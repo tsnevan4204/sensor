@@ -1,0 +1,52 @@
+== 0. correctness
+forward vs reference transfer matrix, dry wall: max |dGamma| = 9.0e-15
+adjoint Jacobian vs central finite differences (9 params): worst relative diff = 1.9e-07
+
+== 2. identifiability at the true wall (relative singular values of the scaled Jacobian)
+dry, all free (drywall eps untied): singular values / max = [1.0e+00 2.4e-02 2.0e-02 1.7e-03 7.7e-04 2.6e-04 5.1e-05]
+   CRB std: drywall_front.t=1.4e-05, drywall_front.eps_r=6.0e-03, insulation.t=2.9e-04, insulation.eps_r=7.5e-03, drywall_back.t=2.0e-04, drywall_back.eps_r=8.8e-02, standoff=7.0e-07
+   strongest correlation: insulation.t vs insulation.eps_r = -0.999
+dry, drywall eps shared: singular values / max = [1.0e+00 2.4e-02 2.0e-02 1.8e-03 6.8e-04 2.6e-04]
+   CRB std: drywall_front.t=1.4e-05, drywall_front.eps_r=6.0e-03, insulation.t=2.9e-04, insulation.eps_r=7.4e-03, drywall_back.t=2.2e-05, standoff=6.9e-07
+   strongest correlation: insulation.t vs insulation.eps_r = -0.999
+wet 5%, front + theta only: singular values / max = [1.0e+00 1.5e-02 7.8e-04 5.4e-05]
+   CRB std: drywall_front.t=1.3e-05, drywall_front.eps_r=6.0e-03, insulation.theta=1.7e-03, standoff=7.1e-07
+   strongest correlation: drywall_front.t vs drywall_front.eps_r = -0.975
+   wet 5%: |dGamma/dp| for the hidden parameters: insulation.t=9e-14, insulation.eps_r=6e-02, insulation.theta=5e-01, drywall_back.t=1e-14
+
+== 1. L1 dry wall, drywall material shared, Monte Carlo over noise
+drywall_front.t        mean|err| 2.85e-04   CRB 1.5e-05   err/CRB: mean +17.25 std 51.64  max|.| 172.1
+drywall_front.eps_r    mean|err| 1.90e-02   CRB 6.0e-03   err/CRB: mean -2.49 std 7.46  max|.| 24.5
+insulation.t           mean|err| 5.98e-04   CRB 3.1e-04   err/CRB: mean +0.72 std 3.95  max|.| 12.3
+insulation.eps_r       mean|err| 1.94e-02   CRB 7.9e-03   err/CRB: mean -1.53 std 6.25  max|.| 20.1
+drywall_back.t         mean|err| 1.14e-03   CRB 2.3e-05   err/CRB: mean -40.71 std 75.30  max|.| 220.4
+standoff               mean|err| 1.46e-06   CRB 7.1e-07   err/CRB: mean +1.43 std 4.44  max|.| 14.5
+chi2 / n_data per run: 0.84, 0.99, 1.00, 1.58, 0.97, 1.01, 0.87, 1.05, 1.03, 0.96
+drywall_front.t        plausible basins (dchi2<4) per run: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1]   truth inside plausible set: 9/10
+insulation.t           plausible basins (dchi2<4) per run: [1, 2, 1, 1, 1, 1, 2, 2, 1, 1]   truth inside plausible set: 5/10
+drywall_back.t         plausible basins (dchi2<4) per run: [5, 5, 4, 1, 3, 3, 4, 3, 4, 4]   truth inside plausible set: 9/10
+
+== 3. L2 wet insulation (theta = 0.05), back of wall fixed (invisible)
+   per run theta: 0.047, 0.052, 0.048, 0.047
+front drywall unknown (single scan): theta est 0.0485 (true 0.05)  bias -0.0015  spread 0.0021  CRB 0.0017  chi2/n 0.95
+   per run theta: 0.049, 0.050, 0.050, 0.048, 0.049, 0.052, 0.050, 0.051
+front drywall known (dry-patch scan first): theta est 0.0500 (true 0.05)  bias -0.0000  spread 0.0011  CRB 0.0010  chi2/n 0.97
+   per run theta: 0.049, 0.051, 0.050, 0.049
+== 4. mismatch: water at 30 C, model assumes 20 C: theta est 0.0498 (true 0.05)  bias -0.0002  spread 0.0008  CRB 0.0010  chi2/n 0.95
+   per run theta: 0.060, 0.061, 0.061, 0.059
+== 4. mismatch: host eps 1.30, model assumes 1.15: theta est 0.0603 (true 0.05)  bias +0.0103  spread 0.0008  CRB 0.0010  chi2/n 1.16
+profile chi2(theta) - min, front unknown: 0.00:1676.5, 0.02:476.3, 0.04:232.8, 0.06:33.9, 0.08:382.9, 0.10:528.3, 0.12:650.7, 0.14:655.4, 0.16:556.3, 0.18:58.7, 0.20:0.0, 0.22:433.2, 0.24:711.5, 0.26:1154.9, 0.28:2223.6, 0.30:1883.2
+profile chi2(theta) - min, front known  : 0.00:3387.7, 0.02:824.3, 0.04:0.0, 0.06:27.5, 0.08:788.1, 0.10:2177.9, 0.12:3635.5, 0.14:5260.8, 0.16:7292.8, 0.18:9671.5, 0.20:12344.3, 0.22:15265.0, 0.24:18393.6, 0.26:21694.9, 0.28:25138.3, 0.30:28697.1
+
+== 5. L3 wicked moisture profile in the front drywall (geometry and dry materials known)
+singular values of the 8-cell theta profile (+standoff), / max: [1.0e+00 2.7e-04 7.4e-05 1.1e-05 3.8e-06 7.5e-07 2.8e-08 9.8e-18 4.6e-19]
+smooth: lambda chosen 1e+06 (chi2 511, target 512)  profile rms error 0.0354  mean water true 0.0450 est 0.0301
+        lambda -> chi2: 1e+00:445, 1e+01:446, 1e+02:446, 1e+03:448, 1e+04:448, 1e+05:453, 1e+06:511, 1e+07:901
+tv    : lambda chosen 1e+04 (chi2 488, target 512)  profile rms error 0.0362  mean water true 0.0450 est 0.0234
+        lambda -> chi2: 1e+00:446, 1e+01:446, 1e+02:449, 1e+03:448, 1e+04:488, 1e+05:953, 1e+06:2037, 1e+07:2296
+true profile: [0.008 0.011 0.017 0.025 0.037 0.056 0.083 0.123]
+smooth est : [0.015 0.024 0.026 0.031 0.033 0.036 0.037 0.038]
+tv     est : [1.275e-18 3.393e-03 6.695e-03 3.464e-02 3.510e-02 3.566e-02 3.593e-02
+ 3.603e-02]
+
+total time 1552s

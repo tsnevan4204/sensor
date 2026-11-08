@@ -1,0 +1,1220 @@
+
+Hi everyone. Thanks for the kind introduction. That was really Oh yeah, that was well rehearsed. So everything right. Thanks for having me.
+0:08
+It's a pleasure to be here. It's my first time in Philadelphia. I'm going to speak about geometry and physics simulation. Basically the version of
+0:15
+physics that everyone can do who doesn't know physics but knows geometry and I'm very excited about that. And since this
+0:21
+is kind of an open thing and a very interdicciplinary venue, the plan is to go and give you a kind of very rough
+0:28
+overview of topics that I'm generally interested in on a very high level so that you wouldn't really understand but
+0:33
+hopefully get interested and tell you about how I approach problems in that area and then hopefully we can talk. I'm
+0:38
+still here until tomorrow afternoon so hit me up. Um
+0:44
+let's see. So my background is in math but most of my problems that I'm working on these
+0:50
+days come from my computer graphics or robotics or mathematical physics and in these areas numerical simulation have
+0:57
+been central to many of the recent advances in these fields. Um but before we can run a simulation we actually need
+1:03
+a mathematical model of the physical system we want to study. Right? So to describe say the swinging motion of a
+1:09
+pendulum or a fluid flow, we first write down some suitable ODEs or a set of PTEES which we then can go and solve
+1:16
+numerically using like finite elements and time integration and all these fancy words. Um but these models often have
+1:23
+constraints and symmetries or that dynamics has is governed by variational principle and these can be posed on like
+1:30
+configuration spaces that may be curved or even topologically non-trivial. So something complicated and differential
+1:37
+geometry turns out is a very good tool because it allows us to define the familiar notions of calculus on these
+1:44
+bases. Wow. Okay. So I'm sorry about that. I'm not trying to win hall here.
+1:50
+I hope we're very that's a good topic for a starting you
+1:55
+know starting job of how many scientists does it need to you seem um sorry about
+2:01
+that. Okay, so background in math, I care about this stuff, right? And this
+2:07
+stuff, we care about computations. Okay, wonderful. To understand how well the model that we built captures the
+2:13
+physical system we started with, and we can use kind of our favorite tools from analysis PD theory of operations and
+2:20
+derive like theorems and equations that describe them. Um and similarly to see if we write code
+2:27
+how well it actually approximates the uh system that we want to model we can do like stability analysis and check for
+2:34
+convergence or deres error bounds and so on. So this approach is really well established in like physics simulation
+2:39
+numerical analysis and it tells us a lot about both the model and the computation side. But I want to make a point about
+2:47
+the following. So convergence results tell us what happens
+2:52
+in the limit of refined limit. Say when some number of vertices tends to infinity, right? But in any practicing
+2:58
+computation, we will always have that number being finite. So we never really get there and
+3:04
+numerical algorithms therefore often work in a finite dimensional space as conf say some Rn whereas the continuous
+3:12
+space has all this complicated structure possibly that we would like to capture. So in a sense discretization can fail to
+3:19
+preserve the semantics of the physical system that we actually care about.
+3:24
+So think of the following for example a not it has a very clear geometric and
+3:29
+topological constraints but when we don't pay attention to simulation it's very easy to simulate something that can
+3:34
+be very far away from what we actually have in uh that motivates a different paradigm.
+3:42
+So why not develop fully discrete mathematical models that preserve the essential properties of their continuous
+3:48
+counterparts and that already at a finite restriction. This philosophy aligns with kind of this broader idea or
+3:55
+trend in computing that is shared for ste like discrete differential geometry or scientific machine learning and it
+4:01
+moves towards building physical structure into the computational models from the outset. So we don't have to
+4:07
+rediscover that. The cool part about this is that algorithms based on these models can solve discrete equations
+4:13
+exactly and the structural properties also hold already at a finite resolution
+4:18
+and they also come with their own theory. So we can derive like discrete optimality conditions or conservation
+4:25
+laws just as we would do for any continuous combination. But there's a catch right? In general we
+4:32
+cannot preserve all the properties of the smooth counterparts at the finite resolution. You got to make a choice.
+4:38
+And to me, this is where things get really interesting because different choices can lead to different discrete
+4:44
+models and theories even though on the continuous side all these might be equivalent.
+4:50
+So often times drawing for an inspiration uh and on problems and applications
+4:56
+uh I try to take like a unified first principle approach to developing new models, algorithms and theory all
+5:02
+together. and geometry provides a shared language for collecting them and making
+5:07
+them like previously hard problems in these fields accessible.
+5:12
+So for the rest of the talk, the goal will actually be to show you um how this has led to new mathematical insights but
+5:20
+also resolve computational bottlenecks across a surprising broad range of applications. So let's see how far we
+5:27
+get here. Um the first thing I want to talk about
+5:32
+are classical topic in math or differential geometry which are illustration.
+5:39
+Um in this end let's consider a straight piece of wire.
+5:45
+And if we bend that yeah let's assume it's inextensible and has high torsion stiffness. Then we see these different
+5:51
+shapes emerging. That's supposed to hopefully you see roughly what it's meant. Um and these
+5:58
+shapes are formalized by the concept of an elastic curve. They minimize bending while fixing length and the applied co.
+6:06
+And it turns out that mathematically they can be formalized by a very principle which involves the L2 norm of
+6:12
+the curvature of the curve that is to be minimized and two integral constraints for length torsion.
+6:18
+So ask about the torsion. Yeah. If it's a straight line there is no
+6:24
+torsion. So how do you define recursion? Why is this o straight when it has straight
+6:30
+segments? If it has straight segments then you can't bend to
+6:35
+oh you can fill that if you have a straight segment you look at a normal vector on the start normal
+6:43
+vector at the end and you look at the parallel transport. I see. So you interpolate it.
+6:49
+No you parallel transport along the curve. It's actually the chronomy of the space curve.
+6:56
+Right? If you have a closed circle, right, the the circle, you can just pick one par one normal vector. You do the
+7:03
+parallel transport around the perf and then you can look at the angle defect that you get that
+7:08
+but it can be straight then yes that we can still define that which
+7:14
+depends on the choice of vectors that you have in the start or the end but the variationally because it's a constraint
+7:21
+only the derivative of that really goes in and then it's independent of that choice because the change of angle that
+7:27
+you see will not depend on that if you take the derivatives so you can make that interpolate in pretend.
+7:34
+No interpolation
+7:40
+the bormal you assume that the boronal rotates smoothly in the beginning.
+7:45
+No, I pick two vectors in the beginning and
+7:50
+the end and I turn transport the vector field along that. That is solving an OD. There's no no interpolation going on.
+7:57
+Then I have to the end an angle. I can measure the annual difference and that
+8:03
+depends on the choice of vectors that I make initially right and the varial derivative of that does not depend on
+8:09
+that initial choice anymore and that is the quantity I care about I understand so sorry
+8:14
+it it doesn't depend on the choice at all or it doesn't depend or it's
+8:20
+invariation of both of them by eventually it doesn't depend on the
+8:25
+initial choice at all because in the various problem you only see the derivatives of
+8:31
+Okay, so those are simple examples but in general we have much more much richer
+8:39
+base of solution and they have a long history going all the way back to the
+8:44
+18th century. I believe it was Buli who originally proposed a variational formulation while that Ola put that up
+8:51
+and kind of classified all the planer elastica already as 1744.
+8:56
+Okay, but they have they're not only interesting for historical purposes or for teaching purposes, but they actually
+9:02
+have a tendency to show up in seemingly very unrelated physical and dynamical systems too. For example, there's
+9:09
+Kirkov's analogy which states that the curve is elastic if and only if its tangent vector satisfies a pendulum
+9:15
+equation. That is you imagine a pendulum and you always follow the direction at a
+9:20
+constant V. What you will trace out is an elastic path. So that might be surprising to you. Another example which
+9:27
+I think is way more fascinating is the example of smoking flow which goes back to limit.
+9:33
+So old gun differential geometries. If you blow a smoke ring, it will in general just wobble about pretty crazy,
+9:40
+right? But if you're really good at it and blow it in a perfect circle, it will move just like this one here on the
+9:46
+left. Will just translate. And you might
+9:52
+um wonder if there are other curves that have this property and we know that
+9:58
+evolve just by translation or general say a rigid body transformation
+10:03
+and as it turns out elastic curves are the answer and in fact they are the only curves with that property. So that's
+10:10
+pretty amazing. Um and finally these curves have very practical relevance since for example the design of
+10:15
+everything from smooth curves to uh from from ships to airplanes that requires these curves. Um before we had computers
+10:22
+engineers use these wooden splines that were held in place by some weights and those are pie-wise elastic curves and
+10:30
+these wooden splines were in fact the inspiration for the cubic splines that these days see in any cut program or
+10:36
+graphics and design truths. Um but they minimize a linearized bending energy. So
+10:41
+generally they are really different curves than those that we want from this nonlinear elastic model and for
+10:47
+simulation and design that might be essential. So how can we define like real elastic purse so that we can
+10:54
+compute them efficiently with a computer say for polygonal purse
+11:00
+and the fundamental difficulty is that for polygonal purse the classical notion
+11:05
+of curvature vanishes along the edges. it doesn't bend at all and is singular at vertices.
+11:12
+Um and one of the best known structure preserving models that take kind of the somewhat obvious route here is the wet
+11:18
+al discrete elastic rod model which defines curvature for polar curves and
+11:23
+then builds a discrete analopee of the bending energy from it and goes from there. The caveat here is that that
+11:29
+choice is not unique. So there are multiple choices of making such a definition of curvature of of a discrete
+11:36
+curvature but all give different theories and all of them might be reasonable. A second class of approaches
+11:42
+of defining elastic curve starts from the analytical systems characterization. So broadly speaking these methods first
+11:49
+discretize the discrete dynamic system and then define elastic curves as the corresponding counterpart of that. That
+11:55
+has for been done for like bunch tops and spinning tops or also discrete moping flows from which the curves that
+12:02
+evolve as your body motion are an elastic and the services down there. Huh?
+12:07
+The services on the bottom right sweep up those there can straight up surface
+12:13
+bacon or yes it's really just tracing out so that you see kind of what the elastic curve
+12:18
+does. They are Hashimoto surfaces but I don't think they have like too much interesting geometry. Um anyway, so you might think
+12:26
+that no matter what route we take, we in order to get it to speed theory, we got to discretize something, right?
+12:34
+And uh if so, then you're in for a treat because let's look at the classical example of the isoparametric problem. So
+12:41
+it seeks planer curves that for a given length enclose the maximal area and the
+12:46
+winner is the circle. But equivalently, you may ask to find the minimum length of the curve that encloses the given
+12:52
+fixed area. And again the winner is the surf. And for a space curve that is a
+12:58
+bit more difficult because there's no canonical stunning surface whose area we could measure. But as it turns out there
+13:05
+is a canonical area vector. How do we get that? Any space curve can be
+13:10
+projected onto a coordinate plane. On that plane we can measure the signed area depending on which way around one
+13:17
+of the equals area. Then we can do for three coordinate planes. Setting those three scalas we get up in a vector gives
+13:24
+us the area vector by kind of computed by this integral that I put on the slide. Similarly, we can define a volume
+13:30
+vector for a space curve and that is simply obtained by taking the space curve and rotating it about the three
+13:37
+coordinate axis. This again gives us three signed volumes and we can stack up
+13:42
+a vector and that is computed by this volume vector that I write down here.
+13:48
+And an interesting observation about these two is that under change of reference frame they transform just like
+13:53
+linear and angular momentum. And for now this is just a side mark. But that's actually a pretty deep
+13:59
+observation I want to take. Okay. Now the surprising a curve you can show that a curve is
+14:06
+elastic if and only if it's a critical point of the la functional subject to
+14:11
+constraint area and volume vectors. This characterization was first given as a corollery in work studying the
+14:18
+integraable system of smoking flow and we gave a much more elementary proof for it and develop the theory a bit further.
+14:25
+Moreover, note the following. We know what the length of a polygonal curve is, right? It's just the sum of the action.
+14:32
+So we can evaluate that this pre exactly on a polygonal curve. The same holds
+14:37
+true for the area and volume vector. We can just evaluate those quantities exactly on a polygonal perf. We project
+14:43
+we look at the area that can be done. So really all functions can be evaluated on
+14:50
+polygonal curves. So in a sense we can discretise them simply by evaluation
+14:55
+without making any auxiliary choices of say discretization of curvature or dynamical systems in the first place.
+15:02
+Therefore aching to the continuous counterpart I want to actually propose to make a definition of discrete elastic
+15:08
+curves given by this isoparametric problem. Elastic curves are generalized circles and here we simply use the fact
+15:16
+that this isometric problem requires much less regularity than the bending based one. They can be led on polic.
+15:23
+Here are two examples to convince you that this really gives consistent critical points independent of the
+15:29
+curves resolution. So they all look kind of alike with how many vertices we have at our disposal. And just to be sure,
+15:36
+our experiments indicate that you know we converge with the expected rate of convergence.
+15:42
+And the whole theory generalizes to open curves by interpret interpreting them as
+15:48
+quasi periodic which all the elastica are. And if you really think about that,
+15:53
+this is kind of a mind-boggling theorem because on the left hand side we have the classical formulation which has
+15:59
+squared second derivatives in the variational energy and a fourth order equation. While on the right hand side,
+16:06
+the isopimetric problem has only a first derivatives in the energy and a second order equation. Yet the two problems
+16:14
+still have equivalent solutions and the lower order surely helps for optimization. So the isopiric problem is
+16:22
+much much better conditioned and you don't really need to try hard to get a good optimization algorithm going. Here
+16:27
+I show an example where I optimize using just the plain vanilla augmented dual
+16:33
+method written up from that I write and you see it's pretty fast compared to a bending based approach with the same
+16:39
+algorithm or like a fancy mlab based optimizer. So that works really well.
+16:46
+Um, and here's a fun fact, right? If it's so easy to compute elastica, by
+16:52
+Khos's analogy, we actually get a new solver for pendulums as a bonus, right? Using the quasi periodicity of the
+16:59
+elastica, they just repeat all the time. We only ever need to compute one fundamental domain. And then by
+17:04
+construction, they're exactly periodic for infinite time. And that at the speed resolution. So we don't need to think
+17:10
+about any like fancy time integration steps or anything like that anymore.
+17:16
+Okay. Um, and we keep more connections to the dynamical systems with that because the space of smooth curves
+17:22
+carries a natural presimpactic structure. If you don't know what that means, it doesn't matter. It's just that
+17:27
+structure that I need to define something Hamiltonian dynamics and that's the so-called masin form and
+17:34
+it's especially important in vortex dynamics and fluids and using peacewise linear elements we
+17:40
+can actually construct a discrete counterpart directly on polygonal curves
+17:45
+giving them their own Hamiltonian framework and here's a fact just for the experts
+17:50
+of you so the momentum map for rigid body motions on this syntactic case is
+17:56
+exactly comprised of the volume and area vector of this curves and that is really a new theorem and together with the
+18:04
+discrete master form that theorem actually has an exact counterpart on the discrete side. So in that sense this is
+18:10
+structure preserving you preserve the geometric mechanics behind it and this also clarifies the
+18:16
+transformation laws of these vectors. So the area and volume vector are in fact the linear and angular momenta of any
+18:23
+given space curve. So their components are the na charges of translation rotation symmetries. So isoparametric
+18:30
+constraints are actually momentum constraints. So that is how you should think about that. Um but the coolest
+18:37
+part maybe is that this framework now lets us derive analogs on polygonal pers
+18:42
+for things like the tangent vortex filament or nkdv flows which are complicated flows in this hierarchy. And
+18:49
+the thing is that the classical formulations actually need higher derivatives than polygonal curves have
+18:54
+to offer. Right? So on the right hand side we have third derivatives that we would need to compete or we can just
+18:59
+have it from this polygonal framework. So that's pretty awesome I think. So let's see what we've learned. Uh on the
+19:06
+modeling side we developed a nonline for this pre- elastic curves that retains connections with dynamical systems and
+19:12
+requires low auxiliary visations. We build this isoptic characterization
+19:17
+of elastic curves minimizing length and fixing area and volume vectors and that
+19:23
+has kind of nice disperation structure preservation and of course the lower order gave
+19:29
+um nice computational tools like it's really easy to compute elastic now um so
+19:35
+next you know one immediate next step is to extend the 3D to more general spaces do that on spherical space or hyperbolic
+19:41
+space and kind of check our connections to say will more surface is and other constructions that are based on elastic
+19:47
+burst for which we then get like discrete or semi-discrete counterparts. Of course, rigorous convergence analysis
+19:53
+is actually also still needed. So, so far that has gone numerically. Anyway, time to switch gears.
+20:00
+I hope that's not too far. I try to make up a bit for the lost time. Um the next thing on the list is plasma physics.
+20:08
+So it is a major problem in physics to understand the mechanisms for how magnetic field lines in a plasma
+20:15
+organize themselves into equilibrium states. And the difficulty is that it's really hard to go just there in the
+20:21
+measurements in the sun's atmosphere. And it's really costly to run these programs that have fusion reactors like
+20:27
+marks or stellarators. Need a lot of grunt money before that. That is why many of the advances in these fields are
+20:33
+like reliable simulation. uh but in the sun's atmosphere we can actually see the
+20:38
+magnetic field lines as these filamented structures and they look pretty and they
+20:43
+feel like they're kind of using uh following an organized way and you
+20:49
+notice that they're also fairly stable over time scales and that is because they have a tendency to fairly quickly
+20:54
+settle into equilibrium configurations of this magnetic n
+20:59
+um but on these time scales they cannot relax all the way but they typically remain in states that are twisted
+21:05
+knotted or braided in some complicated ways. So why use these plasma models? Magnetic lines behave a little bit like
+21:12
+spaghetti stirred in a pot, right? You have this bunch of pasta deforming and they can bend and move around, but they
+21:19
+cannot pass through each other or reconnect in order to untang themselves. So this leads to a number of like open
+21:26
+and difficult problems in these fields about the existence and regularity of topologically constrained equilibria
+21:33
+parachute information formation and paralytic recollection. Okay. So mathematically that is captured
+21:38
+as a gradient flow that is topologically constrained and computationally the
+21:44
+challenge is how to fix this topological constraint. If I just move around vectors on a grid, say for example, and
+21:50
+I trace out the field lines, how do I make sure that if I update them, the field lines didn't pass through each
+21:56
+other somewhere in the back, right? That's a really hard problem. Um, and one can show that critical
+22:02
+points actually satisfy the so-called nonlinear force field equation, which is this on the right here.
+22:10
+And they do not only show up um in Kmart physics, but are actually relevant all
+22:16
+over the place. So if you care about dynamical systems or anything in geometry, you might at some point think about them. So there's plenty of of
+22:22
+incentive to study and uh they at least some pretty general
+22:27
+solutions and can have remarkably complicated field line structures as like in the topological sense. And since
+22:34
+they appear in so many uh geometry adjacent areas, you might wonder if
+22:39
+there's, you know, some characterization or underlying common geometric structure
+22:45
+behind all that complexity. And as it turns out, we found one that is a
+22:51
+surprisingly simple theorem because it fits just in one line. Actually, it's the title of the paper. That is all you
+22:56
+need to know. But states that force three fields, so the solutions to these equation are conformally geodzic.
+23:06
+So to understand what this means, let's go through the individual cards here. So
+23:11
+it is about these special vector fields we call forcef free fields which model these plasma fields in or a crude
+23:18
+approximation of plasma field to the solar atmosphere accelerates. And the last part speaks about a
+23:24
+different kind of special vector fields. those that are geodzic and street lines of a geodic vector field trace out what
+23:32
+would be the analog of a straight line or a shortest path on a curved space. Just think like a riding bike on a
+23:38
+surface and if you never turn the handlebar you're following a geodessic. That's the idea as straight as it goes.
+23:45
+And the key part is the middle one. It should be read as up to a conformal change of metric and two metrics are
+23:52
+related by a conformal change of metric. if one is just a rescaling of the other.
+23:57
+So the the way we should take measurements we just rescale that. So actually the theorem tells us about
+24:03
+these two classes of vector fields being the same. And it actually says that
+24:08
+exists a conformal change of metric that fields become geodzic vector fields. So
+24:14
+I can locally rescale the space to make one field pass into the other. A more intuitive way to think about this
+24:20
+is to say fields are forcef free if and only if there exists an index of refraction that light rays follow its
+24:28
+field lines. Right? So light rays follow geodessics but when they travel through a medium with non-uniform index of
+24:34
+refraction they get bent and are not straight in the classical sense but follow geodeics in a non-ucleian metric.
+24:42
+And the best part is that actually more precise statement of the theorem is really constructive.
+24:48
+the the scaling factor needed to rescale the space is actually the squared norm
+24:53
+of the vector field. There's nothing terribly complicated. It's not just an existence proof and we don't know what
+24:58
+it looks like, but we can just write it down. And this always reminds me like this thing of in relativity where you
+25:04
+have mass particles traveling along geoteics in a space that they walk around with their mass themselves. So
+25:11
+it's a metric that they generate themselves in a bit like this. It's the same for for these four three fields.
+25:17
+And this has a lot of entropy contact particles. For instance,
+25:33
+ADC, that thing is known to have chaotic field line configurations in the like K
+25:38
+sets. Um so we can turn something chaotic into something as ordered as a geodeic
+25:44
+foliation just by rescaling the space. And we think about that pretty amazing
+25:50
+also and if the field has unit norm then we can see equivalence between false
+25:55
+fields and geodessic vector fields. So an example would be the hop field uh on
+26:02
+the three sphere because it's comes from great circles. we know it's already geodessic that's as straight as possible
+26:09
+on the sweep here and now we know it's also for free even with respect to the same metric
+26:15
+okay so the constructive nature of this result actually makes it very useful for I purposes because um the L2 gradient
+26:22
+flow can now be reccast as a geometric curve shortening flow just in a non-ucleian metric so ukian or non-
+26:31
+ukian doesn't matter making it shorter is a hell lot easier and making these
+26:36
+crazy topologically constrained flows that we would actually like to model for plasma. So algorithmically this suggests
+26:42
+we can just compute an approximation of the metric if we have such a discretization of the plasma field and
+26:48
+perform a step of cush material and just iterate the two and note that these filament
+26:54
+interactions there's 100 filaments per component here are actually encoded in the metric. So in fact this is
+27:01
+straightforward to run because we can perform an unconstrained optimization. But although all of that looks like
+27:06
+really interacting, there are no constraints whatsoever. And with some technical assumptions of course you can
+27:11
+guarantee that the topology of this guy is preserved as you should. Um let me show you some examples of applications.
+27:19
+So in 1990 Mod proposed this idea of relaxing flux tubes in the shapes of knots and links. If you think about it,
+27:26
+we can just very easily perform this type of experiment. now that we propose in the bottom here just code that up and
+27:32
+let it run on a very discreet flux cube and who was interested in it because of
+27:38
+conjecture that I think uh the energy spectra of these mod classes might be
+27:43
+topological invariance but I don't think anyone ever acted on this yeah are so you just show
+27:51
+yeah yeah yeah what you just showed T32 switching to T23
+27:58
+Yes. Do they have the same energy? Um I mean the PT SP is not in
+28:05
+equilibrium configuration that is suggested here. Right.
+28:11
+So the the the the state would be the equilibrium reach reach one. Yeah. The door not matter.
+28:20
+Yeah. But but that is unclear right that this type of experiment should be done more right.
+28:27
+show. Yes. Yes. Yes. It's very similar. Um, okay. Um I want to point out one
+28:35
+thing because previous state-of-the-arts methods in that field that try to study these energy spectra actually relied on
+28:41
+methods designed to approximate the W length of ts which is a different interesting question but really in fact
+28:46
+not the same for problem as you can see here like in equilibrium states we actually have a variable thickness along
+28:53
+the filaments and uh so that that matters and including like time and
+28:59
+specially variable filament thickness kind of in a principled way has been kind of people have been stuck with that
+29:05
+for more than a decade and turns out that kind of to do that we just need to consider the problem in the right
+29:10
+geometry and so you can actually do that sorry
+29:15
+two energy spectrum what is spectra oh you might have very different uh
+29:23
+local minima right if I relax it's the t2
+29:28
+it's not that not no uh it's the if I relax one knot right I can deform it
+29:34
+very complicatedly and maybe if I relax it I end in a different local minimum for which I can't relax and the set of
+29:42
+energies of all these different local minimas oh that is the spectrum
+29:47
+yes so that that is the idea I see I see how you get there sorry um yeah so we also
+29:55
+used a very similar relaxation scheme in the purpose of graphics where the idea was to know want to take pretty images
+30:02
+of solar atmospheres just from p painting a bit of flux maps and the sun surface and if you make a book pretty it
+30:09
+looks roughly like this and if you zoom in I feel like the results that's qualitatively the right thing there's
+30:15
+unfortunately no ground truth um but I hope that whenever you these type of
+30:20
+images that NAZA sometimes shows you from now on think of informative desics okay um so what have we learned we've
+30:29
+identified a new characterization of these force fields modeling the magnetic field in the solar atmosphere as
+30:34
+geodessics in a non-defeated metric. The core result showed some like new results
+30:40
+and insights in the field of geometric and topological flow dynamics and of course we get a very nice relaxation
+30:47
+algorithm which is much simpler than uh and more flexible than whatever was there previously. Um there's of course
+30:54
+always more work and I would like to include for the non-triviality to actually study reconnection that is what
+31:00
+I'm really after and also what do similar statements sound like if I look for foliations of say um surfaces or
+31:10
+higher higher dimensional sub manifes okay so let's see how we're doing
+31:17
+um for the last part I want to speak about geometric methods and motion planning
+31:22
+And across biomechanics, robotics and animation, we want to study and design controllers for specific motions or
+31:29
+understand which animal gates are particularly effective or efficient or maybe study how different environments
+31:36
+affect the commotion strategies. And predicting and controlling this type of motion is really challenging because the
+31:41
+information, the body pose and the environmental response are all coupled with one another in a really large
+31:47
+configuration space. um particularly interesting features
+31:52
+that means without legs or body uh or bodies have that roundroof
+31:59
+no have nothing to push their bodies against. So think the astronaut in zero
+32:05
+gravity, right? They want to turn around with nothing to push against. There's no air. So how can they still manage? It's
+32:11
+actually very very exciting thing to look at. And what all of these examples have in common is that uh
+32:18
+wellcoordinated shape sequences actually allow them to translate and or rotate in
+32:23
+space. Um but figuring out what shape sequence I need to take in order to
+32:28
+achieve something that I would like or that I would desire is actually again a hard problem and broadly speaking there
+32:35
+are three main approaches there simulation based learning which has kind of proven ridiculous and successful but
+32:40
+can require like many expensive simulation rollouts and it's not really like efficient in graphics and
+32:46
+animation. Kinematic motion synthesis based on some fancy interpolation methods is actually really fast and will
+32:52
+scale really well but you cannot really enforce physical correctness um in between interpolation points and last
+32:59
+geometric cake design offers physically principled and efficient methods but
+33:04
+only really helpful for lowdimensional configuration spaces and what I want to show you is that with a little bit of
+33:11
+change on the perspective on how we look at the geometric picture um we can resolve many of the shortcomings in a
+33:17
+very principled way. So let me talk about what this geometric model actually is. And here I have a snake and it's one
+33:26
+point in the space of all shapes that snake could take. That's hard to say. Um
+33:32
+and by moving the point around in the space of shapes, we see different shapes corresponding to that shape. And when we
+33:38
+position the shape in world space, we think of the collections of all these positions as a fiber over the SP point.
+33:45
+And it looks like the group of rigid body transformations. Moving along this fiber, we see that the shape is
+33:50
+repositioned, but the original shape keeps intact or stays intact. And vectors that are tangent to this
+33:56
+fiber are called vertical vectors. And there infinite has an individual body motions of that configuration. And later
+34:04
+we just equipped with configuration space with a metric uh that allows us to define a horizontal distribution just by
+34:10
+taking the orthogonal complement. A metric is nothing else than a dot product. So we know what right angles
+34:15
+are. What does it mean to be orthogonal? Uh typical choices model kinetic energy of the system as for these examples or
+34:23
+dissipation energies as for these examples. And the important thing is together they spend the whole tangent
+34:30
+space of the configuration space. So a shape sequence is now nothing else than a curve in the shape space and the
+34:37
+corresponding motion trajectory is a lift of that curve choosing one point in the fiber along the way.
+34:44
+So um now the interesting thing is that in
+34:51
+these scenarios where motion is entirely encoded in shape changes, one can show
+34:56
+that motion is physically meaningful if and only if that lift is always tangent
+35:01
+to this horizontal distribution. So that gives us a way to distinguish physically meaningful motion versus bogus that we
+35:08
+can just come up with or what elevator might do that is just not correct. And to see how this works that look at the
+35:14
+periodic gate. So a closed loop in shape space. Note that if we go about a closed
+35:20
+loop in shape space the corresponding list does not in general close up. We end up in the same fiber because we have
+35:25
+the same shape but we have a different point in that fiber. And the difference between these start and end points in
+35:32
+the fiber because it looks like a group of rigid body transformations is again a rigid body transformation which is the
+35:38
+transformation leaving the snake from here to here. And in that geometric picture is actually the curvature of
+35:44
+this bundle like a curved space and going about as per transform. So how you should think about this is a bit like a
+35:51
+staircase right here. We keep climbing and we turn to the same point and for us
+35:57
+it's the situation in reverse. We always go horizontal but we end up a bit higher up in the
+36:03
+same file. Right? So that's kind of the the type of space that we're dealing with. And there are number of methods in
+36:09
+the realm of robotics for instance that use this interpretation of motion as per curvature of the bundle. And if you were
+36:16
+to find say maximal displacement gate you would try to maximize the curvature enclosed by a gate cycle. Um but despite
+36:23
+being very elegant, writing down this connection explicitly using forwards get pretty cumbersome and
+36:31
+although these pervatured gate analysis focus also this pervar based analysis focus on closed loops only. So we can
+36:39
+only really treat periodic gates. Um but many tasks like motion design might
+36:45
+involve like non-periodic shape sequences. So a different proposal. Let's not treat
+36:52
+the hor let's treat directly the horizontal purse as the primary primitives representing physically
+36:58
+meaningful motion. And this has certain upsides.
+37:03
+So in the bundler picture this looks as follows. You can prescribe a start and in any configuration I'm right now here
+37:11
+and I want to go there and have this shape here and have that shape there. And then a physically valid motion trajectory between the two shades must
+37:18
+simply set aside these pointwise horizontality constraints. And an optimal motion trajectory would
+37:24
+be one that minimizes the energy of all paths connecting the two configurations.
+37:29
+So our lo motion problem or motion planning problem is actually a subremanium boundary value problem in
+37:35
+disguise. And here subremanion means nothing else than the tangent vectors
+37:40
+are constrained to lie in these horizontal spaces of the sub manifold whereas in ordinary remmanion geometry
+37:47
+they would be allowed to point everywhere. So that is what makes the sub otherwise it's just a cat zero. Um
+37:53
+one more thing is that um in the classical model we actually only capture outer dissipation. So the interaction
+37:59
+with the environment but shape changes do not come free of charge. Think of the snake's metabolism
+38:06
+that needs to burn calories in order to perform these intrinsic shape changes or a robot or battery power in order to be
+38:12
+formed, right? It needs to uh power for the actuators. So, of course, um we
+38:18
+could use kind of conventional energy based definitions to include some measure of efficiency. But from a geomet
+38:24
+perspective, this feels a little bit artificial because this whole method is a very nice geometric picture. So there
+38:30
+should also be a geometric model for efficiency and what we did in a recent preprint is to propose a purely
+38:38
+geometric model that includes measures of internal energy dissipation simply from bending stretching and compression
+38:44
+which is kind of from additional metric on the horizontal spaces. So let's let us optimize both measures at the same
+38:50
+time. How that works? Uh I can give an example. So here I have a shape sequence
+38:58
+and I go about my data. Okay, goes from the U to the S shape. So it's really
+39:04
+this type of all value problem. Of course, if you add more examples, we just need to uh only ask for
+39:12
+translations but maybe also rotations. And this is a kind of cool example because we see this characteristic
+39:18
+behavior of the head and the tails will be together, right? And that is what in biomechanics literature is called an
+39:24
+omega turn. If it has a nail, it must be important. And it's pretty cool that this comes up just from a geometric
+39:30
+picture. We never fed any more physics to it. So that must like I take this as a sign that our model might be doing
+39:36
+somewhat the right thing here. Um and okay, maybe to see that
+39:42
+accounting for this inner energy dissipation actually does something good for you. Uh here are some examples where
+39:49
+I have the same boundary values but I modulate how much I wait this inner bending dissipation. And uh this
+39:55
+actually reproduces some of the qualitative examples that people again in biomechanics have studied for us.
+40:02
+Pressing nemaode worms and some the the media that some nemaode worms crawl in
+40:07
+somehow together to make the autoation for them more expensive. We kind of get the similar touch of this and we can
+40:15
+just that change the set of gates that we allow for maybe I don't care about
+40:21
+what shape I have if I arrive but just that I arrive through the door right
+40:26
+what might be very reasonable in that case you can just take mixed boundary conditions we fix the first position and
+40:34
+check and just want to see the displace we can solve these path of problems well
+40:40
+okay this This is what this looks like. It's a bit slow. It's good that it's
+40:45
+slow by the way because it's a high resolution computation and we have many many time steps here which is hard to
+40:51
+do. So in the paper I'm going to brag about that. Now it's a bit slow. Of course, we can also do periodic boundary
+40:56
+problems. And the cool part is because everything is figured out on the manifold. Um the optimization will
+41:03
+figure out the number of gate cycles it must repeat together with a corresponding shape sequence immediately
+41:09
+optimal. Otherwise, people would typically prescribe and try to find like if I want to make three cycles, what's
+41:15
+the sequence that I mute? But we figured this out along the way. So if you move it just a little bit further, it might be a different number.
+41:21
+So there are these like different supplement boundary value problems that we can solve. And let me just say that
+41:30
+lifting uh these problems or the lifting problem from the shape space to the
+41:35
+configuration space is actually a differentiable simulation. And if you know something about this is that where
+41:41
+we can use them to also do all other types of inverse design. Say for example
+41:46
+I want to have this snake from A to B. We can figure this out very efficiently by back propagation through this list
+41:53
+using the adjint method which is terribly terribly cheap to do. So instead of having run like large
+41:59
+computations as we did for the bomb value problems, we can actually speed this up and make all types of fancy
+42:05
+things like checkpoints or energy or regularization or obstacles or anything like that.
+42:10
+We did the thing just go through that last spy. Yeah, that we didn't constrain
+42:16
+it. Yeah, that it did. That was just to mark the end point. The obstacle constraints you were these fancy moon rocks. They're
+42:23
+moon locks because Naza gives those textures for you with CC license
+42:30
+and the realm of graphics people really care licenses. Anyway, so um in robotics like in soft
+42:37
+robotics or so sometimes we might not have like inspired inspired things but say I built a robot that looks like
+42:43
+this. has three flaps to to move about. And in general, that might be did pretty
+42:48
+hard to figure out, you know, how to make this guy translate or roll, but an optimization can figure that out for us.
+42:55
+You know, if you do that, it almost looks lifelike. And these things we learn to flap around or even, you know,
+43:00
+rotate out of plate. The last one could use some regularization. That's easy to do, but I want to show you the raw
+43:05
+result. And the last thing I want to show is uh addresses procel scallop
+43:10
+theorem that states that in dissipation dominated scenarios shape tables controlled by a single degree of freedom
+43:18
+cannot produce any net motion. So with single degree of freedom we have this pinch and with a curvature picture it's
+43:24
+very clear why this holds because for a single degree of freedom we cannot enclose curvature. Um, so that's trivial
+43:30
+now, but the fun part is if you put two class on a stick, um, the optimization
+43:36
+scheme is smart enough to figure out how to translate them by making them collaborate with each other,
+43:41
+coordinating their respective shape changes. So I think this is pretty cool because it allows us to kind of
+43:47
+prescribe these very simple useless building blocks, then figure out by optimization how to make them achieve
+43:53
+something non-trivial. Okay. So, okay, let's see what we've learned about
+43:59
+motion planning. I propose this idea of modeling motion planning problems as supplementing boundary value problems
+44:06
+because this gives us a bit more flexibility while still having all the benefits of this geometric framework and
+44:11
+the principal approach behind it. And we also extended this model a little bit uh
+44:16
+of this classic HK scale rapid model in the sense of spring shooting inner energy dissipation to account for
+44:22
+efficient locomotions and modeling flexibility in a computation. We can kind of solve all types of funky unreal
+44:28
+problems with it. Of course there's more work to be done. The next immediate step
+44:34
+would be to um take similar ideas to say under actuated compliant bodies um to
+44:40
+jointly optimize say gates morphology and materials for swimming or gliding or
+44:45
+flight. That is something that we're currently looking into here. But if you see it works on different model
+44:51
+fidelities and you can actually make all of that compatible. And the cool part is although we have kind of this two-way
+44:56
+coupling on things swimming and flying all about there's no fluid simulation and we still get the fluid coupling and
+45:02
+somehow right behavior. So as a quick prototyping tool that might be kind of the fun thing for roboticists.
+45:08
+So what's your takehole? I'm a little bit over time already. I want to blame Zoom for that or my computer.
+45:15
+Zoom is okay. So done with Zoom. Um so [laughter] over the last kind of 40 something I
+45:23
+don't know how many minutes I actually talked we have explored kind of these computational problems coming from a
+45:28
+range of applications ranging from like elastic bursting graphics to plasma physics to motion parallel and robotics
+45:36
+right and what connects them them all is that it was really helpful to develop the model the theory and the computation
+45:43
+together like each can inform the other and so what you should really take away
+45:48
+is that across disciplines doesn't really matter what you do. We can pour a lot of inspiration and new insights from
+45:55
+taking this unified first principle approach to to modeling theory and computation and as a unifying language
+46:02
+across these three aspects. Geometry actually allows us to reveal the connection across physical systems and
+46:09
+make these complex problems actually tractable for both theory and application. And with that I conclude my
+46:16
+talk. Thanks for listening and sorry for the connection.
+46:32
+I tried to make up the timer. You go back. I'm going to ask.
+46:38
+Yeah. What I didn't realize part about how elastic
+46:44
+rocks have to be minimalizers of those two.
+46:50
+Yeah. Uh two integrals of of which one like the isoparametric one or the
+46:56
+classical one. You go back.
+47:01
+Uh gamma gamma.
+47:08
+Oh yeah. Yeah. Uh this uh
+47:13
+that guy. Yes. Okay. Okay. So
+47:18
+say two things each other. What did I say? What this this characterization?
+47:24
+Yeah. How do you want to find extrema of these things? I don't want to find extreme missings. These are my
+47:29
+constraints. So the isometric problem seeks to minimize the length and put
+47:34
+these as constraints. Minimize the length with those two constraints gives you exactly your cost.
+47:41
+Yes. Why do you need the second one? That is that correspond to Yeah.
+47:48
+Yes. That is kind of rough torsion. Uh yes. And wait is this obvious? No, not at
+47:56
+all. Are you sure? I'm not sure. No, to be it's not. You proved it. Yes.
+48:06
+So the interesting bit is that how you can prove it is that you can make the classical proof. Look at the Oola orange
+48:12
+equation and then these order reduction techniques of you know you find out there's like total derivatives you
+48:17
+integrate once you get more constant motion yada yada yada. Eventually you end up with this equation that tells you
+48:23
+about the smoking flow. It looks something like gamma prime cross gamma prime prime equal to a cross gamma plus
+48:29
+c plus some reproation. So this tells you that the left hand side fine that is the smoking fuel the
+48:36
+localized induction equation tells you that if your curve evolves by that then in the right hand side the illusion will
+48:42
+be in body motion and turns out that this is pretty much already the like one
+48:49
+equation of that isoparametric. So so once you specify so these are six
+48:54
+numbers. Yes specify six milkers. Uhhuh.
+49:01
+Um hold on. Yeah, you give l six lers
+49:08
+their values are the forces that are all oneless. So are they interesting?
+49:14
+Uh good question. I don't know. Like for instance, could you imagine now simulating splashing the curved Phoenix
+49:20
+up stuff? You might you might plot on the side as uh as far as like you get
+49:28
+your that it's far as when like when the when the when the multipliers are not zero and you see
+49:35
+these places where it's zero it's just blowing on constraint right and then you see oh here now it's
+49:41
+pushing this way it's pushing that you could see you have a lot I should I could but I don't have a good
+49:49
+you don't have a lot I don't have okay yeah well as you watch
+49:58
+yeah but that's a for clarity um if you want close curves
+50:04
+that those six numbers if you want posic curves they are more general so I never
+50:09
+say a positive periodic you need to look close but your periodic up to your body
+50:14
+motion that we propose right so a wave would kind of be close but I can't say
+50:20
+that con here then I start so that's why I'm calling earth so there's this n
+50:28
+space crossace
+50:35
+of course
+50:40
+elbow constraints. The funny part about all this is that the Oh, I'm supposed to
+50:46
+stand here by the way. I'm sorry. Um is that the symmetry group for non-trivial
+50:52
+monotomy actually gets smaller. That is very simple to see because if you have something weighty, I'm not allowed to
+50:59
+rotate it because then it translates in a different direction and not that direction. And that is the monogility that I fix. So by rotating, I kick it
+51:07
+out of its space. So the space of symmetries is actually the centralizer subgroup of that given monogrammy of the
+51:13
+SC3 motors and then we get depending on what your model is either four or just
+51:19
+two of the components of these six components in total uh like in the paper
+51:25
+we've written it but that it's no let me explain this not but you can make all of
+51:31
+that like the symmetry do get more interesting but all these spins that I said about B=
+51:37
+being the momentum lab and head of the multi charges still holds in the general cases. So we've worked from that out.
+51:45
+Yes. Um two further along. Uhhuh.
+51:50
+One more
+51:55
+theorem. [clears throat] Yes. uh those boys. Uh no later then later the the sois is parametric which
+52:03
+is an old makes sorry and then the next one you make the stint here the make the extension to finite uh yeah um
+52:12
+oh this yes no
+52:20
+but the previous one was a definition yes okay that was my question that was the definition
+52:25
+yes I may have that as elastic in as much as but there were
+52:30
+previous unz yeah two board classes of previous undatis the one actually say oh if I
+52:37
+want to minimize bending energy I better define a discrete bing energy of discrete curves and the other one is I
+52:44
+discretize the systems so this is sort of a philosophical definition right this is how we are
+52:50
+defining elastates some sense as much as these are all in the infinite space the
+52:55
+equivalent than they should. Yes. Yeah. That exactly. Exactly. But so why is I get this can be defined.
+53:03
+Yes. Why is this a nice one, right? Well, I think that that is the answer why it's a nice one. Why should we
+53:09
+believe this is the one? Well, there's no this in this discretization business, right? But why
+53:16
+is this a good one we want to claim, right? And it it it is good because we never it's kind of a bit more canonical
+53:22
+in the sense that to define that we never need to make a definition of that is discrete curvature or that's the
+53:28
+discrete analog of the um that's the discrete analog of the dynamical system
+53:34
+but really we can just straightway evaluate that thing on polygonal curves and it's still well posed. So we never
+53:40
+discretized never never have to make an auxiliary discretization. What we do have to do is fix a gauge
+53:46
+because we don't know how to fix the vertices that can still you know move
+53:51
+about the curve and we just make kind of the thing that we say okay we look at uh equal edge land at once
+53:57
+and that's the scaling uh now
+54:03
+they all specifically oh we haven't done too much analysis on
+54:10
+and I wouldn't know if people have done So typically these convergence results in kind of the Greek differential
+54:16
+geometric models are are somewhat the holy grail because you kind of have to have a model type basis of and how you
+54:24
+do that because it's not kind of your typical finite element discretization for which you can piggyback on other stuff and numerically we see the right
+54:31
+order of convergence in the sense that we have peacewise linear curves which should be second order convergence and
+54:36
+that seems to be the case and we also have some uh I showed like for the open
+54:42
+world right has said some some splot of some igen values. Those are the igen values of this operator associated to
+54:48
+the mass and vioine form and we see that that guy converges roughly to the same thing. We believe you could show it but
+54:56
+I in honesty as a geomet I'm always you know a bit more drawn to there's a new
+55:02
+geometric concept I can learn about then bring to numerical analysis. So there's
+55:07
+a certain threshold for me to to do that. But it's a good question and I don't know. So far I'm not making a good
+55:14
+impression. I don't know any of the answers to the questions. Are there any are there special cases when the
+55:19
+effective is um
+55:31
+yes occur
+55:37
+we have positive area yeah area but oh not both of them that is you got this done but play curves we
+55:45
+can get without the volume Can I have both these area? No.
+55:51
+Pretty. Yeah. Because the area just No, but it could have positive and negative. So,
+55:56
+oh yeah, but then then you got to have twist and this gives you some volume. So, but I actually haven't never tried
+56:02
+it to compute it. But from the way we understood the modulized space, so you can kind of at least for a close
+56:07
+situation, oh, I should be more careful um because the quasi product ones I got
+56:12
+to think about them. But for the closed curves, the modulized space is pretty much fixed in area and goes from volume
+56:20
+zero to very large volume in one component. And this gives you a mod space from like zero to twisted to figure 8. And then you got to rescale
+56:28
+because this thing grows because the volume gets bigger and bigger. But with some rescaling, you know how to
+56:33
+write down the modized base for that. But I don't think both zero can be the base.
+56:39
+I see. because the area is perpendicular to those.
+56:47
+Yeah. So the whole pitch shouldn't be that we understood all of the theory but there's actually kind of exciting new
+56:52
+theory to be discovered. Right? We found this principle. It's nice for discretization. We found this geometric
+56:57
+mechanics principle and from here you can take right is there are there other spaces of say the space of co surfaces
+57:05
+that if I fix momentum constraint and have this rigid body modal action on the space of surfaces uh I need a simple for
+57:12
+so let's say we put them in R4 so there I have like analogy mastery for act from that to track and then I can you know
+57:20
+ask for constraints to push this thing in an R3 so that I see it and you have some rough
+57:26
+We worked with a piece of paper during a boring talk at one point and the idea is
+57:31
+likely you get three constraints to constrain the center of mass in one constraint to constrain the body. So
+57:39
+what you get is seems surfaces. So there should be you know theory for them and the question is can we make
+57:45
+other interesting group actions that are not SC3 groups but you know whatever is your favorite group and what are the
+57:50
+momentum constraints of that and can I make nice theory from this? will make the the bigger picture should be a much
+57:56
+more general setup. We've done the simplest case of the simplest curves. It's astonishing because it's kind of
+58:01
+very historic theory. We relate still to a lot of dynamical systems and all these dice commissions to physics. But we're
+58:10
+we're not done, right? There's there's more questions than we started out with. I think that's most of the time the the
+58:15
+case for good research. So you have more questions for me. question should the choice is metric you
+58:22
+will ask question oh yeah so if I want to see you understand this
+58:28
+correctly it's like shoot that uh so so first I guess I wanted to
+58:34
+confirm like this twist of metric is basically this basically defines by
+58:40
+yes yes and so like if I was playing a video game and the guy's like running he's like moving he's like sliding off walk
+58:47
+across I'd be versus not approaching somewhat. Yeah, just that they don't
+58:54
+don't do that. Yeah. So then how impact does team change? Well, that's a very good question.
+59:00
+Um, so far what I showed you is very crude approximations to get kind of the metric and most of the time it's up to
+59:11
+so we just traum vertices connecting by edges and that's it. That's the black
+59:19
+and for this you make a case you have a very simple model of just taking the edge and you define lo anosophobic mesh
+59:26
+by saying this direction epilon the norm to displace this edge b like a block
+59:33
+diagonal oxation of the actual like uh dissipation in like
+59:40
+five this you can't believe stops at the helium
+59:46
+K. So you can kind of make a good local approximation of these very simply
+59:54
+elastic stuff that I showed you yet. It is like we have different track models that we now also have content.
+1:00:01
+I see. But so you you can start you can start from physical models you wish vary
+1:00:09
+degrees and from those a survive a metric of JD
+1:00:14
+correct. Yes. Yes. Exactly. So actually that is something that is still on my goal current to-do list right to see if
+1:00:21
+I have these models I can now park in any type of accuracy of dissipation metric.
+1:00:26
+How much better does it get in terms of approximation and how will these like geometric learning and let's say one
+1:00:33
+fidelity next how do I make good translation through those levels
+1:00:38
+to to understand that that is kind of a mathematically interesting question behind that. So yeah that is be a
+1:00:44
+poination biic black ballet group that right now
+1:00:50
+with the cheek thing because it's like cost effective tri
+1:00:57
+what is the s for the people yes
+1:01:02
+I think one one thing that might be look at if you if you have seems like you do
+1:01:08
+animals not is you take an animal you put it in environ in which it's not used
+1:01:14
+so quick a space for months like a
+1:01:21
+you know like a cat and water it
+1:01:29
+yeah so probably imagine right the motion kind of not robotics but for bio
+1:01:36
+physics or so you might care about the I take these videos and now I care about
+1:01:41
+about the what is the dread coefficient along the table with the gel form cells
+1:01:47
+or so that could evolve and you can just rever the whole pipes.
+1:01:52
+So you can differentiate everything and optimize for everything. So we carry these shakes and figure out the physical
+1:01:59
+coefficient. metric needed to pass a box maker. You see more than one Google box
+1:02:04
+and that is something that we started very recently to actually do that you
+1:02:10
+for quite an I think we can do it and uh now we had a a very capable
+1:02:18
+working for us and figuring out like and he did very well.
+1:02:24
+So because to be clear like the animal has a policy but you put you put a sock
+1:02:31
+put socks on cat like spam is but that's not the metric change that's
+1:02:38
+well that's the metric or that is well it's true you changed like how the socks yeah that that changes the metric but
+1:02:45
+the the animals policy thinks it should something else that's like choosing a curve in this position shift space.
+1:02:52
+Yes. Yes, but but that that is exactly the policy right
+1:03:00
+you're trying to figure out. So the fact nothing is actually a very hard problem but we should kind of thought now set up
+1:03:07
+kind of no to do lifting up only have the scroll context contributing to the
+1:03:12
+metric. I think it's scary. am one of those things that I say convinced about this but so far I haven't found people
+1:03:20
+who are way spending time thinking about all actually but you do but you have
+1:03:26
+people who will do it the people are going so astronauts when they went to the moon they thought they were going to
+1:03:32
+move a certain way and they do they ended up hopping but they thought they were going to do something different
+1:03:39
+oh that's actually a very neat example we should try that and now they're going to be you astronauts
+1:03:44
+So we should ahead of time figure out what the So I think they thought they were going to do something more like
+1:03:50
+skipping but they ended up doing something more like copying where they kept their legs together but
+1:03:56
+before they got there they end they didn't know what to
+1:04:01
+and now it's relevant because they're sending astronauts I I didn't know that that's that's lovely
+1:04:07
+the astronauts to the moon. Oh, that that I use as a first
+1:04:12
+and my my advice to anybody is invest now.
+1:04:22
+Yeah. Okay. That was interesting. That was wonderful. Thank you.

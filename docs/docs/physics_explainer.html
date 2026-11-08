@@ -1,0 +1,623 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Layered Wall DDEC</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=Source+Sans+3:wght@400;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<script>
+window.MathJax = { tex: { inlineMath: [['\\(','\\)']], displayMath: [['\\[','\\]']], tags: 'none' }, svg: { fontCache: 'global' } };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-svg.js"></script>
+<style>
+/* Layout: one reading column (~70ch) with full-width figures; lab-notebook register, two field colors (E warm, H cool) carried through every figure */
+:root{
+  --bg:#f4f6f8; --panel:#ffffff; --ink:#15202b; --muted:#566271; --rule:#d5dbe2;
+  --e:#c4471a;            /* electric field / primal / radar signal */
+  --h:#2b5fa8;            /* magnetic field / dual */
+  --water:#0f8b8d;        /* moisture */
+  --dry:#c9ced6; --ins:#efe3b4; --air:#eaf0f6;
+  --serif:"Source Serif 4", Georgia, serif;
+  --sans:"Source Sans 3", "Helvetica Neue", Arial, sans-serif;
+  --mono:"IBM Plex Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#10161d; --panel:#17202a; --ink:#e3e9ef; --muted:#9aa7b4; --rule:#2c3946;
+  --e:#f0794a; --h:#7aa8ec; --water:#3cc2c3; --dry:#55606c; --ins:#6b6038; --air:#1b2631; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#10161d; --panel:#17202a; --ink:#e3e9ef; --muted:#9aa7b4; --rule:#2c3946;
+  --e:#f0794a; --h:#7aa8ec; --water:#3cc2c3; --dry:#55606c; --ins:#6b6038; --air:#1b2631; color-scheme:dark }
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:17px;line-height:1.6;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:40px 80px}
+main{max-width:860px;margin:0 auto;display:flex;flex-direction:column;gap:8px}
+main>*{min-width:0;max-width:100%}
+.prose{max-width:70ch;overflow-wrap:anywhere}
+mjx-container[display="true"]{overflow-x:auto;overflow-y:hidden;max-width:100%}
+h1{font-family:var(--serif);font-weight:600;font-size:2.3rem;line-height:1.15;margin:0;text-wrap:balance}
+h2{font-family:var(--serif);font-weight:600;font-size:1.45rem;margin:44px 0 4px;text-wrap:balance;display:flex;gap:12px;align-items:baseline}
+h2 .n{font-family:var(--mono);font-size:.85rem;color:var(--e);font-weight:500}
+h3{font-size:1rem;margin:20px 0 0;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+p{margin:10px 0}
+.lede{color:var(--muted);font-size:1.08rem;margin-top:10px}
+figure{margin:18px 0 6px;background:var(--panel);border:1px solid var(--rule);border-radius:6px;padding:14px;overflow-x:auto}
+figure svg{display:block;min-width:640px;width:100%;height:auto}
+figcaption{font-size:.88rem;color:var(--muted);margin-top:8px}
+.physics{border-left:3px solid var(--h);padding:4px 0 4px 16px;margin:14px 0}
+.physics b{color:var(--h);font-weight:600}
+.eq{overflow-x:auto;overflow-y:hidden;padding:2px 0}
+code,.mono{font-family:var(--mono);font-size:.9em}
+.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:14px}
+@media (max-width:700px){.grid3{grid-template-columns:1fr}}
+.box{background:var(--panel);border:1px solid var(--rule);border-radius:6px;padding:12px 14px;min-width:0}
+.box h4{margin:0 0 6px;font-size:.8rem;letter-spacing:.07em;text-transform:uppercase}
+.box ul{margin:0;padding-left:18px}
+.box li{margin:3px 0}
+.k-e{color:var(--e)} .k-h{color:var(--h)} .k-w{color:var(--water)}
+table{border-collapse:collapse;width:100%;font-size:.95rem}
+th,td{text-align:left;padding:7px 10px;border-bottom:1px solid var(--rule);vertical-align:top}
+th{font-size:.78rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.tw{overflow-x:auto}
+/* svg styling */
+.s-ink{fill:var(--ink)} .s-muted{fill:var(--muted)} .s-e{fill:var(--e)} .s-h{fill:var(--h)} .s-w{fill:var(--water)}
+.st-ink{stroke:var(--ink)} .st-e{stroke:var(--e)} .st-h{stroke:var(--h)} .st-muted{stroke:var(--muted)} .st-rule{stroke:var(--rule)}
+.f-dry{fill:var(--dry)} .f-ins{fill:var(--ins)} .f-air{fill:var(--air)} .f-panel{fill:var(--panel)} .f-none{fill:none}
+svg text{font-family:var(--sans);font-size:14px}
+svg .m{font-family:var(--mono);font-size:12.5px}
+svg .lbl{font-size:13px;font-weight:600}
+</style>
+
+</head>
+<body>
+<main>
+<header class="prose">
+  <h1>Layered Wall DDEC</h1>
+  <p class="lede">The 1D toy problem drawn out, then the physics needed to build a data-driven exterior calculus model of it, derived from Maxwell's equations step by step, with what each step means physically.</p>
+</header>
+
+<!-- ============================================================ 1 -->
+<h2><span class="n">01</span>The physical setup</h2>
+<p class="prose">A radar faces a stud wall at normal incidence. It sends a sweep of frequencies, and every interface inside the wall sends part of the wave back. The radar records the sum of those echoes as one complex number per frequency.</p>
+
+<figure>
+<svg viewBox="0 0 1000 440" role="img" aria-label="Radar at left sends a wave through a 300 mm air gap into a three-layer wall: drywall, insulation with moisture, drywall. Echoes from each interface return to the radar.">
+  <defs>
+    <marker id="ar-e" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="s-e"/></marker>
+    <marker id="ar-h" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="s-h"/></marker>
+    <marker id="ar-ink" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="s-ink"/></marker>
+    <pattern id="hatch" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="7" class="st-muted" stroke-width="1" opacity=".45"/></pattern>
+    <pattern id="fiber" width="22" height="14" patternUnits="userSpaceOnUse"><path d="M0,7 q5.5,-6 11,0 t11,0" class="f-none st-muted" stroke-width=".8" opacity=".5"/></pattern>
+  </defs>
+
+  <!-- air regions -->
+  <rect x="160" y="70" width="270" height="270" class="f-air"/>
+  <rect x="740" y="70" width="230" height="270" class="f-air"/>
+  <!-- wall layers -->
+  <rect x="430" y="70" width="40" height="270" class="f-dry"/><rect x="430" y="70" width="40" height="270" fill="url(#hatch)"/>
+  <rect x="470" y="70" width="230" height="270" class="f-ins"/><rect x="470" y="70" width="230" height="270" fill="url(#fiber)"/>
+  <rect x="700" y="70" width="40" height="270" class="f-dry"/><rect x="700" y="70" width="40" height="270" fill="url(#hatch)"/>
+  <!-- moisture droplets -->
+  <g class="s-w" opacity=".85">
+    <circle cx="500" cy="290" r="5"/><circle cx="530" cy="310" r="4"/><circle cx="560" cy="285" r="6"/><circle cx="520" cy="262" r="3.5"/>
+    <circle cx="600" cy="305" r="5"/><circle cx="640" cy="290" r="4"/><circle cx="585" cy="320" r="3"/><circle cx="670" cy="312" r="4.5"/>
+    <circle cx="462" cy="300" r="3"/><circle cx="455" cy="318" r="2.5"/>
+  </g>
+  <text x="585" y="248" text-anchor="middle" class="s-w lbl">moisture θ(z)</text>
+
+  <!-- air gap break -->
+  <g class="st-muted" stroke-width="1.5">
+    <line x1="284" y1="393" x2="292" y2="377"/><line x1="294" y1="393" x2="302" y2="377"/>
+  </g>
+  <rect x="285" y="380" width="14" height="10" class="f-panel"/>
+  <line x1="284" y1="393" x2="292" y2="377" class="st-muted" stroke-width="1.5"/><line x1="294" y1="393" x2="302" y2="377" class="st-muted" stroke-width="1.5"/>
+
+  <!-- radar -->
+  <rect x="30" y="155" width="100" height="90" rx="6" class="f-panel st-ink" stroke-width="1.5"/>
+  <path d="M130,175 L160,160 L160,240 L130,225 z" class="f-panel st-ink" stroke-width="1.5"/>
+  <text x="80" y="190" text-anchor="middle" class="lbl s-ink">Radar</text>
+  <text x="80" y="210" text-anchor="middle" class="m s-muted">77–81 GHz</text>
+  <text x="80" y="227" text-anchor="middle" class="m s-muted">FMCW</text>
+
+  <!-- incident wave -->
+  <path d="M165,130 q10,-16 20,0 t20,0 t20,0 t20,0 t20,0 t20,0 t20,0 t20,0 t20,0 t20,0 t20,0 t20,0 t20,0" class="f-none st-e" stroke-width="2"/>
+  <line x1="170" y1="105" x2="420" y2="105" class="st-e" stroke-width="2" marker-end="url(#ar-e)"/>
+  <text x="175" y="96" class="s-e lbl">incident wave a(f), Eₓ</text>
+
+  <!-- echoes -->
+  <line x1="428" y1="168" x2="168" y2="168" class="st-h" stroke-width="2.4" marker-end="url(#ar-h)"/>
+  <line x1="468" y1="184" x2="168" y2="184" class="st-h" stroke-width="1.8" opacity=".85" marker-end="url(#ar-h)"/>
+  <line x1="698" y1="200" x2="168" y2="200" class="st-h" stroke-width="1.3" opacity=".7" stroke-dasharray="6 4" marker-end="url(#ar-h)"/>
+  <line x1="738" y1="216" x2="168" y2="216" class="st-h" stroke-width="1" opacity=".55" stroke-dasharray="6 4" marker-end="url(#ar-h)"/>
+  <text x="310" y="236" class="s-h lbl" text-anchor="middle">echoes sum to Γ(f)</text>
+  <text x="310" y="254" class="m s-muted" text-anchor="middle">deep echoes weaken in wet layers</text>
+
+  <!-- transmitted -->
+  <line x1="745" y1="130" x2="930" y2="130" class="st-e" stroke-width="1.4" opacity=".55" marker-end="url(#ar-e)"/>
+  <text x="755" y="120" class="m s-muted">transmitted, lost</text>
+
+  <!-- field triad -->
+  <g transform="translate(850,215)">
+    <line x1="0" y1="0" x2="0" y2="-48" class="st-e" stroke-width="2" marker-end="url(#ar-e)"/>
+    <text x="7" y="-40" class="s-e lbl">E ∥ x</text>
+    <line x1="0" y1="0" x2="52" y2="0" class="st-ink" stroke-width="1.6" marker-end="url(#ar-ink)"/>
+    <text x="36" y="18" class="s-ink lbl">z</text>
+    <circle cx="0" cy="0" r="9" class="f-panel st-h" stroke-width="1.6"/>
+    <path d="M-6,-6 L6,6 M6,-6 L-6,6" class="st-h" stroke-width="1.6"/>
+    <text x="-14" y="30" class="s-h lbl">H ∥ y (into page)</text>
+  </g>
+
+  <!-- layer labels -->
+  <text x="450" y="62" text-anchor="middle" class="lbl s-ink">drywall</text>
+  <text x="585" y="62" text-anchor="middle" class="lbl s-ink">insulation</text>
+  <text x="720" y="62" text-anchor="middle" class="lbl s-ink">drywall</text>
+  <text x="450" y="90" text-anchor="middle" class="m s-ink">t₁ ε₁ σ₁</text>
+  <text x="585" y="90" text-anchor="middle" class="m s-ink">t₂ ε₂ σ₂ θ</text>
+  <text x="720" y="90" text-anchor="middle" class="m s-ink">t₃ ε₃ σ₃</text>
+
+  <!-- z axis -->
+  <line x1="160" y1="385" x2="975" y2="385" class="st-ink" stroke-width="1.2" marker-end="url(#ar-ink)"/>
+  <g class="st-ink" stroke-width="1.2">
+    <line x1="160" y1="379" x2="160" y2="391"/><line x1="430" y1="379" x2="430" y2="391"/>
+    <line x1="470" y1="379" x2="470" y2="391"/><line x1="700" y1="379" x2="700" y2="391"/><line x1="740" y1="379" x2="740" y2="391"/>
+  </g>
+  <text x="160" y="408" text-anchor="middle" class="m s-ink">0</text>
+  <text x="425" y="408" text-anchor="end" class="m s-ink">300</text>
+  <text x="474" y="408" class="m s-ink">312.7</text>
+  <text x="696" y="408" text-anchor="end" class="m s-ink">401.6</text>
+  <text x="744" y="408" class="m s-ink">414.3</text>
+  <text x="975" y="372" text-anchor="end" class="m s-muted">z (mm)</text>
+  <text x="295" y="372" text-anchor="middle" class="m s-muted">300 mm air</text>
+  <text x="450" y="430" text-anchor="middle" class="m s-muted">12.7</text>
+  <text x="585" y="430" text-anchor="middle" class="m s-muted">88.9</text>
+  <text x="720" y="430" text-anchor="middle" class="m s-muted">12.7</text>
+</svg>
+<figcaption>Normal incidence, so fields vary only along z. Electric field along x, magnetic field along y. Layer thicknesses are to scale with each other; the 300 mm air gap is compressed.</figcaption>
+</figure>
+
+<div class="grid3">
+  <div class="box"><h4 class="k-e">Measured</h4>
+    <ul><li>\(y(f_m)\), one complex number per frequency, \(m=1\dots 256\)</li>
+    <li>\(y(f) = A(f)\,\Gamma(f;\vartheta) + n(f)\)</li>
+    <li>Γ is the wall's reflection coefficient: echo amplitude and phase relative to what was sent</li></ul></div>
+  <div class="box"><h4 class="k-w">Recovered</h4>
+    <ul><li>Thicknesses \(t_i\)</li><li>Permittivity \(\varepsilon_i\) or a profile \(\varepsilon(z)\): what the material is</li>
+    <li>Conductivity \(\sigma_i\): how lossy it is</li><li>Water fraction \(\theta(z)\): moisture</li></ul></div>
+  <div class="box"><h4 class="k-h">Nuisance, also estimated</h4>
+    <ul><li>\(A(f)\): unknown gain and phase ripple of the radar hardware</li>
+    <li>Noise level</li><li>Exact standoff distance</li></ul></div>
+</div>
+
+<!-- ============================================================ 2 -->
+<h2><span class="n">02</span>Maxwell's equations, split into two kinds of law</h2>
+<div class="prose">
+<p>Written with differential forms, Maxwell's equations separate cleanly into laws that only count and laws that measure:</p>
+<div class="eq">\[
+\underbrace{dE = -\partial_t B,\qquad dH = \partial_t D + J}_{\text{topological: exact on any mesh}}
+\qquad\qquad
+\underbrace{D = \star_\varepsilon E,\quad B = \star_\mu H,\quad J = \star_\sigma E}_{\text{metric: where the material lives}}
+\]</div>
+<p>The left pair are Faraday's and Ampère's laws. They say how much flux passes through a surface given the circulation around its edge. They involve no lengths, angles or materials, only which edge bounds which face. The exterior derivative \(d\) becomes an incidence matrix of 0s and ±1s on a mesh, with no approximation.</p>
+<p>The right three are constitutive laws. They say how strongly a given field polarizes or magnetizes this particular material, over this particular length. They need distances and material constants, and they are the only place approximation enters.</p>
+</div>
+<div class="physics prose"><b>In physics terms.</b> Faraday's law is bookkeeping for magnetic flux: a changing flux through a loop produces a voltage around it. Ampère's law is bookkeeping for current and charge. These hold for any material. The constitutive laws describe the material: drywall, wet fiberglass and air obey the same Faraday and Ampère laws and differ only in ε, μ and σ. Recovering what is behind the wall means recovering the constitutive laws. In DDEC, those are exactly the Hodge stars, the part you learn.</div>
+
+<!-- ============================================================ 3 -->
+<h2><span class="n">03</span>Forms, cochains and the de Rham complex</h2>
+<div class="prose">
+<p>A <b>k-form</b> is a field that is meant to be integrated over k-dimensional things: a 0-form is read at points, a 1-form along curves, a 2-form over surfaces, a 3-form over volumes. Each electromagnetic field has a natural type, and the units tell you which:</p>
+</div>
+<div class="tw"><table>
+<tr><th>Field</th><th>Units</th><th>Per…</th><th>Type</th><th>What you physically measure</th></tr>
+<tr><td class="k-e">E</td><td>V/m</td><td>length</td><td>1-form</td><td>voltage along a path: \(\int_C E\cdot dl\), what a voltmeter's two probes read</td></tr>
+<tr><td class="k-e">B</td><td>Wb/m² (T)</td><td>area</td><td>2-form</td><td>magnetic flux through a loop: \(\iint_S B\cdot dA\), what a pickup coil responds to</td></tr>
+<tr><td class="k-h">H</td><td>A/m</td><td>length</td><td>1-form</td><td>circulation around a loop, equal to the current it encloses</td></tr>
+<tr><td class="k-h">D</td><td>C/m²</td><td>area</td><td>2-form</td><td>electric flux through a surface, equal to the charge it encloses</td></tr>
+<tr><td class="k-h">J</td><td>A/m²</td><td>area</td><td>2-form</td><td>current through a surface</td></tr>
+<tr><td class="k-h">ρ</td><td>C/m³</td><td>volume</td><td>3-form</td><td>charge inside a volume</td></tr>
+</table></div>
+<div class="prose">
+<p>The exterior derivative \(d\) takes a k-form to a (k+1)-form. In 3D it is grad, then curl, then div. Its one defining property is Stokes' theorem, \(\int_S d\omega = \oint_{\partial S}\omega\): the integral of \(d\omega\) over a piece equals the integral of \(\omega\) over that piece's boundary. Applying \(d\) twice gives zero (curl grad = 0, div curl = 0), because a boundary has no boundary.</p>
+<p>Chaining the spaces with \(d\) gives the <b>de Rham complex</b>. Maxwell's equations use two of them, one for E and B and one for H, D and J, joined by the Hodge stars:</p>
+</div>
+<figure>
+<svg viewBox="0 0 940 350" role="img" aria-label="Two de Rham complexes. Top: potential, E, B, zero, linked by grad, curl, div. Bottom, running right to left: unused, H, D and J, rho, linked by grad, curl, div. Dashed Hodge stars connect E to D and J, B to H.">
+  <defs>
+    <marker id="dr-e" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="s-e"/></marker>
+    <marker id="dr-h" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="s-h"/></marker>
+    <marker id="dr-w" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="s-w"/></marker>
+  </defs>
+  <text x="20" y="40" class="lbl s-e">Primal complex · E and B · measured on the mesh</text>
+  <text x="20" y="338" class="lbl s-h">Dual complex · H, D and J · measured on the dual mesh</text>
+  <!-- top boxes -->
+  <g class="f-panel st-e" stroke-width="1.5">
+    <rect x="20" y="56" width="170" height="64" rx="5"/><rect x="265" y="56" width="170" height="64" rx="5"/>
+    <rect x="510" y="56" width="170" height="64" rx="5"/><rect x="755" y="56" width="170" height="64" rx="5"/>
+  </g>
+  <text x="105" y="78" text-anchor="middle" class="m s-muted">0-form · points</text><text x="105" y="104" text-anchor="middle" class="lbl s-ink">φ potential</text>
+  <text x="350" y="78" text-anchor="middle" class="m s-muted">1-form · curves</text><text x="350" y="104" text-anchor="middle" class="lbl s-e">E</text>
+  <text x="595" y="78" text-anchor="middle" class="m s-muted">2-form · surfaces</text><text x="595" y="104" text-anchor="middle" class="lbl s-e">B</text>
+  <text x="840" y="78" text-anchor="middle" class="m s-muted">3-form · volumes</text><text x="840" y="104" text-anchor="middle" class="lbl s-ink">0 (no monopoles)</text>
+  <!-- top arrows -->
+  <g class="st-e" stroke-width="2"><line x1="192" y1="88" x2="261" y2="88" marker-end="url(#dr-e)"/><line x1="437" y1="88" x2="506" y2="88" marker-end="url(#dr-e)"/><line x1="682" y1="88" x2="751" y2="88" marker-end="url(#dr-e)"/></g>
+  <text x="227" y="80" text-anchor="middle" class="m s-e">grad</text><text x="472" y="80" text-anchor="middle" class="m s-e">curl</text><text x="717" y="80" text-anchor="middle" class="m s-e">div</text>
+  <text x="472" y="140" text-anchor="middle" class="m s-e">Faraday: dE = −∂ₜB</text><text x="717" y="140" text-anchor="middle" class="m s-e">dB = 0</text>
+  <!-- bottom boxes -->
+  <g class="f-panel st-h" stroke-width="1.5">
+    <rect x="20" y="246" width="170" height="64" rx="5"/><rect x="265" y="246" width="170" height="64" rx="5"/>
+    <rect x="510" y="246" width="170" height="64" rx="5"/><rect x="755" y="246" width="170" height="64" rx="5"/>
+  </g>
+  <text x="105" y="268" text-anchor="middle" class="m s-muted">3-form · dual volumes</text><text x="105" y="294" text-anchor="middle" class="lbl s-h">ρ</text>
+  <text x="350" y="268" text-anchor="middle" class="m s-muted">2-form · dual surfaces</text><text x="350" y="294" text-anchor="middle" class="lbl s-h">D, J</text>
+  <text x="595" y="268" text-anchor="middle" class="m s-muted">1-form · dual curves</text><text x="595" y="294" text-anchor="middle" class="lbl s-h">H</text>
+  <text x="840" y="268" text-anchor="middle" class="m s-muted">0-form · dual points</text><text x="840" y="294" text-anchor="middle" class="lbl s-ink">(unused here)</text>
+  <!-- bottom arrows, right to left -->
+  <g class="st-h" stroke-width="2"><line x1="751" y1="278" x2="684" y2="278" marker-end="url(#dr-h)"/><line x1="506" y1="278" x2="439" y2="278" marker-end="url(#dr-h)"/><line x1="261" y1="278" x2="194" y2="278" marker-end="url(#dr-h)"/></g>
+  <text x="717" y="270" text-anchor="middle" class="m s-h">grad</text><text x="472" y="270" text-anchor="middle" class="m s-h">curl</text><text x="227" y="270" text-anchor="middle" class="m s-h">div</text>
+  <text x="472" y="234" text-anchor="middle" class="m s-h">Ampère: dH = ∂ₜD + J</text><text x="227" y="234" text-anchor="middle" class="m s-h">Gauss: dD = ρ</text>
+  <!-- hodge stars -->
+  <g class="st-w" stroke="var(--water)" stroke-width="1.8" stroke-dasharray="6 4">
+    <line x1="350" y1="124" x2="350" y2="242" marker-start="url(#dr-w)" marker-end="url(#dr-w)"/>
+    <line x1="595" y1="124" x2="595" y2="242" marker-start="url(#dr-w)" marker-end="url(#dr-w)"/>
+  </g>
+  <text x="360" y="190" class="lbl s-w">⋆ε : D = εE</text><text x="360" y="208" class="lbl s-w">⋆σ : J = σE</text>
+  <text x="605" y="190" class="lbl s-w">⋆μ⁻¹ : H = B/μ</text>
+  <text x="20" y="190" class="m s-muted">solid arrows: d, topology, exact</text>
+  <text x="20" y="208" class="m s-muted">dashed arrows: ⋆, material, approximate</text>
+</svg>
+<figcaption>The primal complex runs left to right and the dual complex right to left. A Hodge star turns a primal k-form into a dual (3−k)-form: E (1) becomes D (2), B (2) becomes H (1). That vertical step is the only place ε, μ and σ appear.</figcaption>
+</figure>
+<div class="prose">
+<h3>What a cochain is</h3>
+<p>A computer cannot store a field at every point. Instead, store its integral over each mesh piece of the matching dimension. That list of numbers is a <b>cochain</b>. A k-form becomes a k-cochain: one number per vertex, edge, face or cell. On one triangle:</p>
+</div>
+<figure>
+<svg viewBox="0 0 900 260" role="img" aria-label="A triangle with vertex values phi1 to phi3, oriented edge values e12, e23, e13 and a face value f.">
+  <defs><marker id="tr-e" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0,0 L10,5 L0,10 z" class="s-e"/></marker></defs>
+  <path d="M110,215 L340,215 L225,45 z" class="st-h" stroke-width="0" fill="var(--h)" opacity=".12"/>
+  <g class="st-e" stroke-width="2.2">
+    <line x1="110" y1="215" x2="232" y2="215" marker-end="url(#tr-e)"/><line x1="232" y1="215" x2="340" y2="215"/>
+    <line x1="340" y1="215" x2="277" y2="122" marker-end="url(#tr-e)"/><line x1="277" y1="122" x2="225" y2="45"/>
+    <line x1="110" y1="215" x2="172" y2="123" marker-end="url(#tr-e)"/><line x1="172" y1="123" x2="225" y2="45"/>
+  </g>
+  <g class="s-ink"><circle cx="110" cy="215" r="6"/><circle cx="340" cy="215" r="6"/><circle cx="225" cy="45" r="6"/></g>
+  <text x="98" y="240" text-anchor="middle" class="m s-ink">φ₁</text><text x="352" y="240" text-anchor="middle" class="m s-ink">φ₂</text><text x="225" y="30" text-anchor="middle" class="m s-ink">φ₃</text>
+  <text x="225" y="238" text-anchor="middle" class="m s-e">e₁₂</text><text x="300" y="120" class="m s-e">e₂₃</text><text x="130" y="120" text-anchor="end" class="m s-e">e₁₃</text>
+  <path d="M248,170 a24,24 0 1,0 -10,-20" class="f-none st-h" stroke-width="1.6" marker-end="url(#ar-h)"/>
+  <text x="226" y="178" text-anchor="middle" class="lbl s-h">f</text>
+  <text x="420" y="70" class="lbl s-ink">0-cochain  (φ₁, φ₂, φ₃)</text><text x="420" y="90" class="m s-muted">one number per vertex: value at the point</text>
+  <text x="420" y="130" class="lbl s-e">1-cochain  (e₁₂, e₂₃, e₁₃)</text><text x="420" y="150" class="m s-muted">one number per oriented edge: ∫ E·dl along it</text>
+  <text x="420" y="190" class="lbl s-h">2-cochain  f</text><text x="420" y="210" class="m s-muted">one number per face: ∬ B·dA through it</text>
+</svg>
+<figcaption>Each edge has an arrow (orientation); each value is an integral over that piece, not a sample at a point.</figcaption>
+</figure>
+<div class="prose">
+<p>Because the stored numbers are integrals, Stokes' theorem makes \(d\) exact on cochains. The voltage along an edge from a potential is the difference of its endpoint values, and the circulation around the face is the signed sum of its edges (e₁₃ counts negative because it points against the counterclockwise loop):</p>
+<div class="eq">\[
+\underbrace{\begin{pmatrix}e_{12}\\ e_{23}\\ e_{13}\end{pmatrix}=\begin{pmatrix}-1&1&0\\0&-1&1\\-1&0&1\end{pmatrix}\begin{pmatrix}\varphi_1\\ \varphi_2\\ \varphi_3\end{pmatrix}}_{\mathsf D_0:\ \text{grad}},
+\qquad
+\underbrace{\oint_{\partial f} = \begin{pmatrix}1&1&-1\end{pmatrix}\begin{pmatrix}e_{12}\\ e_{23}\\ e_{13}\end{pmatrix}}_{\mathsf D_1:\ \text{curl}},
+\qquad
+\mathsf D_1\mathsf D_0 = \begin{pmatrix}0&0&0\end{pmatrix}.
+\]</div>
+<p>The last identity is curl grad = 0, holding exactly as integer arithmetic. Faraday's law on this mesh is \(\dot f = -\mathsf D_1\,\mathbf e\), with no error at any resolution. Error only enters when you need ε or μ, because \(\int E\cdot dl\) along an edge does not tell you \(\iint D\cdot dA\) through a surface without knowing the material and the geometry. That conversion is the Hodge star, and it needs the second, dual mesh.</p>
+</div>
+<div class="physics prose"><b>In physics terms.</b> E and B are what a voltmeter and a pickup coil read. H, D and J are what Ampère's and Gauss's laws count: enclosed current and enclosed charge. The two families are bookkept on two interleaved meshes, and the material is the exchange rate between them.</div>
+
+<!-- ============================================================ 4 -->
+<h2><span class="n">04</span>Reduce to one dimension</h2>
+<div class="prose">
+<p>At normal incidence on planar layers, nothing varies in x or y. Take \(\mathbf E = E_x(z,t)\,\hat x\) and \(\mathbf H = H_y(z,t)\,\hat y\). The curl equations \(\nabla\times\mathbf E = -\mu\partial_t\mathbf H\) and \(\nabla\times\mathbf H = \varepsilon\partial_t\mathbf E + \sigma\mathbf E\) keep one component each:</p>
+<div class="eq">\[
+(\nabla\times\mathbf E)_y = \partial_z E_x \;\Rightarrow\; \partial_z E_x = -\mu\,\partial_t H_y,
+\qquad
+(\nabla\times\mathbf H)_x = -\partial_z H_y \;\Rightarrow\; -\partial_z H_y = \varepsilon\,\partial_t E_x + \sigma E_x .
+\]</div>
+<h3>Why the form degree drops by one</h3>
+<p>Since nothing changes along x, take a strip of unit width in x and look at it edge-on along z. E is a 1-form, so its natural number is a line integral. Integrate along the unit x-segment ("rung") at height \(z_i\): \(e_i=\int_0^1 E_x\,dx = E_x(z_i)\). That rung sits at the single point \(z_i\) on the z-axis, so on the line \(e_i\) looks like a value at a node: a <b>0-cochain</b>.</p>
+<p>B is a 2-form, so its natural number is a flux. Integrate over the panel between two rungs: \(b_{i+\frac12}=\int_{z_i}^{z_{i+1}}\!\!\int_0^1 B_y\,dx\,dz\). That panel spans the interval \([z_i,z_{i+1}]\), so on the line \(b\) belongs to an edge: a <b>1-cochain</b>. The fixed x-direction uses up one dimension of every form.</p>
+</div>
+<figure>
+<svg viewBox="0 0 900 340" role="img" aria-label="Two strips along z. Upper x-z strip: E rungs at nodes, B flux panels between them. Lower y-z strip, shifted half a cell: H rungs at dual nodes, D and J panels between them.">
+  <defs><marker id="st-e2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" class="s-e"/></marker>
+  <marker id="st-h2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" class="s-h"/></marker></defs>
+  <text x="40" y="26" class="lbl s-e">x–z strip, unit width in x: E rungs, B panels</text>
+  <!-- upper panels -->
+  <rect x="150" y="60" width="200" height="90" fill="var(--e)" opacity=".10"/><rect x="350" y="60" width="200" height="90" fill="var(--e)" opacity=".18"/><rect x="550" y="60" width="200" height="90" fill="var(--e)" opacity=".10"/>
+  <line x1="150" y1="60" x2="750" y2="60" class="st-muted" stroke-width="1" stroke-dasharray="3 3"/>
+  <!-- E rungs -->
+  <g class="st-e" stroke-width="2.6">
+    <line x1="150" y1="150" x2="150" y2="64" marker-end="url(#st-e2)"/><line x1="350" y1="150" x2="350" y2="64" marker-end="url(#st-e2)"/>
+    <line x1="550" y1="150" x2="550" y2="64" marker-end="url(#st-e2)"/><line x1="750" y1="150" x2="750" y2="64" marker-end="url(#st-e2)"/>
+  </g>
+  <text x="140" y="48" text-anchor="middle" class="m s-e">eᵢ₋₁</text><text x="350" y="48" text-anchor="middle" class="m s-e">eᵢ</text><text x="550" y="48" text-anchor="middle" class="m s-e">eᵢ₊₁</text><text x="750" y="48" text-anchor="middle" class="m s-e">eᵢ₊₂</text>
+  <g class="s-ink" opacity=".7"><circle cx="250" cy="100" r="3"/><circle cx="450" cy="100" r="3"/><circle cx="650" cy="100" r="3"/></g>
+  <g class="f-none st-ink" opacity=".7"><circle cx="250" cy="100" r="9"/><circle cx="450" cy="100" r="9"/><circle cx="650" cy="100" r="9"/></g>
+  <text x="250" y="132" text-anchor="middle" class="m s-ink">bᵢ₋½</text><text x="450" y="132" text-anchor="middle" class="m s-ink">bᵢ₊½</text><text x="650" y="132" text-anchor="middle" class="m s-ink">bᵢ₊₃⁄₂</text>
+  <text x="58" y="110" text-anchor="middle" class="m s-muted">x ↑</text><text x="58" y="126" text-anchor="middle" class="m s-muted">(1 unit)</text>
+  <!-- z axis -->
+  <line x1="40" y1="170" x2="860" y2="170" class="st-ink" stroke-width="1.4"/>
+  <g class="s-e"><circle cx="150" cy="170" r="5"/><circle cx="350" cy="170" r="5"/><circle cx="550" cy="170" r="5"/><circle cx="750" cy="170" r="5"/></g>
+  <g class="f-panel st-h" stroke-width="1.8"><rect x="245" y="165" width="10" height="10"/><rect x="445" y="165" width="10" height="10"/><rect x="645" y="165" width="10" height="10"/></g>
+  <text x="860" y="162" text-anchor="end" class="m s-muted">z →</text>
+  <!-- lower panels: dual cells around nodes -->
+  <rect x="250" y="190" width="200" height="90" fill="var(--h)" opacity=".18"/><rect x="450" y="190" width="200" height="90" fill="var(--h)" opacity=".10"/>
+  <line x1="250" y1="280" x2="650" y2="280" class="st-muted" stroke-width="1" stroke-dasharray="3 3"/>
+  <g class="st-h" stroke-width="2.6">
+    <line x1="250" y1="190" x2="250" y2="276" marker-end="url(#st-h2)"/><line x1="450" y1="190" x2="450" y2="276" marker-end="url(#st-h2)"/><line x1="650" y1="190" x2="650" y2="276" marker-end="url(#st-h2)"/>
+  </g>
+  <text x="250" y="298" text-anchor="middle" class="m s-h">hᵢ₋½</text><text x="450" y="298" text-anchor="middle" class="m s-h">hᵢ₊½</text><text x="650" y="298" text-anchor="middle" class="m s-h">hᵢ₊₃⁄₂</text>
+  <text x="350" y="240" text-anchor="middle" class="m s-ink">dᵢ, jᵢ</text><text x="550" y="240" text-anchor="middle" class="m s-ink">dᵢ₊₁, jᵢ₊₁</text>
+  <text x="58" y="236" text-anchor="middle" class="m s-muted">y ↓</text><text x="58" y="252" text-anchor="middle" class="m s-muted">(1 unit)</text>
+  <text x="40" y="326" class="lbl s-h">y–z strip, shifted half a cell: H rungs, D and J panels (really perpendicular to the strip above)</text>
+</svg>
+<figcaption>Upper strip: each orange rung carries the voltage eᵢ across one unit of x; each panel carries the magnetic flux b through it (⊙, along y). Lower strip: each blue rung carries hᵢ₊½ across one unit of y; each panel carries the electric flux dᵢ and current jᵢ through it (along x). The two strips interleave along z, which is why H sits at edge midpoints.</figcaption>
+</figure>
+<div class="prose">
+<p><b>Faraday on one upper panel.</b> Walk around the panel between \(z_i\) and \(z_{i+1}\). The two rungs contribute \(e_{i+1}\) and \(-e_i\). The two sides running along z contribute nothing, because E has no z-component. So the circulation is \(e_{i+1}-e_i\), and Faraday says it equals \(-\dot b_{i+\frac12}\). That is exactly the 3D triangle calculation above, applied to a long thin rectangle.</p>
+<p><b>Ampère on one lower panel.</b> Walk around the dual panel around node i. Its rungs carry \(h_{i+\frac12}\) and \(h_{i-\frac12}\), and Ampère says the circulation equals the rate of change of electric flux through the panel plus the current through it: \(\dot d_i + j_i\).</p>
+<h3>Why H, D and J are needed at all</h3>
+<p>Faraday alone only tells you how E changes B. A wave also needs the reverse: how B changes E. That is Ampère's law, and Ampère's law is written in terms of H (circulation) and D and J (flux and current through a surface). So one time step goes around a loop:</p>
+<div class="eq">\[
+\mathbf e \xrightarrow{\ \text{Faraday, exact}\ } \mathbf b \xrightarrow{\ \star_{\mu^{-1}}\ } \mathbf h \xrightarrow{\ \text{Ampère, exact}\ } \mathbf d,\ \mathbf j \xrightarrow{\ \star_\varepsilon^{-1},\ \star_\sigma\ } \mathbf e \;\longrightarrow\;\cdots
+\]</div>
+<p>You could substitute \(H=B/\mu\), \(D=\varepsilon E\) and \(J=\sigma E\) and write everything in E and B alone. That is what the usual second-order wave equation does. But then ε and μ end up inside the curl equations, and those equations stop being exact on a mesh. Keeping H, D and J as separate unknowns is what isolates all the material into the two vertical arrows.</p>
+</div>
+<figure>
+<svg viewBox="0 0 760 250" role="img" aria-label="1D discrete complex as a square: primal nodes e to primal edges b by D0; b to dual nodes h by star mu inverse; h to dual cells d,j by D0 transpose; dual cells to nodes by star epsilon and star sigma.">
+  <defs>
+    <marker id="sq-e" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="s-e"/></marker>
+    <marker id="sq-h" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="s-h"/></marker>
+    <marker id="sq-w" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="s-w"/></marker>
+  </defs>
+  <rect x="30" y="30" width="230" height="58" rx="5" class="f-panel st-e" stroke-width="1.5"/>
+  <text x="145" y="53" text-anchor="middle" class="lbl s-e">primal nodes: e</text><text x="145" y="74" text-anchor="middle" class="m s-muted">0-cochain, Eₓ</text>
+  <rect x="500" y="30" width="230" height="58" rx="5" class="f-panel st-e" stroke-width="1.5"/>
+  <text x="615" y="53" text-anchor="middle" class="lbl s-e">primal edges: b</text><text x="615" y="74" text-anchor="middle" class="m s-muted">1-cochain, B_y flux</text>
+  <rect x="500" y="165" width="230" height="58" rx="5" class="f-panel st-h" stroke-width="1.5"/>
+  <text x="615" y="188" text-anchor="middle" class="lbl s-h">dual nodes: h</text><text x="615" y="209" text-anchor="middle" class="m s-muted">dual 0-cochain, H_y</text>
+  <rect x="30" y="165" width="230" height="58" rx="5" class="f-panel st-h" stroke-width="1.5"/>
+  <text x="145" y="188" text-anchor="middle" class="lbl s-h">dual cells: d, j</text><text x="145" y="209" text-anchor="middle" class="m s-muted">dual 1-cochains, Dₓ and Jₓ</text>
+  <line x1="264" y1="59" x2="496" y2="59" class="st-e" stroke-width="2" marker-end="url(#sq-e)"/>
+  <text x="380" y="50" text-anchor="middle" class="m s-e">D₀ (Faraday)  ḃ = −D₀e</text>
+  <line x1="496" y1="194" x2="264" y2="194" class="st-h" stroke-width="2" marker-end="url(#sq-h)"/>
+  <text x="380" y="216" text-anchor="middle" class="m s-h">D₀ᵀ (Ampère)  ḋ + j = D₀ᵀh</text>
+  <line x1="615" y1="92" x2="615" y2="161" stroke="var(--water)" stroke-width="2" stroke-dasharray="6 4" marker-end="url(#sq-w)"/>
+  <text x="625" y="132" class="m s-w">⋆μ⁻¹</text>
+  <line x1="145" y1="161" x2="145" y2="92" stroke="var(--water)" stroke-width="2" stroke-dasharray="6 4" marker-start="url(#sq-w)" marker-end="url(#sq-w)"/>
+  <text x="155" y="132" class="m s-w">⋆ε, ⋆σ</text>
+  <text x="380" y="132" text-anchor="middle" class="m s-muted">one time step = once around the square</text>
+</svg>
+<figcaption>The 1D version of the two complexes above. Horizontal arrows are integer incidence matrices (exact). Vertical arrows are diagonal Hodge stars (where the wall's material lives, and what DDEC learns).</figcaption>
+</figure>
+<div class="prose"><p>Check with a plane wave \(E_x = e^{j(\omega t - kz)}\). The first curl equation gives \(-jkE = -j\omega\mu H\), so \(H = E/\eta\) with \(\eta = \sqrt{\mu/\varepsilon}\), the wave impedance. A dense or wet material has low η.</p></div>
+<div class="physics prose"><b>In physics terms.</b> Both \(E_x\) and \(H_y\) point along the layer interfaces (the interfaces are planes z = const), so both are continuous across every interface. Only their slopes jump. That is why the simple cell averages in section 06 work.</div>
+
+<!-- ============================================================ 4 -->
+<h2><span class="n">05</span>Discretize the topological laws exactly</h2>
+<figure>
+<svg viewBox="0 0 900 250" role="img" aria-label="1D primal and dual mesh: E on nodes, B flux on edges, H on dual nodes at edge midpoints, D on dual cells around nodes.">
+  <line x1="40" y1="110" x2="860" y2="110" class="st-ink" stroke-width="1.5"/>
+  <!-- dual cell around node i -->
+  <rect x="240" y="72" width="220" height="76" class="f-none st-h" stroke-width="1.4" stroke-dasharray="6 4"/>
+  <text x="350" y="62" text-anchor="middle" class="s-h lbl">dual cell i, length ℓ̃ᵢ: dᵢ = ∫ D dz</text>
+  <!-- primal edge highlight -->
+  <line x1="350" y1="110" x2="570" y2="110" class="st-e" stroke-width="5" opacity=".35"/>
+  <text x="460" y="198" text-anchor="middle" class="s-e lbl">primal edge i+½, length ℓᵢ₊½: bᵢ₊½ = ∫ μH dz</text>
+  <line x1="350" y1="168" x2="570" y2="168" class="st-e" stroke-width="1"/>
+  <line x1="350" y1="162" x2="350" y2="174" class="st-e"/><line x1="570" y1="162" x2="570" y2="174" class="st-e"/>
+  <!-- primal nodes -->
+  <g class="s-e">
+    <circle cx="130" cy="110" r="8"/><circle cx="350" cy="110" r="8"/><circle cx="570" cy="110" r="8"/><circle cx="790" cy="110" r="8"/>
+  </g>
+  <text x="130" y="140" text-anchor="middle" class="m s-e">eᵢ₋₁</text>
+  <text x="350" y="140" text-anchor="middle" class="m s-e">eᵢ</text>
+  <text x="570" y="140" text-anchor="middle" class="m s-e">eᵢ₊₁</text>
+  <text x="790" y="140" text-anchor="middle" class="m s-e">eᵢ₊₂</text>
+  <!-- dual nodes -->
+  <g class="f-panel st-h" stroke-width="2">
+    <rect x="234" y="104" width="12" height="12"/><rect x="454" y="104" width="12" height="12"/><rect x="674" y="104" width="12" height="12"/>
+  </g>
+  <text x="250" y="98" class="m s-h">hᵢ₋½</text>
+  <text x="470" y="98" class="m s-h">hᵢ₊½</text>
+  <text x="690" y="98" class="m s-h">hᵢ₊₃⁄₂</text>
+  <!-- legend -->
+  <circle cx="60" cy="232" r="6" class="s-e"/><text x="74" y="237" class="s-ink">primal node: E value</text>
+  <rect x="254" y="226" width="12" height="12" class="f-panel st-h" stroke-width="2"/><text x="274" y="237" class="s-ink">dual node: H value</text>
+  <text x="440" y="237" class="m s-muted">z →</text>
+</svg>
+<figcaption>Primal nodes carry E; primal edges carry magnetic flux b. Dual nodes sit at edge midpoints and carry H; dual cells surround primal nodes and carry electric flux d. Node spacing can be non-uniform, for example finer inside wet layers.</figcaption>
+</figure>
+<div class="prose">
+<p><b>Faraday.</b> Integrate \(\mu\,\partial_t H_y = -\partial_z E_x\) over primal edge \([z_i, z_{i+1}]\). The fundamental theorem of calculus turns the right side into an endpoint difference, with no approximation:</p>
+<div class="eq">\[
+\frac{d}{dt}\,b_{i+\frac12} = -\,(e_{i+1}-e_i)
+\quad\Longrightarrow\quad
+\dot{\mathbf b} = -\,\mathsf D_0\,\mathbf e,
+\qquad \mathsf D_0\in\{0,\pm1\}^{N\times(N+1)}.
+\]</div>
+<p><b>Ampère.</b> Integrate \(\varepsilon\,\partial_t E_x + \sigma E_x = -\partial_z H_y\) over dual cell \([z_{i-\frac12}, z_{i+\frac12}]\):</p>
+<div class="eq">\[
+\dot d_i + j_i = -\,(h_{i+\frac12}-h_{i-\frac12}) = (\mathsf D_0^{\!\top}\mathbf h)_i
+\quad\Longrightarrow\quad
+\dot{\mathbf d} + \mathbf j = \mathsf D_0^{\!\top}\mathbf h .
+\]</div>
+<p>The dual derivative is the transpose of the primal one, with a sign. That transpose is what makes the scheme conserve energy in section 07.</p>
+</div>
+<div class="physics prose"><b>In physics terms.</b> Faraday: the magnetic flux in a strip changes at a rate set by the voltage difference across its ends. Ampère: the electric flux in a cell changes, or current flows, at a rate set by the difference in H at its two faces. Both are flux bookkeeping: what enters a cell either stays or leaves. Nothing about the wall has been assumed yet.</div>
+
+<!-- ============================================================ 5 -->
+<h2><span class="n">06</span>The Hodge stars: the only approximation, and the material</h2>
+<div class="prose">
+<p>To close the system, relate the fluxes (b, d, j) to the point values (e, h). Since \(E_x\) and \(H_y\) are continuous through each cell, pull them out of the integrals:</p>
+<div class="eq">\[
+d_i=\!\int_{\tilde c_i}\!\varepsilon E\,dz \approx \underbrace{\bar\varepsilon_i\,\tilde\ell_i}_{(\star_\varepsilon)_{ii}} e_i,
+\qquad
+h_{i+\frac12}\approx \underbrace{\frac{1}{\bar\mu_{i+\frac12}\,\ell_{i+\frac12}}}_{(\star_{\mu^{-1}})_{i+\frac12}} b_{i+\frac12},
+\qquad
+j_i \approx \underbrace{\bar\sigma_i\,\tilde\ell_i}_{(\star_\sigma)_{ii}} e_i ,
+\]</div>
+<p>where \(\bar\varepsilon_i\) is the arithmetic mean of ε over the dual cell, and similarly for μ and σ. Arithmetic averaging is the right choice for fields tangential to the layers; normal fields would need harmonic averaging. A cell that straddles the drywall–insulation interface gets a mix of both.</p>
+<p>Putting it together gives the semi-discrete model:</p>
+<div class="eq">\[
+\boxed{\;\dot{\mathbf b} = -\mathsf D_0\,\mathbf e,
+\qquad
+\star_\varepsilon\,\dot{\mathbf e} + \star_\sigma\,\mathbf e = \mathsf D_0^{\!\top}\,\star_{\mu^{-1}}\,\mathbf b \;+\;\text{boundary terms}\;}
+\]</div>
+<p>Eliminating b gives one second-order equation:</p>
+<div class="eq">\[
+\star_\varepsilon\,\ddot{\mathbf e} + \star_\sigma\,\dot{\mathbf e} + \underbrace{\mathsf D_0^{\!\top}\star_{\mu^{-1}}\mathsf D_0}_{\mathsf K}\,\mathbf e = \text{sources}.
+\]</div>
+</div>
+<figure>
+<svg viewBox="0 0 900 200" role="img" aria-label="Equivalent ladder circuit: source resistor eta0, series inductors mu*l, shunt capacitors eps*l and conductances sigma*l, load resistor eta_back.">
+  <!-- top rail -->
+  <line x1="70" y1="60" x2="830" y2="60" class="st-ink" stroke-width="1.4"/>
+  <line x1="70" y1="160" x2="830" y2="160" class="st-ink" stroke-width="1.4"/>
+  <!-- source -->
+  <circle cx="70" cy="110" r="18" class="f-panel st-e" stroke-width="1.6"/><text x="70" y="115" text-anchor="middle" class="s-e lbl">2a</text>
+  <line x1="70" y1="60" x2="70" y2="92" class="st-ink" stroke-width="1.4"/><line x1="70" y1="128" x2="70" y2="160" class="st-ink" stroke-width="1.4"/>
+  <rect x="100" y="50" width="50" height="20" class="f-panel st-ink" stroke-width="1.4"/><text x="125" y="40" text-anchor="middle" class="m s-ink">η₀</text>
+  <!-- series inductors -->
+  <g class="f-panel st-h" stroke-width="1.6">
+    <rect x="290" y="50" width="70" height="20" rx="10"/><rect x="500" y="50" width="70" height="20" rx="10"/>
+  </g>
+  <text x="325" y="40" text-anchor="middle" class="m s-h">L = μ̄ℓ</text><text x="535" y="40" text-anchor="middle" class="m s-h">L = μ̄ℓ</text>
+  <!-- shunt branches at nodes x=220,430,640 -->
+  <g>
+    <g transform="translate(220,0)">
+      <line x1="-14" y1="60" x2="-14" y2="98" class="st-ink" stroke-width="1.3"/><line x1="-26" y1="98" x2="-2" y2="98" class="st-e" stroke-width="2.2"/><line x1="-26" y1="106" x2="-2" y2="106" class="st-e" stroke-width="2.2"/><line x1="-14" y1="106" x2="-14" y2="160" class="st-ink" stroke-width="1.3"/>
+      <line x1="16" y1="60" x2="16" y2="90" class="st-ink" stroke-width="1.3"/><rect x="9" y="90" width="14" height="30" class="f-panel st-w" stroke="var(--water)" stroke-width="1.6"/><line x1="16" y1="120" x2="16" y2="160" class="st-ink" stroke-width="1.3"/>
+      <circle cx="0" cy="60" r="5" class="s-e"/>
+    </g>
+    <g transform="translate(430,0)">
+      <line x1="-14" y1="60" x2="-14" y2="98" class="st-ink" stroke-width="1.3"/><line x1="-26" y1="98" x2="-2" y2="98" class="st-e" stroke-width="2.2"/><line x1="-26" y1="106" x2="-2" y2="106" class="st-e" stroke-width="2.2"/><line x1="-14" y1="106" x2="-14" y2="160" class="st-ink" stroke-width="1.3"/>
+      <line x1="16" y1="60" x2="16" y2="90" class="st-ink" stroke-width="1.3"/><rect x="9" y="90" width="14" height="30" class="f-panel" stroke="var(--water)" stroke-width="1.6"/><line x1="16" y1="120" x2="16" y2="160" class="st-ink" stroke-width="1.3"/>
+      <circle cx="0" cy="60" r="5" class="s-e"/>
+    </g>
+    <g transform="translate(640,0)">
+      <line x1="-14" y1="60" x2="-14" y2="98" class="st-ink" stroke-width="1.3"/><line x1="-26" y1="98" x2="-2" y2="98" class="st-e" stroke-width="2.2"/><line x1="-26" y1="106" x2="-2" y2="106" class="st-e" stroke-width="2.2"/><line x1="-14" y1="106" x2="-14" y2="160" class="st-ink" stroke-width="1.3"/>
+      <line x1="16" y1="60" x2="16" y2="90" class="st-ink" stroke-width="1.3"/><rect x="9" y="90" width="14" height="30" class="f-panel" stroke="var(--water)" stroke-width="1.6"/><line x1="16" y1="120" x2="16" y2="160" class="st-ink" stroke-width="1.3"/>
+      <circle cx="0" cy="60" r="5" class="s-e"/>
+    </g>
+  </g>
+  <text x="430" y="186" text-anchor="middle" class="m s-e">C = ε̄ℓ̃ (shunt)</text>
+  <text x="640" y="186" text-anchor="middle" class="m s-w">G = σ̄ℓ̃ (shunt)</text>
+  <!-- load -->
+  <rect x="790" y="85" width="20" height="50" class="f-panel st-ink" stroke-width="1.4"/><text x="820" y="114" class="m s-ink">η_back</text>
+  <line x1="800" y1="60" x2="800" y2="85" class="st-ink" stroke-width="1.4"/><line x1="800" y1="135" x2="800" y2="160" class="st-ink" stroke-width="1.4"/>
+  <text x="220" y="30" text-anchor="middle" class="m s-e">e₀</text><text x="430" y="30" text-anchor="middle" class="m s-e">eᵢ</text><text x="640" y="30" text-anchor="middle" class="m s-e">eᵢ₊₁</text>
+</svg>
+<figcaption>The 1D DEC model is exactly an LC ladder network: each node is a capacitor to ground (⋆ε) in parallel with a conductance (⋆σ); each edge is a series inductor (⋆μ⁻¹ inverted). The radar is a source behind a resistor η₀, and the space behind the wall is a load η_back.</figcaption>
+</figure>
+<div class="physics prose"><b>In physics terms.</b> The wall becomes a chain of masses and springs, or equivalently an LC ladder. \(\star_\varepsilon\) is how much electric energy each cell stores (capacitance). \(\star_{\mu^{-1}}\) is the stiffness tying neighbors together (inverse inductance). \(\star_\sigma\) is friction (conductance), which turns wave energy into heat. Moisture raises a cell's capacitance, which slows the wave and strengthens reflections, and raises its conductance, which absorbs the echo from deeper layers. Those are the two signatures you invert for, and the starter code showed both: 5% wet insulation erased the back-wall echo.</div>
+
+<!-- ============================================================ 6 -->
+<h2><span class="n">07</span>Energy: the guarantee DDEC keeps for free</h2>
+<div class="prose">
+<p>Define the discrete energy and differentiate it, using the two boxed equations:</p>
+<div class="eq">\[
+W = \tfrac12\,\mathbf e^{\!\top}\star_\varepsilon\mathbf e + \tfrac12\,\mathbf b^{\!\top}\star_{\mu^{-1}}\mathbf b,
+\qquad
+\dot W = \mathbf e^{\!\top}\!\left(\mathsf D_0^{\!\top}\star_{\mu^{-1}}\mathbf b - \star_\sigma\mathbf e\right) - \mathbf b^{\!\top}\star_{\mu^{-1}}\mathsf D_0\mathbf e
+= -\,\mathbf e^{\!\top}\star_\sigma\mathbf e \;+\;\text{boundary power}.
+\]</div>
+<p>The two coupling terms cancel exactly because the Ampère operator is the transpose of the Faraday operator. This is a discrete Poynting theorem: energy changes only through loss inside the wall and power through the two ends.</p>
+<p>It holds for <em>any</em> Hodge stars, as long as they are symmetric positive (semi)definite. That gives three constraints for a learned model:</p>
+<ul>
+<li>\(\star_\varepsilon \succ 0\) and \(\star_{\mu^{-1}} \succ 0\): materials store energy rather than create it. Parameterize the diagonal through a softplus or exponential.</li>
+<li>\(\star_\sigma \succeq 0\): the wall is passive. It can absorb but never amplify.</li>
+<li>For dispersive materials like water, causality: the frequency dependence must come from poles such as a Debye term, so the Kramers–Kronig relations hold automatically.</li>
+</ul>
+</div>
+<div class="physics prose"><b>In physics terms.</b> However badly the learned part is trained, the model can never produce a wall that reflects more energy than it receives, or an echo that arrives before the wave did. Generative fill-in approaches have no such guarantee.</div>
+
+<!-- ============================================================ 7 -->
+<h2><span class="n">08</span>Boundaries: the radar port and the open back</h2>
+<div class="prose">
+<p>The mesh ends at node 0 (the radar plane, or the wall's front face) and at node N (behind the wall). Outside each end is uniform air, where the 1D solution is known exactly. On the left, \(E = a\,e^{-jkz} + r\,e^{jkz}\) and \(H = (a\,e^{-jkz} - r\,e^{jkz})/\eta_0\), so at z = 0:</p>
+<div class="eq">\[
+H(0) = \frac{2a - e_0}{\eta_0},
+\qquad
+H(L) = \frac{e_N}{\eta_{\text{back}}}\quad(\text{outgoing only}).
+\]</div>
+<p>These enter the Ampère equation of each half-size end cell. The boundary contributes a conductance \(1/\eta_0\) on node 0, a source \(2a/\eta_0\), and \(1/\eta_{\text{back}}\) on node N. In 1D this condition is exact, not an approximation, in both time and frequency domain. The measurement is then</p>
+<div class="eq">\[\Gamma = \frac{e_0 - a}{a}.\]</div>
+<p>The 300 mm air gap can be meshed, or handled analytically with the factor \(e^{-2jk_0 d}\). The starter code does the latter, which is the hybrid idea in its simplest form: exact physics in air, discretized physics in the wall.</p>
+</div>
+<div class="physics prose"><b>In physics terms.</b> Open space looks like a resistor of 377 Ω to the wall. Energy that leaves never comes back, so the boundary behaves exactly like a matched load. That resistor is radiation.</div>
+
+<!-- ============================================================ 8 -->
+<h2><span class="n">09</span>Two ways to solve it</h2>
+<div class="prose">
+<h3>Time domain: leapfrog</h3>
+<p>Stagger b at half steps and e at whole steps:</p>
+<div class="eq">\[
+\mathbf b^{n+\frac12} = \mathbf b^{n-\frac12} - \Delta t\,\mathsf D_0\mathbf e^{n},
+\qquad
+\Big(\tfrac{\star_\varepsilon}{\Delta t} + \tfrac{\star_\sigma}{2}\Big)\mathbf e^{n+1}
+= \Big(\tfrac{\star_\varepsilon}{\Delta t} - \tfrac{\star_\sigma}{2}\Big)\mathbf e^{n} + \mathsf D_0^{\!\top}\star_{\mu^{-1}}\mathbf b^{n+\frac12}.
+\]</div>
+<p>This is Yee's FDTD scheme, written as DEC. Every step is a sparse multiply plus a diagonal solve. With σ = 0 it is symplectic and conserves a discrete energy exactly over arbitrarily long runs. It is stable when \(\Delta t \le \min_i \ell_i\sqrt{\bar\varepsilon_i\bar\mu_i}\) (the CFL condition: light must not skip a cell in one step).</p>
+<p>Water needs one extra field. The Debye model \(\varepsilon(\omega)=\varepsilon_0\big(\varepsilon_\infty + \frac{\Delta\varepsilon}{1+j\omega\tau}\big)\) corresponds to a polarization \(p_i\) on each node with \(\tau\,\dot p_i + p_i = \varepsilon_0\Delta\varepsilon\,\tilde\ell_i\,e_i\). Physically, water molecules rotate to follow the field with a lag of τ ≈ 9 ps, comparable to the 13 ps period at 77 GHz, which is why wet material is so lossy there.</p>
+
+<h3>Frequency domain: one sparse solve per frequency</h3>
+<p>With \(e^{j\omega t}\) dependence, \(\partial_t \to j\omega\):</p>
+<div class="eq">\[
+\big(\mathsf K - \omega^2\star_{\varepsilon}(\omega) + j\omega\star_\sigma + \mathsf B\big)\,\hat{\mathbf e} = \hat{\mathbf s},
+\qquad \mathsf K = \mathsf D_0^{\!\top}\star_{\mu^{-1}}\mathsf D_0 .
+\]</div>
+<p>Here \(\mathsf B\) holds the boundary terms. Dispersion is free: just use the complex \(\varepsilon(\omega)\) of wet material directly. The matrix is tridiagonal, so each frequency costs O(N). It is also indefinite: K is positive, \(-\omega^2\star_\varepsilon\) is negative, and they cancel at resonances. This is the wave-equation issue that breaks DDEC's elliptic proofs. In 1D a direct tridiagonal solve doesn't care. In 2D it becomes the open question you'd bring to Kaibo Hu.</p>
+<p>The matrix is complex symmetric (\(\mathsf A^{\!\top} = \mathsf A\)), so the adjoint solve for gradients reuses the same factorization. One gradient of the data misfit with respect to every ε and σ costs one extra solve per frequency.</p>
+</div>
+<div class="tw"><table>
+<tr><th></th><th>Time domain</th><th>Frequency domain</th></tr>
+<tr><td>Water dispersion</td><td>Extra polarization ODE per node</td><td>Free: complex ε(ω)</td></tr>
+<tr><td>Cost</td><td>Many small steps, CFL-limited</td><td>One tridiagonal solve × 256 frequencies</td></tr>
+<tr><td>Structure kept</td><td>Exact energy (symplectic)</td><td>Exact passivity via Im ε ≤ 0</td></tr>
+<tr><td>Matches the radar data</td><td>After an FFT</td><td>Directly</td></tr>
+<tr><td>Extends to 2D</td><td>Easily (explicit)</td><td>Needs indefinite solvers</td></tr>
+</table></div>
+<p class="prose">For the 1D toy, frequency domain is simpler. Time domain is the one that scales.</p>
+
+<!-- ============================================================ 9 -->
+<h2><span class="n">10</span>What the data-driven part is for</h2>
+<div class="prose">
+<p>The inversion chain is short:</p>
+<div class="eq">\[
+\vartheta = (t_i,\varepsilon_i,\sigma_i,\theta(z))
+\;\longrightarrow\;
+\star_\varepsilon(\omega),\,\star_\sigma
+\;\longrightarrow\;
+\text{solve}
+\;\longrightarrow\;
+\Gamma(f)
+\;\longrightarrow\;
+\min_{\vartheta,\,A}\sum_m\big|y(f_m) - A(f_m)\,\Gamma(f_m;\vartheta)\big|^2 .
+\]</div>
+<p>With a fine mesh, nothing here needs learning. Learning pays off where a fine mesh is too costly or the physics is unknown.</p>
+<p><b>1. Coarse cells with a learned Hodge star.</b> The diagonal star on a uniform mesh has a numerical dispersion relation:</p>
+<div class="eq">\[
+\omega^2 = \frac{4}{\bar\varepsilon\bar\mu\,\ell^2}\,\sin^2\!\frac{k\ell}{2}
+\quad\Rightarrow\quad
+\frac{\delta k}{k}\approx\frac{(k\ell)^2}{24}.
+\]</div>
+<p>(Derivation: insert \(e_i = e^{-jki\ell}\) into \(\mathsf K\mathbf e = \omega^2\star_\varepsilon\mathbf e\); the stencil \(2e_i - e_{i+1} - e_{i-1}\) gives \(4\sin^2(k\ell/2)\).) At 20 cells per wavelength that error is only 0.4%. But the round trip through 89 mm of insulation is about 300 radians of phase at 79 GHz, so it accumulates to more than a radian, which is enough to spoil a thickness estimate. A learned star, possibly tridiagonal rather than diagonal, fitted so a coarse cell reproduces the exact phase across the band, fixes this with a handful of parameters. That is the concrete DDEC contribution in 1D, and it carries over to 2D, where no exact transfer-matrix reference exists.</p>
+<p><b>2. A learned moisture closure.</b> Replace the fixed mixing law \(\theta \mapsto \varepsilon(\omega)\) with a small model fitted to measured samples, constrained to Debye-type poles so it stays causal and passive.</p>
+<p><b>3. A learned sensor model.</b> A low-dimensional model for A(f) (and, later, the antenna pattern), fitted from calibration scans against a metal plate, for which Γ = −1.</p>
+</div>
+
+<!-- ============================================================ 10 -->
+<h2><span class="n">11</span>Numbers for the mesh</h2>
+<div class="tw"><table>
+<tr><th>Material at 81 GHz</th><th>Refractive index n ≈ |√εᵣ|</th><th>Wavelength λ₀/n</th><th>Cell at λ/20</th></tr>
+<tr><td>Air</td><td>1.0</td><td>3.7 mm</td><td>0.19 mm</td></tr>
+<tr><td>Dry fiberglass (εᵣ 1.15)</td><td>1.07</td><td>3.5 mm</td><td>0.17 mm</td></tr>
+<tr><td>Dry drywall (εᵣ 2.6)</td><td>1.61</td><td>2.3 mm</td><td>0.12 mm</td></tr>
+<tr><td>Liquid water (εᵣ ≈ 11.5 − 20.8j)</td><td>≈ 4.9</td><td>0.76 mm</td><td>0.04 mm</td></tr>
+</table></div>
+<p class="prose">With fine cells in wet regions and coarser cells elsewhere, the whole 114 mm wall needs about 1,000 to 3,000 nodes, so a full 256-frequency forward solve takes milliseconds. The goal of the coarse learned model is to cut this to tens of cells with the same phase accuracy, which matters once you move to 2D.</p>
+</main>
+
+</body>
+</html>
