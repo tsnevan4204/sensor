@@ -219,8 +219,6 @@ def _fit_block1(B, n_prevs, echoes, d_free=None, top=4, keep=2, full=False, seed
             best_any = (cd, r)
         if cd < 2.5:
             best_ok = (cd, r)
-        elif best_ok is not None:
-            break
     pick = best_ok or best_any
     return [] if pick is None else pick[1]
 
@@ -299,9 +297,8 @@ def _fit_layer(B, n_prevs, sig_low, d_free=None, keep=2):
         if best_any is None or cd < best_any[0]:
             best_any = (cd, res)
         if cd < 2.5:
-            best_ok = (cd, res)
-        elif best_ok is not None:
-            break
+            best_ok = (cd, res)                # widest consistent window wins (no early stop: a
+                                               # short window is "consistent" because it sees little)
     if best_ok is None:                        # no single-layer window is consistent: thin neighbours
         blk = _fit_block(B, n_prevs, echoes, d_free, keep=keep)
         if blk and (best_any is None or blk[0][0] / blk[0][4] < best_any[0]):
