@@ -162,6 +162,14 @@ E011 = dict(E010, coords="optical")
 E012 = dict(E011, ambiguity="ils")
 E011B = dict(E010, coords="optical_box")       # E011 with the physical box enforced
 E012B = dict(E011B, ambiguity="ils")
+CURRENT = E011B                                  # best accepted method after E012b
+# E013: drywall thickness prior, ASTM C36 nominal tolerance +-1/64 in (0.4 mm) used as 1 sd
+DRYWALL_PRIOR = (("drywall_front.t", 0.0127, 0.0004), ("drywall_back.t", 0.0127, 0.0004))
+# E013b: + stud-depth prior on the cavity (insulation) thickness: 3-1/2 in dressed 2x4, sd 1/16 in
+# (1.6 mm) ASSUMED (PS 20 gives the minimum dressed size; no undersize tolerance found)
+STUD_PRIOR = (("insulation.t", 0.0889, 0.0016),)
+E013 = dict(CURRENT, priors=DRYWALL_PRIOR)
+E013B = dict(CURRENT, priors=DRYWALL_PRIOR + STUD_PRIOR)
 
 METHODS = {
     "e007": lambda f, yc, s, d0: method_e007(f, yc, s, d0, fit_tan=False),
@@ -173,6 +181,9 @@ METHODS = {
     "e012": method_search(**E012),
     "e011b": method_search(**E011B),
     "e012b": method_search(**E012B),
+    "current": method_search(**CURRENT),
+    "e013": method_search(**E013),
+    "e013b": method_search(**E013B),
 }
 
 

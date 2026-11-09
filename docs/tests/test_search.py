@@ -96,3 +96,18 @@ def test_optical_box_lm_stays_in_box():
     lo, hi = mo.bounds()
     v = mo.get()
     assert np.all(v > lo) and np.all(v < hi)
+
+
+def test_gaussian_prior_rows_and_penalty():
+    m = S.stud_wall_model(free=("t", "eps_r", "tan_d"), standoff_guess=0.30)
+    m.layers[0].t.value = 0.0131
+    m.layers[2].t.value = 0.0121
+    P = SR.GaussianPrior((("drywall_front.t", 0.0127, 0.0004), ("drywall_back.t", 0.0127, 0.0004)))
+    r, J = P.rows(m)
+    assert np.isclose(r @ r, P.penalty(m), rtol=1e-14)
+    free = m.free_names()
+    for k, name in enumerate(("drywall_front.t", "drywall_back.t")):
+        assert J[k, free.index(name)] == 1 / 0.0004 and np.count_nonzero(J[k]) == 1
+    m.layers[2].t.free = False                    # rows only for free parameters
+    r2, J2 = P.rows(m)
+    assert r2.size == 1 and J2.shape == (1, len(m.free_names()))

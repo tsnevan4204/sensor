@@ -188,3 +188,24 @@ Also found: with 5–20 near-equal basins, the maximum noise gain over basins ro
 - **(E016)** Calibrated reporting with many basins: replace the fixed Δχ² < 4 set by posterior mass over an enumerated basin grid, with an explicit prior.
 
 **Artifacts:** results/2026-11-09_E009_coarse_search/, _E010_pencil/, _E011_optical_coords/, _E012_integer_ambiguity/
+
+### Pre-registered: E013 / E013b (2026-11-09, before running)
+- **E013** = current method (E009 + E011b) + Gaussian priors on both drywall thicknesses: mean 12.7 mm, sd 0.4 mm (the ASTM C36 nominal tolerance ±1/64 in, used as 1 sd). They enter as MAP residual rows, so all basin comparisons use χ² + prior penalty, and the χ²/n noise test uses the data χ² alone.
+  - **Hypothesis:** back-drywall thickness median |error| falls from 2.3 mm to < 0.5 mm, and silent failures fall from 10 to ≤ 5 on B1-dry-v2 seeds 1–20, at work ≤ 1.5× the current method.
+  - **Caveat:** the benchmark draws drywall t ~ U(12.1, 13.3) mm. That spread is comparable to the tolerance, so the prior is not wrong for this benchmark.
+- **E013b** = E013 + a stud-depth prior on insulation t: mean 88.9 mm, sd 1.6 mm. The sd is **assumed**: PS 20 gives the minimum dressed size and I found no undersize tolerance. The benchmark draws U(85.9, 91.9) mm (sd 1.7), so this arm tests the *best case* for a cavity prior.
+  - **Hypothesis:** insulation thickness median |error| falls from 3.5 mm to < 1.5 mm.
+
+### Pre-registered: E014 (2026-11-09, before running)
+**Information analysis (no inversion):** for 8 random B1-dry-v2 walls, the expected χ² gap Δ that the best wrong-cycle wall pays, after all other parameters are re-fitted on noiseless data. Hops are ±1/±2 periods of insulation and/or back drywall.
+**Configurations:**
+- A: today's 77–81 GHz at normal incidence.
+- B, C, D: A plus a second band of 57–64, 22–26 or 3.1–10.6 GHz.
+- E, F: A plus the same band at 30° (TE or TM).
+- G: the same band measured twice (same data budget as B–F).
+
+Exact oblique TMM, gated against the reference at 0°.
+**Hypotheses:**
+- (a) A has median min-gap < 4, consistent with the ambiguity seen in E009–E012.
+- (b) G gains at most 2× (averaging alone does not resolve cycles).
+- (c) At least one of B–F reaches worst-case gap > 25, i.e. P(flip) < 1e-2.

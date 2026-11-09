@@ -99,10 +99,39 @@ class Coords:
         return lo, hi
 
 
+# ============================================================================ priors (E013)
+@dataclass
+class GaussianPrior:
+    """Independent Gaussian priors on named parameters: residual rows (v - mean)/sd, exactly a
+    MAP term in the least-squares cost (chi2 + sum ((v - mean)/sd)^2). Rows only for parameters
+    that are free in the model at hand (stage models see only their own)."""
+    terms: tuple            # ((name, mean, sd), ...)
+
+    def rows(self, model):
+        free = model.free_names()
+        vals = model.summary()
+        r, J = [], []
+        for name, mean, sd in self.terms:
+            if name in free:
+                row = np.zeros(len(free))
+                row[free.index(name)] = 1.0 / sd
+                r.append((vals[name] - mean) / sd)
+                J.append(row)
+        return np.array(r, float), (np.array(J, float) if J else np.zeros((0, len(free))))
+
+    def penalty(self, model):
+        vals = model.summary()
+        return float(sum(((vals[n] - m) / s) ** 2 for n, m, s in self.terms))
+
+
+_PRIORS = ()     # set by invert() for the duration of one inversion (single process)
+
+
 # ============================================================================ LM
 def lm(model, f, y, sigma, regs=(), max_iter=200, tol=1e-12, gate=None, atol=0.0, coords="phys"):
     """Bounded LM in u = logit((q-lo)/(hi-lo)). With coords="phys" and atol=0 this is
     step-for-step the same algorithm as wall_inverse.levenberg_marquardt."""
+    regs = tuple(regs) + tuple(_PRIORS)
     model = model.copy()
     box = coords == "optical_box"          # E011b: optical coordinates + physical box kept
     C = Coords(model, "optical" if box else coords)
@@ -167,7 +196,7 @@ def cost_of(model, f, y, sigma, gate=None):
         d = (Op @ d) / noise
     else:
         d = d / sigma
-    return float(np.sum(d.real**2 + d.imag**2))
+    return float(np.sum(d.real**2 + d.imag**2)) + sum(p.penalty(model) for p in _PRIORS)
 
 
 def half(a, b):
@@ -183,6 +212,7 @@ class Opts:
     coords: str = "phys"          # E011: "phys" | "optical" | "optical_box" (E011b)
     ambiguity: str = "scan"       # E012: "scan" | "ils"
     fit_tan: bool = True
+    priors: tuple = ()            # E013: ((name, mean, sd), ...) Gaussian priors
 
 
 def _subset(f, y, k):
@@ -341,7 +371,23 @@ def ambiguity_scan(model, f, y, sigma, opts, ks=(-3, -2, -1, 1, 2, 3), dchi2=4.0
 
 # ============================================================================ driver
 def invert(f, yc, sigma, d0, opts: Opts = Opts()):
-    """Layer stripping + joint LM + hops + plausible set, for the three-layer stud wall."""
+    """Layer stripping + joint LM + hops + plausible set, for the three-layer stud wall.
+    With priors, all comparisons use the posterior cost chi2 + prior penalty; the returned cost
+    is the data chi2 alone (for the chi2/n noise test)."""
+    global _PRIORS
+    _PRIORS = (GaussianPrior(tuple(opts.priors)),) if opts.priors else ()
+    try:
+        model, cost, plaus, info = _invert(f, yc, sigma, d0, opts)
+    finally:
+        pri = _PRIORS
+        _PRIORS = ()
+    if pri:
+        info["prior_penalty"] = pri[0].penalty(model)
+        cost = cost - info["prior_penalty"]
+    return model, cost, plaus, info
+
+
+def _invert(f, yc, sigma, d0, opts: Opts):
     import scenarios as S
     free = ("t", "eps_r", "tan_d") if opts.fit_tan else ("t", "eps_r")
     model = S.stud_wall_model(free=free, standoff_guess=d0)
