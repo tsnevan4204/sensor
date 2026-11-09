@@ -280,3 +280,25 @@ Method: the current method (E009 + E011b), **no priors**.
 - the reported set is the smallest one holding 95% of the posterior.
 
 **Hypothesis:** truth basin inside the 95% set for ≥ 90% of non-flagged walls (silent ≤ 2/20); calibration: mean reported P(best basin) within ±0.15 of the observed rate at which the best basin is the truth's; work ≤ 2× E015.
+
+## E015 — Cascade fallback for χ²-flagged walls  (2026-11-09)
+**Change:** `benchmark.method_cascade`. If the primary method's data χ²/n > 1.2, rerun with the E009 physical-coordinate search; if still flagged, with the dense E007 search. Same priors throughout; the lowest posterior cost is kept.
+**Results** (B1-dry-v2 seeds 1–20):
+
+| method | success | flagged | silent | front t | insulation t | back t | work |
+|---|---|---|---|---|---|---|---|
+| E013 (drywall prior) | 10 | 7 | 3 | 0.011 mm | 1.78 mm | 0.03 mm | 877 |
+| **E015** (E013 + cascade) | **15** | **1** | 4 | 0.011 mm | 3.47 mm | 0.065 mm | 1113 |
+| E013b (+ stud prior) | 14 | 5 | 1 | 0.013 mm | 1.23 mm | 0.04 mm | 665 |
+| **E015b** (E013b + cascade) | **17** | **1** | 2 | 0.013 mm | 1.64 mm | 0.044 mm | 963 |
+
+(Thickness errors are medians over walls with χ²/n ≤ 1.2: 19/20 for both cascades vs 13 and 15 before.)
+
+**Hypotheses:**
+- **Passed** for flagged walls: 7 → 1 and 5 → 1.
+- **Passed** for work: 1.27× and 1.45× (target ≤ 1.3×; E015b slightly over).
+- **Failed** for "no new silent failures": E015 rose 3 → 4 and E015b 1 → 2. The rescued walls now fit to noise, but in several the insulation cycle is wrong while inside the Δχ² < 4 set's blind spot (seeds 11, 16, 19, 20 for E015). This is the reporting problem E016 targets.
+
+Seed 7 stays flagged in every variant (χ²/n 1.20–1.23; the truth fits better by Δχ² 160–176). It is a front-stage search failure that none of the three searches finds; examine it separately.
+**Conclusion:** accepted. The cascade turns flagged failures into fits at modest cost. The best single-band method is now E015 (sourced priors only) or E015b (with the assumed stud prior).
+**Artifacts:** results/2026-11-09_E015_cascade/
