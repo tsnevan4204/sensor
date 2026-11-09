@@ -1,0 +1,21 @@
+benchmark real:itucausal:dualuwb  method e025_s2  seeds 1-20  wall 109s
+runs 20: success 20, flagged 0, silent 0
+best model in the truth's basin (all layers): 20/20
+chi2/n: 0.93, 0.95, 0.99, 1.02, 0.97, 1.00, 0.93, 1.04, 1.02, 1.00, 0.99, 0.95, 1.06, 0.96, 0.98, 1.01, 1.06, 1.05, 0.95, 1.05
+chi2(truth) - chi2(best): +15.1, +4.5, +10.7, +13.5, +5.2, +8.6, +17.7, +8.2, +16.7, +11.4, +2.6, +10.9, +6.9, +22.5, +16.7, +28.7, +15.3, +2.7, +21.0, +14.3
+outcome per seed: 1:s, 2:s, 3:s, 4:s, 5:s, 6:s, 7:s, 8:s, 9:s, 10:s, 11:s, 12:s, 13:s, 14:s, 15:s, 16:s, 17:s, 18:s, 19:s, 20:s
+wall time per inversion (1 core): median 14.6 s; forward solves (with J) median 1516, (no J) median 13
+work (forward solves in units of one 256-frequency solve): median 1263
+err/CRB over runs whose best model is in the truth basin (20):
+  drywall_front.t        mean|err| 7.52e-06  CRB 9.4e-06  err/CRB mean +0.06 std 1.09 max|.| 2.8
+  drywall_front.eps_r    mean|err| 3.15e-03  CRB 3.8e-03  err/CRB mean -0.04 std 1.18 max|.| 2.9
+  drywall_front.tan_d    mean|err| 1.93e-04  CRB 2.4e-04  err/CRB mean -0.17 std 0.97 max|.| 2.4
+  insulation.t           mean|err| 7.24e-05  CRB 9.6e-05  err/CRB mean -0.05 std 0.97 max|.| 2.5
+  insulation.eps_r       mean|err| 1.92e-03  CRB 2.5e-03  err/CRB mean -0.01 std 0.96 max|.| 2.6
+  insulation.tan_d       mean|err| 1.76e-04  CRB 1.6e-04  err/CRB mean +0.45 std 1.13 max|.| 2.5
+  drywall_back.t         mean|err| 8.44e-06  CRB 1.2e-05  err/CRB mean +0.05 std 0.79 max|.| 1.4
+  standoff               mean|err| 6.58e-07  CRB 7.2e-07  err/CRB mean +0.07 std 1.12 max|.| 2.7
+  tau[drywall_front]        mean|err| 2.34e-06  CRB 2.6e-06  err/CRB mean +0.20 std 1.04 max|.| 2.7
+  tau[insulation   ]        mean|err| 1.12e-05  CRB 1.1e-05  err/CRB mean -0.47 std 1.17 max|.| 2.9
+  tau[drywall_back ]        mean|err| 9.79e-06  CRB 1.3e-05  err/CRB mean +0.01 std 0.89 max|.| 1.9
+plausible basins per run: [12, 10, 12, 12, 10, 13, 12, 12, 15, 12, 6, 9, 11, 14, 12, 5, 2, 11, 3, 11]
