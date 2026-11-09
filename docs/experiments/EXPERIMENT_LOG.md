@@ -525,3 +525,10 @@ Method `e024` = Jonscher + all three (plane wave). `e024beam` = the same + the b
 - Speed (76–300 s per wall) is now the binding constraint → E025.
 
 **Artifacts:** results/2026-11-09_E023_beam/
+
+### Pre-registered: E025 — Speed: start-lattice density and hop sets with two bands (2026-11-09, before running)
+**Profile (e021, one wall, real:cq:dual60, 7.4 s):** lattice stages 75% of the work (126 LM starts), cycle hops 12%, ambiguity scan 10%, joint LM 2%.
+**Rationale:** with one band the basins are 1.9 mm (optical) apart and nearly degenerate, so starts every half period with 3 εr values were needed. With two bands the wrong basins are much weaker or absent (E014), so the lattice can be sparser.
+**Variants** of the E021b method (Jonscher, cascade): `e025_base` (current), `s1` (1-period steps), `s2` (s1 + one εr start per stage), `s3` (2-period steps, one εr), `s4` (s2 + hops ±1 and ambiguity shifts ±1), `s5` (s3 + small hop sets).
+**Benchmarks:** real:cq:dual60 and real:itucausal:dualuwb, seeds 1–20.
+**Hypothesis:** at least one variant keeps success, silent and best-basin counts within ±1 of the base on both benchmarks, with ≥ 4× less work.

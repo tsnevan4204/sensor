@@ -223,6 +223,11 @@ class Opts:
     facing: bool = False                # E024: shared paper facing on both drywall sheets (3 params)
     rough: bool = False                 # E024: effective front-face roughness (1 param)
     band_offset: bool = False           # E024: phase-centre offset of the second band (1 param)
+    lat_step: float = 0.5               # E025: start-lattice spacing in phase periods
+    lat0_eps: tuple = (2.0, 2.6, 3.2)   # E025: drywall eps start values
+    lat1_eps: tuple = (1.05, 1.15, 1.3) # E025: insulation eps start values
+    hops: tuple = (1, -1, 2, -2)        # E025: cycle-hop sizes
+    amb_ks: tuple = (-3, -2, -1, 1, 2, 3)   # E025: ambiguity-scan shifts
 
 
 def _subset(f, y, k):
@@ -244,13 +249,19 @@ def _distinct(cands, model_names, f, k):
 
 
 # ============================================================================ stages
-def stud_stages(d0, fit_tan=True):
+def stud_stages(d0, fit_tan=True, opts=None):
+    """Stage definitions. The lattice density (E025) is configurable through opts:
+    lat_step (offset spacing in phase periods; 0.5 = E007), lat0_eps / lat1_eps (eps start values)."""
+    step = getattr(opts, "lat_step", 0.5) if opts is not None else 0.5
+    e0 = getattr(opts, "lat0_eps", (2.0, 2.6, 3.2)) if opts is not None else (2.0, 2.6, 3.2)
+    e1 = getattr(opts, "lat1_eps", (1.05, 1.15, 1.3)) if opts is not None else (1.05, 1.15, 1.3)
+    off = lambda a: np.arange(-a, a + 1e-9, step)
     s0 = ("standoff", "drywall_front.t", "drywall_front.eps_r") + (("drywall_front.tan_d",) if fit_tan else ())
     s1 = ("insulation.t", "insulation.eps_r", "drywall_back.t") + (("insulation.tan_d",) if fit_tan else ())
     return [I.Stage(s0, I.Gate(d0 - 0.03, d0 + 0.06),
-                    lattice={"drywall_front.t": half(-4, 4), "drywall_front.eps_r": [2.0, 2.6, 3.2]}),
+                    lattice={"drywall_front.t": off(4), "drywall_front.eps_r": list(e0)}),
             I.Stage(s1, I.Gate(d0 + 0.06, d0 + 0.25),
-                    lattice={"insulation.t": half(-6, 6), "insulation.eps_r": [1.05, 1.15, 1.3]})]
+                    lattice={"insulation.t": off(6), "insulation.eps_r": list(e1)})]
 
 
 def _stage_model(model, st):
@@ -330,7 +341,8 @@ def _search_then_polish(trial, f, y, sigma, opts, ref_cost_coarse):
     return lm(mo, f, y, sigma, coords=opts.coords)
 
 
-def cycle_hop(model, f, y, sigma, opts, max_rounds=6, hops=(1, -1, 2, -2)):
+def cycle_hop(model, f, y, sigma, opts, max_rounds=6, hops=None):
+    hops = opts.hops if hops is None else hops
     best = model
     best_cost = cost_of(best, f, y, sigma)
     fs, ys = _subset(f, y, opts.search_step)
@@ -356,7 +368,8 @@ def cycle_hop(model, f, y, sigma, opts, max_rounds=6, hops=(1, -1, 2, -2)):
     return best, best_cost
 
 
-def ambiguity_scan(model, f, y, sigma, opts, ks=(-3, -2, -1, 1, 2, 3), dchi2=4.0):
+def ambiguity_scan(model, f, y, sigma, opts, ks=None, dchi2=4.0):
+    ks = opts.amb_ks if ks is None else ks
     """As wall_inverse.ambiguity_scan, returning plausible basin summaries."""
     best, best_cost = model, cost_of(model, f, y, sigma)
     fs, ys = _subset(f, y, opts.search_step)
@@ -477,7 +490,7 @@ def _invert(f, yc, sigma, d0, opts: Opts):
         model.layers[2].pinf = I.P(0.3, 0.0, 0.9, True, tie="drywall_front.pinf")
         model.sync_ties()
     all_free = {n for n, _, p in model.items() if p.free}
-    stages = stud_stages(d0, opts.fit_tan)
+    stages = stud_stages(d0, opts.fit_tan, opts)
     info = {"starts": []}
     pencil_starts = None
     if opts.init == "pencil":
