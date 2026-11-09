@@ -460,6 +460,7 @@ def method_e030():
 
 
 METHODS["e030"] = method_e030()
+METHODS["e033"] = method_e030()        # same method; the gap is now in the lattice, hops and ambiguity scan
 
 
 def method_e031():

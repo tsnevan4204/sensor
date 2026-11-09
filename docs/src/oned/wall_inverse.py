@@ -881,6 +881,8 @@ def _phase_periods(model, f):
         if L.t.free:
             eps, _ = layer_eps_and_derivs(L, np.array([fc]), model.water_T, model.law, model.f_ref)
             out[f"{L.name}.t"] = lam_c / (2 * np.sqrt(eps[0]).real)
+    if model.gap is not None and model.gap.free:          # E033: an air gap is a thickness with cycles too
+        out["gap"] = lam_c / 2
     if model.standoff.free:
         out["standoff"] = lam_c / 2
     return out

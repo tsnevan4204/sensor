@@ -266,11 +266,15 @@ def stud_stages(d0, fit_tan=True, opts=None):
         s0 = s0 + ("facing.t", "facing.eps_r")   # E024b: facings shape the front echo too
     if opts is not None and getattr(opts, "rough", False):
         s0 = s0 + ("rough",)
+    gap_lat = {}
+    if opts is not None and getattr(opts, "gap", False):
+        s1 = s1 + ("gap",)                        # E033: gap starts every half period (from 2 mm init)
+        gap_lat = {"gap": np.arange(-1.0, 4.01, 0.5)}
     s1 = ("insulation.t", "insulation.eps_r", "drywall_back.t") + (("insulation.tan_d",) if fit_tan else ())
     return [I.Stage(s0, I.Gate(d0 - 0.03, d0 + 0.06),
                     lattice={"drywall_front.t": off(4), "drywall_front.eps_r": list(e0)}),
             I.Stage(s1, I.Gate(d0 + 0.06, d0 + 0.25),
-                    lattice={"insulation.t": off(6), "insulation.eps_r": list(e1)})]
+                    lattice={"insulation.t": off(6), "insulation.eps_r": list(e1), **gap_lat})]
 
 
 def _stage_model(model, st):

@@ -782,3 +782,14 @@ With 57–64 GHz the same methods gave 95/0/5 (dense) and 88/7/5 (sparse).
 **Hypothesis passed.** The UWB second band removes the residual back-of-wall ambiguity, and the speed shortcuts lose nothing with it.
 **Decision:** the second band of the prototype is **3.1–10.6 GHz UWB** (FCC §15.509 wall imaging for construction, with Part 90 eligibility, to be confirmed) alongside the IWR6843 at 60–64 GHz. The fast path (E029) is to be retrained and held-out-validated for this band pair.
 **Artifacts:** results/2026-11-09_E032_uwb_heldout/
+
+## E030 revisited — the air gap IS identifiable; E030 was a search failure  (2026-11-09)
+- **Cramér–Rao bound** of a 3 mm gap (Fisher at the truth, gap free): **0.04 mm at 40 dB** for every band pair (57–64, UWB, prototype 60–64 + UWB). corr(gap, insulation εr) = −0.13 … −0.30. The information is there.
+- **LM from the true gap** (real:cqgap:dual60): the gap is recovered as 2.96–3.01 mm, with **lower χ² than E030** on seeds 2–4 (by 21–235); seed 1 is a near-tie (Δχ² 4).
+- **Cause:** the gap is a thickness with its own phase cycles (λ/2 ≈ 1.9 mm in air at 79 GHz), but it was in neither the start lattice nor the hops or ambiguity scan, so the search stayed in the wrong cycle.
+- **E030's conclusion "not identifiable" is withdrawn.**
+
+### Pre-registered: E033 — Gap in the cycle machinery (before running)
+**Change:** the gap gets a phase period λc/2 (`_phase_periods`), so it enters the cycle hops and the ambiguity scan; stage 1 frees the gap with starts every half period (−1…+4 periods from 2 mm).
+**Benchmarks:** real:cqgap:dual60, real:cqgap:dualuwb, real:allpw:dualuwb, seeds 1–10.
+**Hypothesis:** gap error < 0.2 mm on ≥ 8/10, success ≥ 9, silent 0, insulation err/CRB std ≤ 1.5.
