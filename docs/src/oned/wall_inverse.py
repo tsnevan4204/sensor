@@ -347,6 +347,10 @@ def forward(model: WallModel, f, jacobian=True):
     With model.beam set (E023) the result is the beam-received signal S(f) of forward_beam()."""
     f = np.asarray(f, float)
     model.sync_ties()
+    if getattr(model, "use_tmm", False):           # E041: exact reflection recursion (plain layered models)
+        import tmm as _TMM
+        if _TMM.applicable(model):
+            return _TMM.forward(model, f, jacobian)
     if model.frame_offsets is not None:
         return _forward_frames(model, f, jacobian)
     if model.cal is not None:

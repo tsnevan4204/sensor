@@ -153,10 +153,10 @@ def _visible(layers, back):
     return loss < VIS_DB
 
 
-def random_stack(rng, nmax=NMAX, p_metal=0.3, materials=None, p_wet=0.0):
+def random_stack(rng, nmax=NMAX, p_metal=0.3, materials=None, p_wet=0.0, n_exact=None):
     mats = ALL_MATERIALS if materials is None else materials
     while True:
-        N = int(rng.integers(1, nmax + 1))
+        N = int(rng.integers(1, nmax + 1)) if n_exact is None else int(n_exact)
         names = []
         for _ in range(N):
             choices = [m for m in mats if not names or m != names[-1]]
@@ -185,9 +185,9 @@ def random_stack(rng, nmax=NMAX, p_metal=0.3, materials=None, p_wet=0.0):
 BANDS = ((3.1e9, 10.6e9), (60e9, 64e9))          # prototype pair: UWB + IWR6843
 
 
-def make_case(seed, bands=BANDS, snr_db=40.0, nmax=NMAX, materials=None, p_metal=0.3, p_wet=0.0):
+def make_case(seed, bands=BANDS, snr_db=40.0, nmax=NMAX, materials=None, p_metal=0.3, p_wet=0.0, n_exact=None):
     rng = np.random.default_rng(seed)
-    layers, desc, back = random_stack(rng, nmax, p_metal, materials, p_wet)
+    layers, desc, back = random_stack(rng, nmax, p_metal, materials, p_wet, n_exact)
     d = 0.30 + 0.002 * rng.random()
     fs, ys = [], []
     sig = 10 ** (-snr_db / 20)
@@ -234,6 +234,7 @@ def build(layers, standoff, d_half=0.01, back="air", water_T=WATER_T0):
     if any(l.get("water") or l.get("moist") for l in layers):
         m.water_Tp = I.P(water_T, 0.0, 40.0, True)          # liquid water's temperature is fitted
     m.min_cells = True
+    m.use_tmm = True          # E041: exact reflection recursion (== exact-star DEC to 1e-14), 5x faster
     m.back = back
     return m
 
