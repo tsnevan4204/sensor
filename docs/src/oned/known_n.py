@@ -92,7 +92,8 @@ def invert(f, y, sigma, N, verbose=False):
     old = SR._PRIORS
     SR._PRIORS = (pri,)
     try:
-        best = None
+        cands = []
+        # candidate A: optimal N-piece segmentation of the profile
         for back in ("air", "metal"):
             ST.SBOX = (d - 0.008, d + 0.008)
             mod = ST.build(lay, d, back=back)
@@ -100,9 +101,23 @@ def invert(f, y, sigma, N, verbose=False):
             ST.set_dispersion_free(mod, True)          # p = 0 on its bound: constant-Q geometry first
             mod, c = ST._fit(mod, f, y, sigma)
             mod, c = SR.cycle_hop(mod, f, y, sigma, SR.Opts(search_step=1, search_atol=0.0))
-            if best is None or c < best[1]:
-                best = (mod, c)
-        mod, c = best
+            cands.append((c, mod, "A"))
+        # candidate B: over-segment (threshold change points), exact fit, then reduce to EXACTLY N
+        segs = PF.segment(m, z0, dz)
+        if len(segs) > N:
+            dB = segs[0][0]
+            layB = [_to_layer(dict(t=t, er=er, td=td, th=th)) for z, t, er, td, th in segs]
+            for back in ("air", "metal"):
+                ST.SBOX = (dB - 0.008, dB + 0.008)
+                mod = ST.build(layB, dB, back=back)
+                ST.SBOX = None
+                ST.set_dispersion_free(mod, True)
+                mod, c = ST._fit(mod, f, y, sigma)
+                mod, c = reduce_to(mod, c, N, f, y, sigma)
+                mod, c = SR.cycle_hop(mod, f, y, sigma, SR.Opts(search_step=1, search_atol=0.0))
+                cands.append((c, mod, "B"))
+        c, mod, how = min(cands, key=lambda t: t[0])
+        info["candidate"] = how
         rel = []
         for p0 in (0.02, 0.95):                        # release the dispersion shape at the end
             mm = mod.copy()
@@ -122,3 +137,35 @@ def invert(f, y, sigma, N, verbose=False):
     info.update(wall_s=time.time() - t0, chi2=chi, map_cost=c, alarm=bool(chi > ST.chi2_alarm(n_all)),
                 labels=pri.labels(mod), classes=[{l: 1.0} for l in pri.labels(mod)])
     return mod, chi, info
+
+
+def reduce_to(model, cost, N, f, y, sigma):
+    """Agglomerative reduction of an over-segmented exact fit to EXACTLY N layers: at every step try
+    every single-layer drop and every neighbour merge (either neighbour's material), screen each with
+    a short exact fit, fully converge the cheapest, repeat. Leading air is folded into the standoff."""
+    model = ST._drop_leading_air(model)
+    while len(model.layers) > N:
+        lay = ST.describe(model)
+        trials = []
+        for i in range(len(lay)):
+            trials.append(lay[:i] + lay[i + 1:])
+            if i + 1 < len(lay):
+                tt = lay[i]["t"] + lay[i + 1]["t"]
+                trials.append(lay[:i] + [dict(lay[i], t=tt)] + lay[i + 2:])
+                trials.append(lay[:i] + [dict(lay[i + 1], t=tt)] + lay[i + 2:])
+        best = None
+        for L2 in trials:
+            mm = ST.rebuild(model, layers=L2)
+            ST.set_dispersion_free(mm, True)
+            mm, cm = ST._fit(mm, f, y, sigma, atol=1e-2)
+            if best is None or cm < best[1]:
+                best = (mm, cm)
+        model, cost = ST._fit(best[0], f, y, sigma)
+        model = ST._drop_leading_air(model)
+    while len(model.layers) < N:                      # never fewer than N
+        lay = ST.describe(model)
+        i = int(np.argmax([l["t"] for l in lay]))
+        a = dict(lay[i], t=lay[i]["t"] / 2)
+        model = ST.rebuild(model, layers=lay[:i] + [a, dict(a)] + lay[i + 1:])
+        model, cost = ST._fit(model, f, y, sigma)
+    return model, cost
