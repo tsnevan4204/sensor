@@ -183,6 +183,28 @@ def _model_block(p, f, n_prev):
 
 
 def _fit_block(B, n_prevs, echoes, d_free=None, top=4, keep=2):
+    """Cascade: low band only (few phase cycles), then all bands from the best low-band blocks with
+    +-2 high-band cycles on each thickness (GNSS-style wide-lane -> narrow-lane)."""
+    lo = B.low()
+    Bl = Bands([B.fs[lo]], [B.Gs[lo]], [B.ss[lo]])
+    res_l = _fit_block1(Bl, [n_prevs[lo]], echoes, d_free, top=top, keep=3, full=True)
+    if len(B.fs) == 1 or not res_l:
+        return [(c, p[:5], w, d, nd) for c, p, w, d, nd in res_l[:keep]]
+    fh = max(B.fs, key=lambda x: x[0])
+    lam = C0 / fh.mean()
+    seeds = []
+    for c, p, w, d, nd in res_l:
+        n1, n2 = np.sqrt(p[0]), np.sqrt(p[3])
+        for k1 in (-2, -1, 0, 1, 2):
+            for k2 in (-2, -1, 0, 1, 2):
+                q = np.array(p, float)
+                q[2] += k1 * lam / (2 * n1); q[5] += k2 * lam / (2 * n2)
+                if q[2] > T_LO and q[5] > T_LO:
+                    seeds.append((q, d))
+    return _fit_block1(B, n_prevs, echoes, d_free, top=top, keep=keep, seeds=seeds)
+
+
+def _fit_block1(B, n_prevs, echoes, d_free=None, top=4, keep=2, full=False, seeds=None):
     """E041 block peeling: thin neighbours whose echoes merge are fitted together on ALL bands
     (the high band's phase resolves what the low band's time gate cannot); only the top layer
     is kept and peeled."""
@@ -210,10 +232,11 @@ def _fit_block(B, n_prevs, echoes, d_free=None, top=4, keep=2):
             rr = Op @ ((M - G) / s)
             rs += [rr.real, rr.imag]
         return np.concatenate(rs)
-    pre = lambda p0: ([d_free[0]] if d_free is not None else []) + list(p0)
+    pre = lambda p0, dd=None: ([d_free[0] if dd is None else dd] if d_free is not None else []) + list(p0)
     sc = []
-    for p0 in starts:
-        q0 = np.clip(pre(p0), pre(lo_b), pre(hi_b))
+    cand = [(p0, None) for p0 in starts] if seeds is None else seeds
+    for p0, dd in cand:
+        q0 = np.clip(pre(p0, dd), pre(lo_b), pre(hi_b))
         v = res_fn(np.array(q0, float))
         c = float(v @ v)
         if np.isfinite(c):
@@ -231,7 +254,7 @@ def _fit_block(B, n_prevs, echoes, d_free=None, top=4, keep=2):
         p = sol.x[1:] if d_free is not None else sol.x
         ndof = sum(2 * Op.shape[0] for Op in ops)
         # keep the TOP layer only, in the half-space format (er, td, t, erb, tdb)
-        out.append((2 * sol.cost, np.array([p[0], p[1], p[2], p[3], p[4]]), False, d, ndof))
+        out.append((2 * sol.cost, np.array(p) if full else np.array([p[0], p[1], p[2], p[3], p[4]]), False, d, ndof))
     out.sort(key=lambda t: t[0])
     return out[:keep]
 
@@ -366,9 +389,13 @@ def peel_invert(f, y, sigma, nmax=12, beam=3, keep=2, verbose=False):
             trials.append(lay[:i] + lay[i + 1:])                                   # drop
             if i + 1 < len(lay):
                 trials.append(lay[:i] + [dict(lay[i + 1], t=lay[i]["t"] + lay[i + 1]["t"])] + lay[i + 2:])  # merge
+        tails = [(lay[:k], bk) for k in range(1, len(lay)) for bk in ("air", "metal")]   # cut the tail, either backing
         best_t = None
-        for L2 in trials:
-            mm = ST.rebuild(model, layers=L2)
+        for L2 in trials + tails:
+            bk = None
+            if isinstance(L2, tuple):
+                L2, bk = L2
+            mm = ST.rebuild(model, layers=L2, back=bk)
             ST.set_dispersion_free(mm, True)
             mm, cm = ST._fit(mm, f, y, sigma, atol=1e-2)
             if best_t is None or cm < best_t[1]:
