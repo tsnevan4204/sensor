@@ -265,7 +265,7 @@ def set_dispersion_free(m, on):
     for L in m.layers:
         L.pinf.free = bool(on) and L.theta.value < 0.5
         if L.pinf.free and L.pinf.value <= 1e-6:
-            L.pinf.value = 0.3
+            L.pinf.value = 0.02
     return m
 
 
