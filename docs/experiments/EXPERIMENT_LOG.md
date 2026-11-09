@@ -820,3 +820,20 @@ With 57–64 GHz the same methods gave 95/0/5 (dense) and 88/7/5 (sparse).
 **Methods:** e035_none (ignore drift), e035_gain (fit per-band gain + slope with the wall), e035_full (also phase + delay).
 **Benchmarks:** real:cqdrift:proto and real:cqdriftref:proto (prototype pair 60–64 GHz + UWB), seeds 1–10.
 **Hypothesis:** e035_none fails on cqdrift; with the leakage reference plus fitted gain, ≥ 9/10 success and 0 silent, err/CRB std ≤ 1.5.
+
+## E035 — No plate in the field: factory calibration + self-calibration  (2026-11-09)
+Prototype pair (60–64 GHz + UWB), seeds 1–10, e027_s4-type search. Drift between the factory calibration and the field scan: per band, gain σ 0.5 dB, gain slope 0.3 dB, phase 0.3 rad, delay 3 ps.
+
+| world | ignore drift | fit gain + slope | fit gain, slope, phase, delay ("full") |
+|---|---|---|---|
+| no drift (cq) | 10/0/0 | 10/0/0 (εr CRB ×4) | not run |
+| drift, no reference | 0/10/0 (all flagged, none silent) | 0/10/0 | **10/0/0**, err/CRB std 1.0 |
+| drift + leakage reference (untracked 0.1 dB, 0.02 rad) | 8/2/0, err/CRB std up to 7 (biased) | 8/2/0, std 4 | **10/0/0**, err/CRB std 1.0–1.05 |
+
+**Findings.**
+1. A drifted chain is **never a silent failure**: the χ² alarm catches it.
+2. The residual drift after a leakage reference (0.1 dB, 0.02 rad) is still far above the CRB: CRB-level accuracy needs gain known to ~0.02 dB and phase to ~0.005 rad, which no reference achieves. **The drift must be fitted.**
+3. Fitting 4 smooth drift parameters per band with the wall works (10/10, unbiased, calibrated error bars), even **without any reference**. The price is information: CRB(εr front) 3.7e-3 → 1.7e-2 (×4.6), CRB(insulation t) 0.096 → 0.12 mm, CRB(back drywall t) 0.012 → 0.042 mm. Still sub-0.1 mm thickness and ~1 % εr.
+**Hypothesis** (with reference + fitted gain ≥ 9/10, 0 silent, err/CRB ≤ 1.5): **failed** for gain-only (8/10, biased); **passed** with the full 4-parameter self-calibration (10/10, std 1.0).
+**Decision:** the field workflow is a one-time factory calibration (antenna + lens, Lambot multi-distance plates), with no plate in the field and the per-band drift fitted with each wall. Next refinement: use the leakage reference as a Gaussian prior on the drift parameters (instead of dividing it out) to recover part of the ×4.6 information loss.
+**Artifacts:** results/2026-11-09_E035_fieldcal/

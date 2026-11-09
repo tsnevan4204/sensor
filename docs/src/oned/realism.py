@@ -56,6 +56,7 @@ class Realism:
     field_drift: tuple | None = None    # E035: (sd gain dB, sd gain slope dB, sd phase rad, sd delay ps) of the
                                         # radar CHAIN between factory calibration and the field scan (per band, random)
     untracked: tuple = (0.0, 0.0)       # E035: (sd gain dB, sd phase rad) of the antenna/lens part (not seen by leakage)
+    snr_db: float | None = None         # E037: radar SNR of a perfect reflector (None = Radar default 40 dB)
     leak_ref: bool = False              # E035: correct the chain drift with the internal Tx->Rx leakage reference
     n_quad: int = 160                    # 48 was 6e-5 off for w0 = 1 cm (E023 check); 160: 6e-15
 
@@ -227,18 +228,22 @@ def measure_band(tv, radar: W.Radar, R: Realism, plate_d=0.25, d=None):
     return f, yc, sigma
 
 
-def make_case_real(seed, R: Realism, dual=True, plate_d=0.25, band2=None, band1=None):
+def make_case_real(seed, R: Realism, dual=True, plate_d=0.25, band2=None, band1=None, frame=0, motion=0.0):
     """Same truths as benchmark v2/v2dual (same rng sequence), data through the realistic world."""
     rng = np.random.default_rng(seed)
     d_true = 0.30 + 0.002 * rng.random()
     _, tv = S.truth_random_v2(rng, d_true)
     tv["drywall_back.eps_r"] = tv["drywall_front.eps_r"]
     tv["drywall_back.tan_d"] = tv["drywall_front.tan_d"]
-    bands = [W.Radar(seed=seed) if band1 is None else W.Radar(f0=band1[0], f1=band1[1], seed=seed)]
+    if frame > 0:                       # E038: another handheld frame of the same wall: new noise, moved standoff
+        tv = dict(tv, standoff=tv["standoff"] + motion)
+    snr = {} if R.snr_db is None else {"snr_db": R.snr_db}
+    sd = seed + 100003 * frame
+    bands = [W.Radar(seed=sd, **snr) if band1 is None else W.Radar(f0=band1[0], f1=band1[1], seed=sd, **snr)]
     if dual:
         import benchmark as B
         b2 = B.DUAL_BAND if band2 is None else band2
-        bands.append(W.Radar(f0=b2[0], f1=b2[1], seed=seed + 1000))
+        bands.append(W.Radar(f0=b2[0], f1=b2[1], seed=sd + 1000, **snr))
     fs, ys, s2 = [], [], []
     for k, radar in enumerate(bands):
         d = tv["standoff"] + (R.band_offset if k > 0 else 0.0)

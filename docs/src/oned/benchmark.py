@@ -66,6 +66,7 @@ def real_presets():
             "fm100": RL.Realism(dispersion="cq", fmcw={"S": 100e12, "hpf": (175e3, 350e3), "nonlin": 0.0}),
             "fm250": RL.Realism(dispersion="cq", fmcw={"S": 250e12, "hpf": (175e3, 350e3), "nonlin": 0.0}),
             "fm100nl": RL.Realism(dispersion="cq", fmcw={"S": 100e12, "hpf": (175e3, 350e3), "nonlin": 1e6}),
+            **{f"cqsnr{v}": RL.Realism(dispersion="cq", snr_db=float(v)) for v in (35, 30, 25, 20)},
             "cqdrift": RL.Realism(dispersion="cq", field_drift=(0.5, 0.3, 0.3, 3.0)),
             "cqdriftref": RL.Realism(dispersion="cq", field_drift=(0.5, 0.3, 0.3, 3.0), leak_ref=True,
                                      untracked=(0.1, 0.02)),
@@ -90,6 +91,20 @@ def make_case(benchmark, seed, plate_d=0.25):
         f, y, s, d0, tv, ops = RL.make_case_fmcw(seed, real_presets()[preset], model_chain=(mode == "chain"))
         _EXTRA["chain"] = ops
         return f, y, s, d0, tv
+    if benchmark.startswith("motion:"):          # E038: "motion:<K>:<preset>:<band>", K frames, hand moves +-4 mm
+        import realism as RL
+        _, K, preset, band = benchmark.split(":")
+        rngm = np.random.default_rng(seed + 4242)
+        fs, ys, ss = [], [], []
+        for k in range(int(K)):
+            mv = 0.0 if k == 0 else float(rngm.uniform(-0.004, 0.004))
+            f, y, s, d0k, tv = RL.make_case_real(seed, real_presets()[preset], dual=True, plate_d=plate_d,
+                                                  band2=BANDS2.get(band), band1=BANDS1.get(band), frame=k, motion=mv)
+            if k == 0:
+                d0 = d0k
+            fs.append(f); ys.append(y); ss.append(s)
+            tv0 = tv if k == 0 else tv0
+        return np.concatenate(fs), np.concatenate(ys), float(np.sqrt(np.mean(np.square(ss)))), d0, tv0
     if benchmark.startswith("real:"):            # E021+: realistic world (realism.py), "real:<preset>:<band>"
         import realism as RL
         _, preset, band = benchmark.split(":")
@@ -470,6 +485,59 @@ _B35 = dict(standoff_halfwidth=RES_CELL, law="jonscher", pinf_free=True, lat_ste
             lat1_eps=(1.15,), hops=(1, -1), amb_ks=(-1, 1), min_cells=True)
 for _nm, _cal in (("e035_none", ""), ("e035_gain", "gain"), ("e035_full", "full")):
     METHODS[_nm] = method_cascade(dict(CURRENT, cal=_cal, **_B35), dict(E009, cal=_cal, **_B35))
+
+
+def method_e038(nb=2):
+    """E038: joint inversion of K handheld frames (same wall, each frame its own standoff). Initial
+    frame offsets from the front-echo peak of each frame's lowest band (range profile)."""
+    import wall_toy as W
+    import wall_inverse as I
+
+    def run(f, yc, s, d0):
+        segs = I.band_segments(f)
+        K = len(segs) // nb
+        peaks = []
+        for k in range(K):
+            a, b = min((segs[k * nb + j] for j in range(nb)), key=lambda ab: f[ab[0]])
+            r, p = W.range_profile(f[a:b], yc[a:b])
+            sel = (r > d0 - 0.02) & (r < d0 + 0.02)
+            i = np.argmax(p[sel]); rr = r[sel]
+            peaks.append(rr[i])
+        offs = tuple(float(pk - peaks[0]) for pk in peaks[1:])
+        return method_cascade(dict(CURRENT, frames=offs, frame_nb=nb, **_B35),
+                              dict(E009, frames=offs, frame_nb=nb, **_B35))(f, yc, s, d0)
+    return run
+
+
+METHODS["e038"] = method_e038()
+
+
+def method_e039(lat_step=1.0, k_amb=(-1, 1), fallback=True):
+    """E039: UWB-first cascade for the prototype pair. (1) the stud-wall search on the LOW band only
+    (few phase cycles per layer, so a sparse lattice suffices), (2) LM on both bands from that
+    solution, (3) +-1 cycle scan on the high-band periods, (4) chi2 alarm -> e035_none search."""
+    import search as SR
+    import wall_inverse as I
+    kw = dict(_B35, lat_step=lat_step, hops=(1, -1), amb_ks=k_amb)
+
+    def run(f, yc, s, d0):
+        segs = I.band_segments(f)
+        lo = min(segs, key=lambda ab: f[ab[0]])
+        fl, yl = f[lo[0]:lo[1]], yc[lo[0]:lo[1]]
+        o = SR.Opts(**dict(CURRENT, **dict(kw, ambiguity="scan", amb_ks=())))
+        m, c, _, info = SR.invert(fl, yl, s, d0, o)
+        oall = SR.Opts(**dict(CURRENT, **kw))
+        m, c = SR.lm(m, f, yc, s)
+        m, c, plaus = SR.ambiguity_scan(m, f, yc, s, oall)
+        if fallback and chi2_alarm(c, 2 * f.size):
+            r = METHODS["e035_none"](f, yc, s, d0)
+            return r[0], r[1], r[2], dict(r[3], e039="fallback")
+        return m, c, plaus, {"e039": "direct"}
+    return run
+
+
+METHODS["e039"] = method_e039()
+METHODS["e039_s2"] = method_e039(lat_step=2.0)
 
 
 def method_e031():

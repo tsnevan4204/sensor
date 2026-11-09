@@ -129,8 +129,23 @@ class WallModel:
         return np.array([p.lo for p in fr]), np.array([p.hi for p in fr])
 
     def copy(self):
-        import copy
-        return copy.deepcopy(self)
+        """Fast structural copy (E039: deepcopy was 40% of a search). Every P is copied; read-only
+        members (beam tuples, chain operators) are shared."""
+        import copy as _c
+        cp = lambda p: None if p is None else _c.copy(p)
+        def lay(L):
+            L2 = _c.copy(L)
+            for k in ("t", "eps_r", "tan_d", "theta", "pinf"):
+                setattr(L2, k, cp(getattr(L, k)))
+            return L2
+        m = _c.copy(self)
+        m.layers = [lay(L) for L in self.layers]
+        m.standoff = cp(self.standoff)
+        m.facing = None if self.facing is None else lay(self.facing)
+        m.rough, m.band_offset, m.gap, m.water_Tp = cp(self.rough), cp(self.band_offset), cp(self.gap), cp(self.water_Tp)
+        m.frame_offsets = None if self.frame_offsets is None else [cp(p) for p in self.frame_offsets]
+        m.cal = None if self.cal is None else [[cp(p) for p in ps] for ps in self.cal]
+        return m
 
     def summary(self):
         return {n: p.value for n, _, p in self.items()}

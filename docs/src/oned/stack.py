@@ -105,6 +105,20 @@ def material_law(name, rng, T=None):
     return eps, dict(eps10=er, tan10=tan10, alpha=ap, p=pp)
 
 
+POROUS = ("plasterboard", "wood", "chipboard", "plywood", "brick", "concrete", "batt")
+
+
+def wet_law(eps_host, theta, T):
+    """E036 world: a porous host with volumetric water fraction theta, mixed with the Looyenga
+    (Landau-Lifshitz) cube-root law eps^(1/3) = (1-theta) eps_h^(1/3) + theta eps_w^(1/3). The
+    inversion uses CRIM (square-root law), so the mixing law itself is a model error."""
+    def eps(f):
+        w = W.eps_water_lhm(f, T)
+        c = (1 - theta) * np.power(eps_host(f) + 0j, 1 / 3) + theta * np.power(w + 0j, 1 / 3)
+        return c ** 3
+    return eps
+
+
 def thickness_range(name):
     if name in ITU:
         return ITU[name][3]
@@ -139,7 +153,7 @@ def _visible(layers, back):
     return loss < VIS_DB
 
 
-def random_stack(rng, nmax=NMAX, p_metal=0.3, materials=None):
+def random_stack(rng, nmax=NMAX, p_metal=0.3, materials=None, p_wet=0.0):
     mats = ALL_MATERIALS if materials is None else materials
     while True:
         N = int(rng.integers(1, nmax + 1))
@@ -158,6 +172,10 @@ def random_stack(rng, nmax=NMAX, p_metal=0.3, materials=None):
             lo, hi = thickness_range(nm)
             t = float(np.exp(rng.uniform(np.log(lo), np.log(hi))))
             e, dsc = material_law(nm, rng, Tw)
+            if nm in POROUS and rng.random() < p_wet:
+                th = float(rng.uniform(0.01, 0.12))
+                e = wet_law(e, th, Tw)
+                dsc = dict(dsc, theta=th, T=Tw)
             layers.append((t, e))
             desc.append(dict(name=nm, t=t, **dsc))
         if _visible(layers, back):
@@ -167,9 +185,9 @@ def random_stack(rng, nmax=NMAX, p_metal=0.3, materials=None):
 BANDS = ((3.1e9, 10.6e9), (60e9, 64e9))          # prototype pair: UWB + IWR6843
 
 
-def make_case(seed, bands=BANDS, snr_db=40.0, nmax=NMAX, materials=None, p_metal=0.3):
+def make_case(seed, bands=BANDS, snr_db=40.0, nmax=NMAX, materials=None, p_metal=0.3, p_wet=0.0):
     rng = np.random.default_rng(seed)
-    layers, desc, back = random_stack(rng, nmax, p_metal, materials)
+    layers, desc, back = random_stack(rng, nmax, p_metal, materials, p_wet)
     d = 0.30 + 0.002 * rng.random()
     fs, ys = [], []
     sig = 10 ** (-snr_db / 20)
@@ -193,11 +211,11 @@ EPS_STARTS = (1.0, 1.1, 2.0, 2.8, 4.5, 6.5)     # air, foam/batt, wood, drywall/
 WATER_T0 = 20.0
 
 
-def _layer(i, t, er, td=0.01, water=False, pinf=0.0):
+def _layer(i, t, er, td=0.01, water=False, pinf=0.0, theta=0.0, moist=False):
     L = I.LayerSpec(f"L{i}", I.P(float(np.clip(t, T_LO * 1.01, T_HI * 0.99)), T_LO, T_HI, True),
                     I.P(float(np.clip(er, EPS_LO, EPS_HI - 1e-6)), EPS_LO, EPS_HI, not water),
                     I.P(float(np.clip(td, 0.0, 0.49)), 0.0, 0.5, not water),
-                    I.P(1.0 if water else 0.0, 0.0, 1.0, False),
+                    I.P(1.0 if water else float(theta), 0.0, 1.0 if water else 0.4, bool(moist) and not water),
                     I.P(pinf, 0.0, 0.999, False))
     if water:
         L.eps_r.value, L.tan_d.value = 1.0, 0.0
@@ -213,7 +231,7 @@ def build(layers, standoff, d_half=0.01, back="air", water_T=WATER_T0):
                     eps_back=(METAL_EPS if back == "metal" else 1.0 + 0j))
     m.law, m.f_ref, m.water_T = "jonscher", F_REF, WATER_T0
     m.water_law = "lhm"
-    if any(l.get("water") for l in layers):
+    if any(l.get("water") or l.get("moist") for l in layers):
         m.water_Tp = I.P(water_T, 0.0, 40.0, True)          # liquid water's temperature is fitted
     m.min_cells = True
     m.back = back
@@ -223,8 +241,9 @@ def build(layers, standoff, d_half=0.01, back="air", water_T=WATER_T0):
 def describe(m):
     out = []
     for L in m.layers:
-        out.append(dict(t=L.t.value, er=L.eps_r.value, td=L.tan_d.value, water=L.theta.value > 0.5,
-                        pinf=L.pinf.value))
+        w = L.theta.value > 0.5 and not L.theta.free
+        out.append(dict(t=L.t.value, er=L.eps_r.value, td=L.tan_d.value, water=w,
+                        pinf=L.pinf.value, theta=0.0 if w else L.theta.value, moist=L.theta.free))
     return out
 
 
@@ -395,6 +414,7 @@ def _safe(fn, model, cost, *a):
 
 
 best_d = [0.3]
+MOISTURE = False     # E036: try a free water fraction per layer
 SBOX = None          # standoff box of the current inversion (front face: earliest peak - 30 mm .. + 10 mm)
 
 
@@ -514,6 +534,28 @@ def invert(f, y, sigma, d0=None, nmax=NMAX, bic_per_layer=None, verbose=False):
             if cm - cost < kappa_all:
                 model, cost, changed = mm, cm, True
                 break
+    # --- moisture pass (E036): free the water fraction of one dielectric layer at a time
+    if MOISTURE:
+        improved = True
+        while improved:
+            improved = False
+            best_m = None
+            for i, L in enumerate(model.layers):
+                if L.theta.free or L.theta.value > 0.5 or L.eps_r.value < 1.03:
+                    continue
+                lay = describe(model)
+                for th0 in (0.03, 0.10):
+                    lay_i = [dict(l) for l in lay]
+                    lay_i[i].update(moist=True, theta=th0, er=max(1.05, lay[i]["er"] * (1 - 2 * th0)))
+                    mm = rebuild(model, layers=lay_i)
+                    for Lm, Lo in zip(mm.layers, model.layers):
+                        Lm.pinf.value, Lm.pinf.free = Lo.pinf.value, Lo.pinf.free
+                    mm, cm = _fit(mm, f, y, sigma)
+                    if cm < cost - np.log(n_all) * 2 and (best_m is None or cm < best_m[1]):
+                        best_m = (mm, cm)
+            if best_m is not None:
+                model, cost = best_m
+                improved = True
     # --- back medium check on all data
     alt = rebuild(model, back="metal" if model.back == "air" else "air")
     set_dispersion_free(alt, True)
