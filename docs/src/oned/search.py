@@ -369,6 +369,62 @@ def ambiguity_scan(model, f, y, sigma, opts, ks=(-3, -2, -1, 1, 2, 3), dchi2=4.0
     return best, best_cost, plaus
 
 
+def posterior_scan(model, f, y, sigma, opts, joint=3, single=(-2, -1, 1, 2), mass=0.95, keep=30.0):
+    """E016: enumerate phase basins and report a calibrated credible set.
+    Basins: joint shifts (a, b) in [-joint, joint]^2 of (insulation.t, drywall_back.t), plus single
+    shifts of drywall_front.t and standoff, each re-optimized (coarse search, then all frequencies).
+    Basins are de-duplicated by their integer cycle offsets from the incumbent (optical thickness /
+    period). Posterior over basins (flat prior over basins, equal Laplace volumes):
+        w_b = exp(-(C_b - C_min)/2),  C = chi2 + prior penalty.
+    Returns the best model, its cost, and the smallest set of basins holding >= `mass` of the
+    posterior, as [(summary, C)], plus the posterior of the best basin."""
+    lam2 = C0 / I.carrier(f) / 2
+    fs, ys = _subset(f, y, opts.search_step)
+    best, best_cost = model, cost_of(model, f, y, sigma)
+
+    def key(m):
+        v, v0 = m.summary(), model.summary()
+        k = []
+        for n in ("standoff",) + tuple(f"{L}.t" for L in ("drywall_front", "insulation", "drywall_back")):
+            if n == "standoff":
+                k.append(int(np.round((v[n] - v0[n]) / lam2)))
+            else:
+                L = model.layers[[x.name for x in model.layers].index(n[:-2])]
+                Lm = m.layers[[x.name for x in m.layers].index(n[:-2])]
+                tau = Coords._n(Lm).real * Lm.t.value
+                tau0 = Coords._n(L).real * L.t.value
+                k.append(int(np.round((tau - tau0) / lam2)))
+        return tuple(k)
+
+    basins = {key(model): (model, best_cost)}
+    moves = [[("insulation.t", a), ("drywall_back.t", b)] for a in range(-joint, joint + 1)
+             for b in range(-joint, joint + 1) if (a, b) != (0, 0)]
+    moves += [[("drywall_front.t", k)] for k in single] + [[("standoff", k)] for k in (-1, 1)]
+    ref_c = cost_of(model, fs, ys, sigma)
+    for mv in moves:
+        mv = [(n, k) for n, k in mv if k != 0]
+        trial = _shift(model, f, mv)
+        if trial is None:
+            continue
+        mo, c = _search_then_polish(trial, f, y, sigma, opts, ref_c + keep / max(opts.search_step, 1))
+        if mo is None:
+            continue
+        k = key(mo)
+        if k not in basins or c < basins[k][1]:
+            basins[k] = (mo, c)
+        if c < best_cost:
+            best, best_cost = mo, c
+    items = sorted(basins.values(), key=lambda t: t[1])
+    C = np.array([c for _, c in items])
+    w = np.exp(-(C - C.min()) / 2)
+    w /= w.sum()
+    n_keep = int(np.searchsorted(np.cumsum(w), mass) + 1)
+    cred = [(m.summary(), c) for m, c in items[:n_keep]]
+    info = dict(p_best_basin=float(w[0]), n_basins=len(items), n_plausible=len(cred),
+                basin_posterior=w[:n_keep].tolist())
+    return best, best_cost, cred, info
+
+
 # ============================================================================ driver
 def invert(f, yc, sigma, d0, opts: Opts = Opts()):
     """Layer stripping + joint LM + hops + plausible set, for the three-layer stud wall.
@@ -406,6 +462,11 @@ def _invert(f, yc, sigma, d0, opts: Opts):
         info["starts"].append(n)
         model = _restore_free(best, all_free)
     model, cost = lm(model, f, yc, sigma, coords=opts.coords)
+    if opts.ambiguity == "posterior":
+        model, cost = cycle_hop(model, f, yc, sigma, opts)
+        model, cost, plaus, ainfo = posterior_scan(model, f, yc, sigma, opts)
+        info.update(ainfo)
+        return model, cost, plaus, info
     if opts.ambiguity == "scan":
         model, cost = cycle_hop(model, f, yc, sigma, opts)
         model, cost, plaus = ambiguity_scan(model, f, yc, sigma, opts)

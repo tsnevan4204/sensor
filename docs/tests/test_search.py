@@ -111,3 +111,32 @@ def test_gaussian_prior_rows_and_penalty():
     m.layers[2].t.free = False                    # rows only for free parameters
     r2, J2 = P.rows(m)
     assert r2.size == 1 and J2.shape == (1, len(m.free_names()))
+
+
+def test_band_segments_and_block_gate():
+    a = np.linspace(77e9, 81e9, 256)
+    b = np.linspace(22e9, 26e9, 256)
+    f = np.concatenate([a, b])
+    assert I.band_segments(a) == [(0, 256)]
+    assert I.band_segments(f) == [(0, 256), (256, 512)]
+    assert I.band_segments(f[::8]) == [(0, 32), (32, 64)]
+    assert I.carrier(a) == a.mean() and abs(I.carrier(f) - a.mean()) < 1
+    g = I.Gate(0.27, 0.36)
+    Op, Oa, Ob = g.op(f), g.op(a), g.op(b)
+    assert np.array_equal(Op[:Oa.shape[0], :256], Oa) and np.array_equal(Op[Oa.shape[0]:, 256:], Ob)
+    assert not np.any(Op[:Oa.shape[0], 256:]) and not np.any(Op[Oa.shape[0]:, :256])
+
+
+def test_dual_benchmark_reuses_v2_truth_and_high_band():
+    f, yc, s, d0, tv = B.make_case("v2dual", 4)
+    f1, y1, s1, d1, tv1 = B.make_case("v2", 4)
+    assert tv == tv1 and d0 == d1 and np.array_equal(yc[:256], y1) and f.size == 512
+    # exact forward model on both bands at the truth fits to noise level
+    m = S.stud_wall_model(free=("t", "eps_r", "tan_d"), standoff_guess=d0)
+    for n, _, p in m.items():
+        if n in tv:
+            p.value = tv[n]
+    m.sync_ties()
+    G, _ = I.forward(m, f, jacobian=False)
+    chi2n = np.sum(np.abs(G - yc) ** 2) / s**2 / (2 * f.size)
+    assert 0.8 < chi2n < 1.25, chi2n

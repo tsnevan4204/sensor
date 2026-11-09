@@ -259,3 +259,24 @@ A 30° view helps the insulation (Δ ≈ 15) but not enough for the back drywall
 - **(E015)** For χ²-flagged front-stage failures, rerun the search with the dense physical-coordinate lattice (E009/E010 settings). Only flagged walls pay. Target: flagged 5 → ≤ 1.
 - **(E017)** Multi-band data in the benchmark and inversion (22–26 GHz), confirming E014 in the full pipeline without any prior.
 **Artifacts:** results/2026-11-09_E013_priors/
+
+### Pre-registered: E015 (2026-11-09, before running)
+**Change:** a cascade on top of E013 (drywall prior) and E013b (+ stud prior). If the data χ²/n > 1.2 (the method's own alarm), rerun with the physical-coordinate coarse search (E009 settings). If still flagged, run the dense full-data search (E007 settings). Keep the lowest posterior cost. Only flagged walls pay.
+**Hypothesis:** flagged runs fall from 7 → ≤ 2 (E013) and from 5 → ≤ 1 (E013b), with no increase in silent failures, and median work ≤ 1.3× E013/E013b (the median wall is unflagged).
+
+### Pre-registered: E017 (2026-11-09, before running)
+**Change:** benchmark `v2dual` has the same walls and the same 77–81 GHz data as v2, plus a 22–26 GHz band with its own metal-plate calibration and noise (`benchmark.DUAL_BAND`). Code support:
+- `wall_inverse.band_segments` and `carrier`: block-diagonal time gates per band; cycle period from the highest band. Single-band paths are unchanged (gates `test_band_segments_and_block_gate`, `test_dual_benchmark_reuses_v2_truth_and_high_band`).
+- The matrix-pencil start uses the highest band only. The bug found in the smoke test: the pencil assumes one uniform grid, and on concatenated bands it gave garbage starts.
+
+Method: the current method (E009 + E011b), **no priors**.
+**Hypothesis (from E014):** silent failures ≤ 1, back-drywall right cycle ≥ 90%, insulation right cycle ≥ 80%, insulation-t median error < 0.5 mm; work ≤ 2.5× the single-band method (2× the data).
+
+### Pre-registered: E016 (2026-11-09, before running)
+**Change:** E015 (drywall prior + cascade), but the plausible set comes from `search.posterior_scan` instead of the Δχ² < 4 scan:
+- joint shifts of (insulation, back drywall) over [−3, 3]², plus front-drywall and standoff shifts;
+- basins de-duplicated by integer cycle offsets;
+- posterior w ∝ exp(−ΔC/2), with C = χ² + prior penalty, a flat prior over basins and equal Laplace volumes (an approximation);
+- the reported set is the smallest one holding 95% of the posterior.
+
+**Hypothesis:** truth basin inside the 95% set for ≥ 90% of non-flagged walls (silent ≤ 2/20); calibration: mean reported P(best basin) within ±0.15 of the observed rate at which the best basin is the truth's; work ≤ 2× E015.

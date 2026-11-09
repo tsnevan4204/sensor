@@ -268,6 +268,29 @@ def _from_u(u, lo, hi):
 _GATE_CACHE = {}
 
 
+def band_segments(f, rtol=1e-6):
+    """Split a frequency vector into uniformly spaced bands: list of (start, stop) indices.
+    A step that differs from both neighbouring steps is a jump between bands. A single uniform
+    grid gives one segment, so single-band code paths are unchanged."""
+    f = np.asarray(f, float)
+    d = np.diff(f)
+    if d.size < 3:
+        return [(0, f.size)]
+    same = lambda x, y: abs(x - y) <= rtol * max(abs(x), abs(y))
+    jumps = [i for i in range(d.size)
+             if (i == 0 or not same(d[i], d[i - 1])) and (i == d.size - 1 or not same(d[i], d[i + 1]))
+             and 0 < i < d.size - 1]
+    cuts = [0] + [i + 1 for i in jumps] + [f.size]
+    return list(zip(cuts[:-1], cuts[1:]))
+
+
+def carrier(f):
+    """Centre frequency of the highest band: sets the phase-cycle period (finest basins)."""
+    segs = band_segments(f)
+    a, b = max(segs, key=lambda ab: f[ab[1] - 1])
+    return float(np.mean(f[a:b]))
+
+
 @dataclass
 class Gate:
     """Linear time gate: windowed, zero-padded inverse FFT, keep range bins in [r_lo, r_hi].
@@ -277,6 +300,18 @@ class Gate:
     pad: int = 4
 
     def op(self, f):
+        segs = band_segments(f)
+        if len(segs) > 1:                    # several bands: block-diagonal, one gate per band
+            key = (tuple((f[a], f[b - 1], b - a) for a, b in segs), self.r_lo, self.r_hi, self.pad)
+            if key not in _GATE_CACHE:
+                blocks = [self.op(f[a:b]) for a, b in segs]
+                Op = np.zeros((sum(B.shape[0] for B in blocks), f.size), complex)
+                i = 0
+                for (a, b), B in zip(segs, blocks):
+                    Op[i:i + B.shape[0], a:b] = B
+                    i += B.shape[0]
+                _GATE_CACHE[key] = Op
+            return _GATE_CACHE[key]
         key = (f.size, f[0], f[-1], self.r_lo, self.r_hi, self.pad)
         if key in _GATE_CACHE:
             return _GATE_CACHE[key]
@@ -403,7 +438,7 @@ def _phase_periods(model, f):
     """For each free thickness (and the standoff), the shift that changes the round-trip
     phase at band centre by exactly 2*pi: lambda_c / (2 Re n). False minima sit at these
     spacings, so hopping by whole periods jumps directly between basins."""
-    fc = f.mean()
+    fc = carrier(f)                      # = f.mean() for a single uniform band
     lam_c = C0 / fc
     out = {}
     for L in model.layers:
@@ -492,7 +527,7 @@ def best_standoff(model, f, y, sigma, gate=None, step_frac=1 / 16):
     fine grid (step = period * step_frac) costs one forward solve plus one matrix product.
     Returns the grid minimizer within the standoff bounds."""
     p = model.standoff
-    period = C0 / f.mean() / 2
+    period = C0 / carrier(f) / 2
     grid = np.arange(p.lo, p.hi, period * step_frac)
     m0 = model.copy(); m0.standoff.value = 0.0
     G0, _ = forward(m0, f, jacobian=False)

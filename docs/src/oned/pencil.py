@@ -104,7 +104,10 @@ def stage_starts(model, f, y, sigma, d0, stages, width=None):
     import itertools
     import wall_inverse as I
     w = dict(PENCIL_WIDTH) if width is None else width
-    est = wall_estimate(f, y, sigma, d0)
+    # the pencil needs ONE uniform frequency grid (shift invariance): use the highest band only,
+    # the band it was calibrated on (E010); other bands still enter every LM fit
+    a, b = max(I.band_segments(f), key=lambda ab: f[ab[1] - 1])
+    est = wall_estimate(f[a:b], y[a:b], sigma, d0)
     # Only layers in PENCIL_LAYERS are seeded from the pencil (E010 calibration: the front
     # drywall's tau is within 1.73 periods on all 50 calibration walls; the insulation echo merges
     # with the back-drywall echo 2 cm behind it, median error 2.1 periods, so it is not used).

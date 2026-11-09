@@ -41,7 +41,12 @@ OWNER = {"drywall_back.eps_r": "drywall_front.eps_r", "drywall_back.tan_d": "dry
 
 
 # ----------------------------------------------------------------------------- data
+DUAL_BAND = (22e9, 26e9)     # E017 second band (E014: removes the back-of-wall cycle ambiguity)
+
+
 def make_case(benchmark, seed, plate_d=0.25):
+    dual = benchmark.endswith("dual")
+    benchmark = benchmark[:-4] if dual else benchmark
     rng = np.random.default_rng(seed)
     d_true = 0.30 + 0.002 * rng.random()
     if benchmark == "v1":
@@ -53,12 +58,19 @@ def make_case(benchmark, seed, plate_d=0.25):
         raise ValueError(benchmark)
     tv["drywall_back.eps_r"] = tv["drywall_front.eps_r"]
     tv["drywall_back.tan_d"] = tv["drywall_front.tan_d"]
-    radar = W.Radar(seed=seed)
-    f, y, info = W.measure(scene, radar)
-    _, yp, _ = W.measure_metal_plate(radar, plate_d, seed=seed + 500)
-    yc, _ = I.calibrate(y, yp, f, plate_d)
-    sigma = info["noise_sigma"] * np.sqrt(1 + np.mean(np.abs(yc) ** 2))
-    r, p = W.range_profile(f, yc)
+    bands = [W.Radar(seed=seed)]
+    if dual:                       # E017: second band, own calibration scan and own noise
+        bands.append(W.Radar(f0=DUAL_BAND[0], f1=DUAL_BAND[1], seed=seed + 1000))
+    fs, ycs, sig2 = [], [], []
+    for radar in bands:
+        fb, y, info = W.measure(scene, radar)
+        _, yp, _ = W.measure_metal_plate(radar, plate_d, seed=radar.seed + 500)
+        ycb, _ = I.calibrate(y, yp, fb, plate_d)
+        fs.append(fb); ycs.append(ycb)
+        sig2.append((info["noise_sigma"] * np.sqrt(1 + np.mean(np.abs(ycb) ** 2))) ** 2)
+    f, yc = np.concatenate(fs), np.concatenate(ycs)
+    sigma = float(np.sqrt(np.mean(sig2)))                    # bands have nearly equal noise levels
+    r, p = W.range_profile(fs[0], ycs[0])                    # standoff guess from the 77-81 GHz band
     sel = (r > 0.2) & (r < 0.4)
     d0 = r[sel][np.argmax(p[sel])]
     return f, yc, sigma, d0, tv
@@ -94,7 +106,7 @@ def tau_crb(model, fi):
 # ----------------------------------------------------------------------------- scoring
 def score(f, sigma, tv, best, cost, plaus, yc):
     y_for_truth = (yc,)
-    fc = f.mean()
+    fc = I.carrier(f)                                         # highest band (= f.mean() for one band)
     quarter = W.C0 / fc / 4                                   # lambda_c / 4 (basin half-width in tau)
     est = best.summary()
     fi = I.fisher(best, f, sigma)
@@ -171,6 +183,32 @@ STUD_PRIOR = (("insulation.t", 0.0889, 0.0016),)
 E013 = dict(CURRENT, priors=DRYWALL_PRIOR)
 E013B = dict(CURRENT, priors=DRYWALL_PRIOR + STUD_PRIOR)
 
+def method_cascade(*stages, flag=1.2):
+    """E015: run the first option set; only if the data chi2/n exceeds `flag` (the method's own
+    failure alarm), run the next one, and so on. Keep the result with the lowest posterior cost
+    (data chi2 + prior penalty). Only flagged walls pay for the fallbacks."""
+    import search as SR
+
+    def run(f, yc, s, d0):
+        best, used = None, []
+        for k, kw in enumerate(stages):
+            m, c, plaus, info = SR.invert(f, yc, s, d0, SR.Opts(**kw))
+            post = c + info.get("prior_penalty", 0.0)
+            used.append(dict(stage=k, chi2n=c / (2 * f.size), post=post))
+            if best is None or post < best[4]:
+                best = (m, c, plaus, info, post)
+            if best[1] / (2 * f.size) <= flag:
+                break
+        m, c, plaus, info, _ = best
+        info = dict(info, cascade=used)
+        return m, c, plaus, info
+    return run
+
+
+# E015 fallbacks keep the same priors as the primary method
+E015_FB1 = lambda pri: dict(E009, priors=pri)                    # physical coordinates, coarse search
+E015_FB2 = lambda pri: dict(priors=pri)                          # dense full-data search (E007 settings)
+
 METHODS = {
     "e007": lambda f, yc, s, d0: method_e007(f, yc, s, d0, fit_tan=False),
     "e007_tanfree": lambda f, yc, s, d0: method_e007(f, yc, s, d0, fit_tan=True),
@@ -184,6 +222,12 @@ METHODS = {
     "current": method_search(**CURRENT),
     "e013": method_search(**E013),
     "e013b": method_search(**E013B),
+    "e017": method_search(**CURRENT),                 # run on benchmark v2dual, no priors
+    "e016": method_cascade(dict(E013, ambiguity="posterior"),
+                           dict(E015_FB1(DRYWALL_PRIOR), ambiguity="posterior"),
+                           dict(E015_FB2(DRYWALL_PRIOR), ambiguity="posterior")),
+    "e015": method_cascade(E013, E015_FB1(DRYWALL_PRIOR), E015_FB2(DRYWALL_PRIOR)),
+    "e015b": method_cascade(E013B, E015_FB1(DRYWALL_PRIOR + STUD_PRIOR), E015_FB2(DRYWALL_PRIOR + STUD_PRIOR)),
 }
 
 
