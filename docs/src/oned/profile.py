@@ -111,23 +111,7 @@ def _tv(m, eps=TV_EPS):
     return np.sqrt(d ** 2 + eps ** 2)
 
 
-MGS_E = 0.3     # E043b: minimum-gradient-support scale (log units): penalty ~ number of jumps
-
-
-def _reg(d, kind):
-    if kind == "mgs":                    # Portniaguine & Zhdanov (1999) focusing: d^2 / (d^2 + e^2)
-        return d ** 2 / (d ** 2 + MGS_E ** 2)
-    return np.sqrt(d ** 2 + TV_EPS ** 2)
-
-
-def _reg_w(d, kind):
-    """IRLS weight w such that the penalty is locally sum w d^2 (lagged diffusivity)."""
-    if kind == "mgs":
-        return MGS_E ** 2 / (d ** 2 + MGS_E ** 2) ** 2
-    return 1 / np.sqrt(d ** 2 + TV_EPS ** 2)
-
-
-def _gn(m, f, y, sigma, z0, lam, wts, iters=12, back_eps=1.0 + 0j, kind="tv"):
+def _gn(m, f, y, sigma, z0, lam, wts, iters=12, back_eps=1.0 + 0j):
     """Gauss-Newton / IRLS with LM damping on chi2 + lam * sum wts_p TV(m_p)."""
     K = m.shape[1]
     Dm = np.diff(np.eye(K), axis=0)                      # (K-1, K)
@@ -138,7 +122,7 @@ def _gn(m, f, y, sigma, z0, lam, wts, iters=12, back_eps=1.0 + 0j, kind="tv"):
         yy, _ = forward(mm, f, z0, back_eps=back_eps, jacobian=False)
         rr = (yy - y) / sigma
         chi = float(np.sum(rr.real ** 2 + rr.imag ** 2))
-        return chi + lam * float(np.sum(wts[:, None] * _reg(np.diff(mm, axis=1), kind))), chi
+        return chi + lam * float(np.sum(wts[:, None] * _tv(mm))), chi
 
     phi, chi = obj(m)
     mu = 1e-2
@@ -149,7 +133,7 @@ def _gn(m, f, y, sigma, z0, lam, wts, iters=12, back_eps=1.0 + 0j, kind="tv"):
         J = np.vstack([Jc.real, Jc.imag]) / sigma
         A = J.T @ J
         g = J.T @ rv
-        beta = _reg_w(np.diff(m, axis=1), kind)          # lagged diffusivity (IRLS)
+        beta = 1 / _tv(m)                                # lagged diffusivity (IRLS)
         Rm = np.zeros_like(A)
         gm = np.zeros(3 * K)
         for p in range(3):
@@ -200,11 +184,8 @@ def invert_profile(f, y, sigma, d0=None, dz=DZ, verbose=False, back_eps=1.0 + 0j
         fs, ys = f[sel], y[sel]
         n = 2 * fs.size
         lam = 30.0 * n / K
-        kind = "tv" if si < len(stages) - 1 else "mgs"    # E043b: focus to sharp interfaces at the end
-        if kind == "mgs":
-            lam = 3.0 * n / K
         for _ in range(8):
-            m, chi = _gn(m, fs, ys, sigma, z0, lam, wts, back_eps=back_eps, kind=kind)
+            m, chi = _gn(m, fs, ys, sigma, z0, lam, wts, back_eps=back_eps)
             log.append((si, lam, chi / n))
             if verbose:
                 print(f"  stage {si} lam {lam:.3g} chi2/n {chi / n:.2f}")
