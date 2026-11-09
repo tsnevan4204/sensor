@@ -41,3 +41,9 @@ Last updated 2026-11-09, after E033 was started. Each entry says what the limita
 | D3 | No antenna tilt; isotropic layers; one polarisation | handheld tilt loses signal and shifts paths; wood and fibre mats are anisotropic |
 | D4 | Plate calibration is close in time to the wall scan (drift small) | temperature drift was tested only at 0.05 dB / 0.01 rad |
 | D5 | The UWB front end behaves like the mmWave one (calibratable linear chain) | a UWB antenna is not a Gaussian beam; its pattern must be measured (E023 note) |
+
+## E. Accepted limitations (decided with the project owner)
+
+| # | Limitation | Why accepted | Evidence | Possible later fix |
+|---|---|---|---|---|
+| E1 | **The number of layers N is a user input** (2026-11-09). Thicknesses, materials (library labels) and the backing (air/metal) are outputs. | Deciding the layer count from the data alone is the unsolved part: the radar data admit many-layer explanations that fit to the noise level, and every automatic structure search tried (E034 growth, E041 peeling, E042 global inversion, E043 + material prior) reached only 1–2 of 8 held-out 3-layer walls, some silently wrong. With N given, junk explanations are impossible by construction (E044). | E041–E043 in the experiment log | model selection over N = 1…N_max with the E044 solver for each N and an information criterion, once E044 is reliable for known N |
