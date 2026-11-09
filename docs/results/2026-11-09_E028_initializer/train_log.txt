@@ -1,0 +1,17 @@
+data: train 19970 val 1996 in 61s
+epoch 0: val rmse (scaled) [0.137 0.405 0.534 0.545 0.411 0.595 0.57  0.428]
+epoch 50: val rmse (scaled) [0.069 0.175 0.152 0.233 0.4   0.563 0.506 0.387]
+epoch 100: val rmse (scaled) [0.071 0.132 0.123 0.2   0.394 0.558 0.307 0.386]
+epoch 150: val rmse (scaled) [0.057 0.124 0.135 0.191 0.376 0.54  0.284 0.385]
+epoch 200: val rmse (scaled) [0.053 0.12  0.119 0.19  0.35  0.527 0.277 0.384]
+epoch 250: val rmse (scaled) [0.051 0.114 0.094 0.182 0.329 0.515 0.259 0.384]
+epoch 299: val rmse (scaled) [0.052 0.112 0.087 0.181 0.318 0.509 0.256 0.383]
+training 15s, parameters 8936
+delta      val |err| median 0.1360mm  95% 0.5686mm  frac < half period(0.95mm): 0.988
+tau_front  val |err| median 0.5697mm  95% 2.0964mm  frac < half period(0.95mm): 0.731
+eps_d      val |err| median 0.0357  95% 0.1238
+tan_d      val |err| median 0.0031  95% 0.0097
+tau_ins    val |err| median 3.7386mm  95% 11.4942mm  frac < half period(0.95mm): 0.147
+eps_i      val |err| median 0.0770  95% 0.1882
+tan_i      val |err| median 0.0022  95% 0.0070
+tau_back   val |err| median 2.9260mm  95% 5.7041mm  frac < half period(0.95mm): 0.157

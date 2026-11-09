@@ -250,6 +250,51 @@ def method_cascade(*stages, flag=1.2):
 E015_FB1 = lambda pri: dict(E009, priors=pri)                    # physical coordinates, coarse search
 E015_FB2 = lambda pri: dict(priors=pri)                          # dense full-data search (E007 settings)
 
+def method_e028(hybrid=False, fallback=True):
+    """E028: learned starting point (init_net) -> exact LM; hybrid: the network sets standoff, front
+    drywall and material starts, a coarse lattice over the insulation / back-drywall cycles picks the
+    back basins (compiled min-cell model), then one exact LM on all data. chi2 alarm -> search."""
+    import search as SR
+    import init_net as N
+    fb = METHODS["e027_s4"]
+
+    def run(f, yc, s, d0):
+        dh, v = N.predict(f, yc, s)
+        opts = SR.Opts(**dict(CURRENT, standoff_halfwidth=RES_CELL, law="jonscher", pinf_free=True, min_cells=True))
+        m = S.stud_wall_model(free=("t", "eps_r", "tan_d"), standoff_guess=dh + v[0], standoff_halfwidth=RES_CELL)
+        m.law, m.min_cells = "jonscher", True
+        m.layers[0].pinf = I.P(0.3, 0.0, 0.9, True)
+        m.layers[2].pinf = I.P(0.3, 0.0, 0.9, True, tie="drywall_front.pinf")
+        n = lambda er, td: np.sqrt(er * (1 - 1j * td)).real
+        vals = {"drywall_front.eps_r": v[2], "drywall_front.tan_d": v[3], "insulation.eps_r": v[5], "insulation.tan_d": v[6]}
+        params = {nn: p for nn, _, p in m.items()}
+        for k, val in vals.items():
+            params[k].value = float(val)
+        m.sync_ties()
+        m.layers[0].t.value = v[1] / n(v[2], v[3]); m.layers[2].t.value = v[7] / n(v[2], v[3])
+        m.layers[1].t.value = v[4] / n(v[5], v[6])
+        lo, hi = m.bounds(); m.set(np.clip(m.get(), lo + 1e-9 * (hi - lo), hi - 1e-9 * (hi - lo)))
+        if hybrid:
+            fs, ys = SR._subset(f, yc, 8)
+            per = I._phase_periods(m, f)
+            best = None
+            for a in range(-6, 7):
+                for b in range(-3, 4):
+                    t = SR._shift(m, f, [(nm, k) for nm, k in (("insulation.t", a), ("drywall_back.t", b)) if k])
+                    if t is None:
+                        continue
+                    mo, c = SR.lm(t, fs, ys, s, atol=0.05, coords=opts.coords, max_iter=15)
+                    if best is None or c < best[1]:
+                        best = (mo, c)
+            m = best[0]
+        mo, c = SR.lm(m, f, yc, s, coords=opts.coords)
+        if c / (2 * f.size) > 1.2 and fallback:
+            r = fb(f, yc, s, d0)
+            return r[0], r[1], r[2], dict(r[3], e028="fallback")
+        return mo, c, [(mo.summary(), c)], {"e028": "direct"}
+    return run
+
+
 METHODS = {
     "e007": lambda f, yc, s, d0: method_e007(f, yc, s, d0, fit_tan=False),
     "e007_tanfree": lambda f, yc, s, d0: method_e007(f, yc, s, d0, fit_tan=True),
@@ -307,12 +352,17 @@ METHODS = {
        }.items()},
     "e024b": method_cascade(dict(CURRENT, standoff_halfwidth=RES_CELL, law="jonscher", pinf_free=True, band_offset=True),
                             dict(E009, standoff_halfwidth=RES_CELL, law="jonscher", pinf_free=True, band_offset=True)),
+    "e028": None, "e028h": None,       # filled below (need METHODS for the fallback)
     "e016": method_cascade(dict(E013, ambiguity="posterior"),
                            dict(E015_FB1(DRYWALL_PRIOR), ambiguity="posterior"),
                            dict(E015_FB2(DRYWALL_PRIOR), ambiguity="posterior")),
     "e015": method_cascade(E013, E015_FB1(DRYWALL_PRIOR), E015_FB2(DRYWALL_PRIOR)),
     "e015b": method_cascade(E013B, E015_FB1(DRYWALL_PRIOR + STUD_PRIOR), E015_FB2(DRYWALL_PRIOR + STUD_PRIOR)),
 }
+
+
+METHODS["e028"] = method_e028(hybrid=False)
+METHODS["e028h"] = method_e028(hybrid=True)
 
 
 # ----------------------------------------------------------------------------- runner

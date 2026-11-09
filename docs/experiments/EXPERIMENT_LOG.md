@@ -599,3 +599,40 @@ These are E026–E028.
 - Inversion: MLP start → Jonscher LM on all data (min cells) → if χ²/n > 1.2, fall back to the e027_s4 search. The final answer is always the exact-model LM optimum; the network only chooses the starting point.
 
 **Hypothesis:** on real:cq:dual60 seeds 1–20, outcomes within ±1 of e027_s4 (19/1/0), fallback on ≤ 3 walls, median time ≤ 50 ms.
+
+## E024b — Band offset and all effects with the front-stage fix  (2026-11-09)
+- **real:cqoffset:dual60, e024b:** **9 / 0 / 1** (success / flagged / silent), best basin 9/10. Before the fix: 2/8/0.
+- **lambot:all:dual60** (beam 2 cm, H_f, H_i, plate error, drift, paper, roughness, air gap 3 mm, band offset), **e024beam with the fix, seeds 1–5:** **4 / 1 / 0**, best basin 4/5 (seed 4 χ²/n 1.23). Before the fix: 0/9/1. Median 256 s per wall.
+- **But** err/CRB within the right basin has std 2–3 (means up to ±2.8): the estimates are biased beyond their error bars. Most likely cause: the unmodelled 3 mm insulation air gap (LM from the truth: χ²/n 0.96–1.18 without a gap layer, 0.95–0.98 with one).
+- **Next:** a gap layer chosen by model selection, and an err/CRB-based acceptance test in addition to χ² (bias that χ² does not flag).
+
+**Conclusion:**
+- Paper, roughness and offset are solved individually.
+- The all-effects case is solved for the basin (no silent failures), not yet for unbiased parameters.
+
+**Artifacts:** results/2026-11-09_E024_facings/
+
+## E028 — Learned direct initializer  (2026-11-09)
+**Results** (real:cq:dual60, seeds 1–20; MLP ≤ 10k parameters trained on 20k prior-drawn causal walls, seeds disjoint from the benchmark; training 15–22 s):
+
+| version | success / flagged / silent | direct (no fallback) | direct times | fallback median |
+|---|---|---|---|---|
+| spectrum features (32 frequencies per band), network + LM | 19 / 1 / 0 | 2/20 | 30, 49 ms | 1.1 s |
+| hybrid (network + coarse back lattice by coarse χ²) | 16 / 1 / **3** | 13/20 | ~0.9 s | — (rejected: picks back basins without hop/ambiguity checks) |
+| range-profile features (142 inputs, 9.6k parameters), network + LM | 18 / 1 / **1** | 3/20 | **16, 30, 54 ms** | 0.96 s |
+
+**Network accuracy** (validation, within half a cycle):
+- standoff δ 97–99%, front τ 73–75%;
+- insulation τ 15% → 24% (median error 3.7 → 2.1 mm with range features);
+- **back τ 16% (no better than the prior)**.
+
+**Failures examined:**
+- The back-drywall thickness is a cycle count (a periodic quantity) carried by two unresolved echoes. Smooth regression cannot represent the wrap-around.
+- The fast path also skipped the ambiguity checks, which produced a silent failure (seed 9, χ²/n 1.03).
+
+**Hypothesis failed** (the fast path is used on 2–3/20 walls, not ≥ 17/20). Where the start is right, a complete exact inversion takes **16–54 ms**, which shows the millisecond route works once the initializer is good.
+**Next (E029):**
+- Phase-aware outputs, a GNSS-style cascade: predict cos/sin of each layer's optical thickness on the **wide-lane** period c/(2Δf_carrier) ≈ 8.1 mm (79 vs 60.5 GHz) and the narrow-lane period 1.9 mm, plus a coarse value. Resolve the integers coarse → wide → narrow (the Teunissen/LAMBDA cascade).
+- Always run a ±1-cycle ambiguity check (a few cheap LM runs) before accepting the fast path.
+
+**Artifacts:** results/2026-11-09_E028_initializer/ (training logs), src/oned/init_net.py, init_net_weights.npz (9.6k parameters).
