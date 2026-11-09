@@ -62,3 +62,14 @@ Source: `results/2026-11-06_E007_validation/` (validation_log.txt, validation.pn
 - Forward + Jacobian: about 17 ms for 256 frequencies and ~100 cells (vectorized Thomas solve).
 - One L1 inversion: **about 80–90 s**. That is about 66 gated LM runs from lattice starts, plus a joint LM, cycle hops and the ambiguity scan.
 - **This is the main thing to cut** (see `08_low_compute_toolbox.md`).
+
+## Update 2026-11-09 (E008–E012b, S001)
+
+- **The benchmark was flattering.** In B1-dry-v1 the loss tangents equal the model's fixed values. With tan δ randomized and estimated (B1-dry-v2), the E007 method succeeds on 2/20 walls with 12/20 **silent** failures. With tan δ held at a wrong nominal value it succeeds on 0/20. Within the right basin the E007 error bars are well calibrated (err/CRB std 0.8–1.7). The old large err/CRB values were wrong-basin answers.
+- **Search speed.** Coarse-frequency early-stopped search with optical-thickness coordinates, kept inside the prior box (E009 + E011b), reaches the same or better outcomes with 11× less work (about 12 s instead of 153 s per inversion). Search failures fall from 7 to 1 per 20 walls.
+- **Information limit.** With tan δ unknown, one 77–81 GHz band and 40 dB, the front drywall is identified. The **cycle counts of the insulation and back drywall are not**: wrong basins 1–5 periods away fit as well as or better than the truth (Δχ² 0.2–6). Integer least squares cannot resolve this because the profiled χ² over the integers is nearly flat. A fixed Δχ² < 4 set under-covers when there are many basins (look-elsewhere effect).
+- **Matrix pencil.** It super-resolves the front drywall's faces (within 1.73 periods on all 50 held-out walls). The insulation echo merges with the back-drywall echo at this SNR, so it does not help there.
+- **Stability (S001, doc 11).**
+  - 1D learned stars that are symmetric and cell-passive in their *modal* admittances give a uniquely solvable system, with a k- and mesh-independent bound.
+  - In 2D, passivity alone is not sufficient. A full-side absorber or strict loss is needed, and β ≈ 1.2/k.
+  - 2D needs learned stars because the local Trefftz space is infinite-dimensional. Exact fine-relative stars are dense Schur complements, and coarse learned stars need patch stencils (m ≈ log k).

@@ -141,3 +141,50 @@ New tests in `tests/test_stability.py` (19 tests) and `tests/conftest.py` (pins 
 - (d) Ask Kaibo Hu Q1–Q6.
 **Artifacts:** results/2026-11-09_S001_stability/
 - **E011b** (added 2026-11-09, before running; reason: in E011 the LM in τ-coordinates left the physical prior box, e.g. insulation t = 185 mm vs box 80–100 mm, and settled in worse basins): LM in optical coordinates, but any trial step whose physical parameters leave the box is rejected (damping raised, as for a cost increase), so iterates stay feasible. Hypothesis: search failures (truth-basin χ² < returned χ²) back to ≤ E010's count, outcomes not worse than E010, work lower than E010. **E012b** = E011b + integer least squares (same hypothesis as E012).
+
+## E009–E012b — Faster search, pencil starts, optical coordinates, integer ambiguity  (2026-11-09)
+**Roadmap item:** Phase 1.1 (cut search cost), evaluated on B1-dry-v2 seeds 1–20 (E008). Hypotheses pre-registered above.
+**Change:** `search.py` (generalized LM: early stop `atol`, coarse-frequency search, optical coordinates with or without box), `pencil.py`, `ambiguity.py`, method registry in `benchmark.py`. Each method adds one switch to the previous one.
+**Gates:** 33 tests pass. `search.lm` is step-for-step identical to `wall_inverse.levenberg_marquardt`. The optical-coordinate chain rule matches finite differences (< 1e-6). `search_base` reproduces `e007_tanfree` on seed 1 (χ² 428.0392480098).
+**New diagnostic** (`results/2026-11-09_E008_benchmark/truth_basin.py`): χ² of LM started at the truth (all frequencies, tan δ free) = the best χ² inside the truth's basin. Each silent failure is then one of:
+- **search:** the truth basin is better than the returned answer;
+- **enumeration:** the truth basin is within Δχ² 4 but was not listed;
+- **ambiguity:** the truth basin is worse by more than 4.
+Check: from the truth, LM stays in the truth basin (τ errors ≤ 0.006 period).
+
+**Results:**
+
+| method | success | flagged | silent (search / enum / ambiguity) | work* | wall† | verdict |
+|---|---|---|---|---|---|---|
+| E008 baseline (E007 method, tan δ free) | 2 | 6 | 12 (7 / 5 / 0) | 11546 | 153 s | — |
+| E009 coarse search (32 freq, Δχ² < 0.01 stop, 3 basins polished) | 6 | 2 | 12 (2 / 8 / 2) | 4387 | 48 s | partial: work 2.6× lower (target ≥ 4×), but search failures 7 → 2 |
+| E010 + pencil starts (front drywall) | 7 | 2 | 11 (1 / 8 / 2) | 4674 | 51 s | rejected: no work saving (target ≥ 1.5×); harmless |
+| E011 + optical coordinates | 2 | 2 | 16 (6 / 8 / 2) | 793 | 9.5 s | rejected: LM left the prior box (insulation 185 mm vs box 80–100) |
+| E011b optical coordinates, box kept | 5 | 5 | 10 (1 / 6 / 3) | **1007** | **11.6 s** | partial: 11× less work than baseline; 3 more *flagged* front-stage failures than E010 |
+| E012 + integer least squares (on E011) | 6 | 1 | 13 (4 / 5 / 4) | 2366 | 28 s | rejected |
+| E012b + integer least squares (on E011b) | 7 | 2 | 11 (3 / 4 / 4) | 6068 | 65 s | rejected: silent not reduced, work 6× E011b, P(best) not calibrated (mean 0.38 vs observed 0.05) |
+
+\*work = forward solves × frequencies/256. †1 core, shared machine.
+
+**Failures examined (the main finding).** Per seed, the best answer's offset from the truth in whole periods (front, insulation, back), for E011b:
+- **Front drywall:** offset 0 on 15/20 walls. The other 5 are front-stage failures, all flagged by χ² (χ²/n 3.4–8).
+- **Insulation and back drywall:** off by 1–5 periods on most walls. The returned basin fits **better** than the truth basin by Δχ² 0.2–6.4 (seeds 1, 2, 5, 6, 8, 10, 18, 20).
+
+So with tan δ unknown and a single 77–81 GHz band at 40 dB, the cycle counts of the insulation and back drywall are **not identified**. Many basins fit within noise, and which one fits best is decided by the noise. This is an information limit, not a search bug.
+
+It also explains the E012 failure. Integer least squares assumes the profiled χ² is a well-curved quadratic over the integers. Here it is nearly flat: W was indefinite or ill-conditioned on most walls, so the closed-form success rates were undefined. The empirical posterior over a box-truncated set was overconfident.
+
+Also found: with 5–20 near-equal basins, the maximum noise gain over basins routinely exceeds Δχ² = 4, a look-elsewhere effect. A fixed "Δχ² < 4" plausible set is therefore not a calibrated confidence set when there are many basins.
+
+**Conclusion:**
+- **Accepted** for speed: E009 + E011b. Search failures fall from 7 to 1, and work falls 11× (153 s → 12 s per inversion).
+- **Rejected:** E010 (no gain), E011 (box bug), E012/E012b (resolution cannot come from enumeration when the data do not determine the integers).
+- The remaining silent failures are ambiguity at the back of the wall. Only more information can fix them.
+
+**Next:**
+- **(E013)** A manufacturing prior on drywall thickness. The ASTM C36 tolerance is ±1/64 in nominal, ±1/32 in local (±0.8 mm), against a basin spacing of 1.2 mm. Expected to remove the back-drywall cycle ambiguity.
+- **(E014)** More information for the insulation. Option 1: a second band, judged by the integer success rate rather than the CRB (E008 showed it does not break t/εr). Option 2: two incidence angles, which measure √(ε − sin²θ)·t and so separate t from εr.
+- **(E015)** For flagged front-stage failures, fall back to the E010 search. This is cheap because only flagged runs pay.
+- **(E016)** Calibrated reporting with many basins: replace the fixed Δχ² < 4 set by posterior mass over an enumerated basin grid, with an explicit prior.
+
+**Artifacts:** results/2026-11-09_E009_coarse_search/, _E010_pencil/, _E011_optical_coords/, _E012_integer_ambiguity/
