@@ -29,7 +29,12 @@ def one(seed):
 
 if __name__ == "__main__":
     s0, s1, wk, out = int(sys.argv[2]), int(sys.argv[3]), int(sys.argv[4]), sys.argv[5]
+    import os
+    done = set()
+    if os.path.exists(out):                       # resumable: container restarts kill long runs
+        done = {json.loads(l)["seed"] for l in open(out) if l.strip()}
+    todo = [s for s in range(s0, s1 + 1) if s not in done]
     with Pool(wk) as p:
-        for r in p.imap(one, range(s0, s1 + 1)):
+        for r in p.imap_unordered(one, todo):
             open(out, "a").write(json.dumps(r, default=float) + "\n")
             print(r.get("seed"), "OK" if r.get("ok") else ("flag" if r.get("alarm") else "SILENT"), f"{r.get('wall_s', 0):.1f}s", flush=True)
