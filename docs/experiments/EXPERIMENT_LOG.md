@@ -209,3 +209,28 @@ Exact oblique TMM, gated against the reference at 0°.
 - (a) A has median min-gap < 4, consistent with the ambiguity seen in E009–E012.
 - (b) G gains at most 2× (averaging alone does not resolve cycles).
 - (c) At least one of B–F reaches worst-case gap > 25, i.e. P(flip) < 1e-2.
+
+## E014 — Which extra measurement resolves the back-of-wall cycles? (information analysis)  (2026-11-09)
+**Change:** `results/2026-11-09_E014_information/info_gap.py`: an oblique-incidence TMM (TE/TM; gate: equals `wall_toy.reflection_tmm` at 0° to < 1e-12). For each configuration and 8 random B1-dry-v2 walls, the fit starts at truth + whole-period shifts of insulation and/or back drywall, re-fits all 8 wall parameters (bounded least squares) on noiseless data, and records the χ² the wrong basin pays (Δ). Noise σ is the benchmark value, with 256 samples per band or angle. Runs in 21 s.
+**Results** (median over walls of Δ per hop; "vanishes" = the fit from the shifted start slides back to the true wall, i.e. no wrong local minimum exists):
+
+| configuration | insulation ±1 | back drywall ±1 | joint (+1, −1) | worst-wall min Δ | P(flip) worst |
+|---|---|---|---|---|---|
+| A 77–81 GHz (today) | 1.9–2.5 | **0.2** | 1.8 | 0.0 | 0.46 |
+| G same band twice | 3.8–5.0 | 0.4 | 3.7 | 0.1 | 0.45 |
+| E + 30° TE | 15.6 | 5.1–5.6 | 18–20 | 0.4 | 0.37 |
+| F + 30° TM | 12.3 | 3.9–4.2 | 14–15 | 0.3 | 0.39 |
+| B + 57–64 GHz | ~2000 | 246–292 | ~1800 | 61.7 | 4e-5 |
+| C + 22–26 GHz | vanishes | vanishes | vanishes | ≥ 344 (±2 hops) | ~0 |
+| D + 3.1–10.6 GHz | vanishes | vanishes | vanishes | no wrong basin | 0 |
+
+**Hypotheses:**
+- (a) **passed:** today's single band has median min-gap 0.2. It cannot tell the back-drywall cycle apart at all, which matches the E009–E012 failures.
+- (b) **passed:** measuring the same band twice only doubles Δ.
+- (c) **passed:** every second band resolves the cycles (B worst case Δ = 62; C and D remove the wrong minima entirely).
+
+A 30° view helps the insulation (Δ ≈ 15) but not enough for the back drywall (Δ ≈ 5).
+**Why** (math): a one-cycle shift changes the round-trip delay by exactly one carrier period, Δτ = 1/fc. At frequency f this changes the phase by 2πfΔτ = 2π + 2π(f − fc)/fc, so the residual is 2π(f − fc)/fc. Across 77–81 GHz it spans only ±0.16 rad, which is below the noise on the weak back echoes. A second band centred at f₂ adds 2π(fc − f₂)/fc: 0.47π for 57–64 GHz, 1.4π for 22–26 GHz, and 1.8π (varying across the band) for 3.1–10.6 GHz. Lower bands also lose less in the drywall, so the back echoes are stronger.
+**Conclusion:** the remaining 1D silent failures are an **information** problem with a clear hardware answer: add a second band. 22–26 GHz (an ISM/automotive band) or UWB 3.1–10.6 GHz remove the ambiguity entirely; 57–64 GHz nearly does. A second angle is a weaker alternative.
+**Next:** implement multi-band data in the benchmark and inversion (exact stars need no change), then rerun the full inversion with the chosen band to confirm in practice. The prior (E013) is the fallback for single-band hardware.
+**Artifacts:** results/2026-11-09_E014_information/
