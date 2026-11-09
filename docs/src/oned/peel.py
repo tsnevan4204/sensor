@@ -119,7 +119,7 @@ def _lsq(res_b, q0, lo, hi, max_nfev=60):
         return res_b(q[None])[0]
 
     def jac(q):
-        h = 1e-7 * np.maximum(np.abs(q), 1e-3)
+        h = 1.4901161193847656e-08 * np.maximum(1.0, np.abs(q))   # scipy's 2-point rule: sqrt(eps) max(1,|q|)
         h = np.where(q + h > hi, -h, h)
         R = res_b(np.vstack([q[None], q[None] + np.diag(h)]))
         return ((R[1:] - R[0][None]) / h[:, None]).T
@@ -497,7 +497,7 @@ def peel_invert(f, y, sigma, nmax=12, beam=3, keep=2, verbose=False):
                 L2, bk = L2
             mm = ST.rebuild(model, layers=L2, back=bk)
             ST.set_dispersion_free(mm, True)
-            mm, cm = ST._fit(mm, f, y, sigma, atol=1e-2)
+            mm, cm = ST._fit(mm, f, y, sigma, atol=1e-2, max_iter=8)   # screening only; the winner is fully converged
             if best_t is None or cm < best_t[1]:
                 best_t = (mm, cm)
         if best_t is not None:

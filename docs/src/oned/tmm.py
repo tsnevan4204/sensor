@@ -32,6 +32,14 @@ def forward(model, f, jacobian=True):
     model.sync_ties()
     names = model.free_names()
     col = {nm: j for j, nm in enumerate(names)}
+    vals = {n: p for n, _, p in model.items()}          # one pass (model.owner() rebuilds this per call)
+
+    def owner(n):
+        p = vals.get(n)
+        if p is None:
+            return None
+        src = p.tie if p.tie is not None else n
+        return src if (vals[src].free and vals[src].tie is None) else None
     T = model.water_Tp.value if model.water_Tp is not None else model.water_T
     k0 = 2 * np.pi * f / C0
     N = len(model.layers)
@@ -67,14 +75,14 @@ def forward(model, f, jacobian=True):
         # n_i enters r_i (as the lower medium), r_{i+1} (as the upper medium) and e_i
         dn = dr[i] * (-2 * nm1 / (nm1 + n) ** 2) + dr[i + 1] * (2 * nn / (n + nn) ** 2) \
             + de[i] * (-2j * k0 * L.t.value * e[i])
-        ot = model.owner(f"{L.name}.t")
+        ot = owner(f"{L.name}.t")
         if ot is not None:
             J[:, col[ot]] += de[i] * (-2j * k0 * n * e[i])
         for key in ("eps_r", "tan_d", "theta", "pinf", "water_T"):
-            o = model.owner(f"{L.name}.{key}") if key != "water_T" else (model.owner("water_T") if model.water_Tp is not None else None)
+            o = owner(f"{L.name}.{key}") if key != "water_T" else (owner("water_T") if model.water_Tp is not None else None)
             if o is None or key not in derivs[i]:
                 continue
             J[:, col[o]] += dn * derivs[i][key] / (2 * n)
-    if model.owner("standoff") is not None:
+    if owner("standoff") is not None:
         J[:, col["standoff"]] += y * (-2j * k0)
     return y, J

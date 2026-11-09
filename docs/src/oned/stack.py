@@ -268,9 +268,9 @@ def set_dispersion_free(m, on):
 
 
 # ============================================================================ inversion: search
-def _fit(m, f, y, sigma, atol=0.0):
+def _fit(m, f, y, sigma, atol=0.0, max_iter=200):
     try:
-        mo, c = SR.lm(m, f, y, sigma, atol=atol)
+        mo, c = SR.lm(m, f, y, sigma, atol=atol, max_iter=max_iter)
     except Exception:
         return m, np.inf
     return mo, (c if np.isfinite(c) else np.inf)
