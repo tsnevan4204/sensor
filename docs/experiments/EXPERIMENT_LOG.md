@@ -690,3 +690,39 @@ e029 + (i) the scaled alarm χ² > n + 3√(2n); (ii) an alarm before the scan t
 **Change:** `WallModel.gap` splits the insulation into [batt t − g, air g], g ∈ [0.3, 10] mm. `insulation.t` stays the cavity depth. Gate: equals the realism air-gap truth to < 1e-12; Jacobian vs FD < 1e-6. Method `e030` fits with and without the gap (facing, roughness, band offset, Jonscher, min cells) and keeps the gap only if χ² drops by more than 6 (one extra parameter, about 3σ of a 1-dof χ²).
 **Benchmarks:** real:cqgap:dual60 (3 mm gap only) and real:allpw:dual60 (roughness + paper + 3 mm gap + band offset, plane wave), seeds 1–10.
 **Hypothesis:** on both, success ≥ 9, silent 0, err/CRB std ≤ 1.5 (E024b all-effects: std 2–3); the gap is selected on ≥ 8/10 walls.
+
+### Pre-registered: E031 — FMCW chain of the prototype chip (TI IWR6843-like) (before running)
+**Change:**
+- **Data** (`realism.fmcw_band`): one chirp per scan with slope S. The target response is evaluated at the true instantaneous frequencies f_n + ε_n (quadratic nonlinearity, peak ε). It is multiplied by A(f) and filtered by the IF high-pass chain: two first-order sections, 175 and 350 kHz (IWR6843 HPF1/HPF2 options), bilinear, zero initial state, so the start transient is included. ADC noise is added. Bands 77–81 GHz (IWR1843) and 60–64 GHz (IWR6843).
+- **Model** (`WallModel.chain`): per-band linear operator L_b = F_b·diag(Â_b), applied to Γ and J. Â is a smooth (degree-10 Chebyshev) fit from the plate scan through the same F. Gate: the truth fits the raw IF data at noise level; the Jacobian maps consistently.
+- **Method e031:** search on chain-equalised data L⁻¹y, then the final exact LM and χ² on the raw IF data.
+- **Baseline:** the classical calibration y/A_plate, which ignores the chain (fmcw:<preset>:naive with e027_s4).
+
+**Physics:** an echo at delay τ beats at S·τ (200 kHz for the wall at S = 100 MHz/µs, at the HPF corners), so the HPF gain varies across the wall's echoes and differs between plate (0.25 m) and wall (0.30 m). At S = 250 MHz/µs the beat frequencies rise to ~500 kHz, where the HPF is flatter.
+
+**Benchmarks:** fmcw:fm100 / fm250 / fm100nl (1 MHz nonlinearity, unmodelled), :naive (e027_s4) and :chain (e031), seeds 1–10.
+
+**Hypotheses:**
+- (a) naive at 100 MHz/µs: flagged or silently biased (z > 3) on most walls;
+- (b) chain at 100 and 250 MHz/µs: success ≥ 9, silent 0, err/CRB std ≤ 1.5;
+- (c) naive at 250 MHz/µs is less biased than naive at 100;
+- (d) the unmodelled 1 MHz nonlinearity is flagged or mildly biased (characterises the need for chirp-linearity calibration).
+
+### Held-out baselines on dual60 (seeds 21–120)  (2026-11-09)
+
+| method | success/flagged/silent | best basin | median |
+|---|---|---|---|
+| e025_base (dense search) | **95 / 0 / 5** | 93 | 3.1 s |
+| e027_s4 (sparse search) | 88 / 7 / 5 | 85 | 1.1 s |
+| e029b (fast path) | 86 / 3 / 11 | 85 | 1.0 s |
+
+**Conclusions:**
+- With the 57–64 GHz second band, even the dense search leaves 5% silent failures (back-of-wall basins within noise: an information limit). With 22–26 GHz, E019 gave 100/100.
+- The speed shortcuts add about 6 more.
+- **Hardware implication:** UWB 3.1–10.6 GHz (wrong basins vanish, E014/E025) is the stronger second band. To be confirmed on held-out walls.
+
+### E031 development notes
+- (i) **Equalising** the data by L⁻¹ (to run the coarse search unchanged) fails: the IF high-pass inverse is ill-conditioned (cond ≈ 1.2e3) and its error grows along the sweep like a random walk, to 1.1–1.8 against a signal of 0.3. The model must predict filtered data; the filter is never inverted.
+- (ii) The search therefore applies the operators on the full grid (search_step = 1).
+- (iii) `best_standoff` must apply the standoff ramp **before** the IF chain (L·(Γ₀·ramp)); it applied it after. Fixed.
+- Smoke (seeds 1–2): 1 success, 1 flagged (a search miss).

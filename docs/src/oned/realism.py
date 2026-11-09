@@ -52,6 +52,7 @@ class Realism:
     air_gap: float = 0.0
     drift: tuple = (0.0, 0.0)
     band_offset: float = 0.0            # second band's phase-centre offset (m), unknown to the model
+    fmcw: dict | None = None            # E031: FMCW chain {"S": slope Hz/s, "hpf": (f1, f2) Hz, "nonlin": peak Hz}
     n_quad: int = 160                    # 48 was 6e-5 off for w0 = 1 cm (E023 check); 160: 6e-15
 
 
@@ -270,3 +271,94 @@ def make_case_lambot(seed, R: Realism, band2=(57e9, 64e9)):
     sel = (r > 0.2) & (r < 0.4)
     d0 = r[sel][np.argmax(p[sel])]
     return np.concatenate(fs), np.concatenate(ys), float(np.sqrt(np.mean(s2))), d0, tv, tuple(w0s)
+
+
+
+# ----------------------------------------------------------------------------- E031: FMCW chain (TI IWR6843-like)
+def hpf_matrix(n, fs, corners):
+    """Lower-triangular Toeplitz matrix of the IF high-pass chain acting on the IF time series:
+    first-order sections H(s) = s/(s + w_c) per corner, discretised by the bilinear transform,
+    zero initial state (includes the start-of-chirp transient). y_IF = F x."""
+    from scipy.signal import lfilter
+    imp = np.zeros(n); imp[0] = 1.0
+    h = imp
+    for fc in corners:
+        K = 2 * fs
+        wc = 2 * np.pi * fc
+        b = np.array([K, -K]) / (K + wc)
+        a = np.array([1.0, (wc - K) / (K + wc)])
+        h = lfilter(b, a, h)
+    F = np.zeros((n, n))
+    for i in range(n):
+        F[i, :i + 1] = h[i::-1]
+    return F
+
+
+def fmcw_band(tv, radar: W.Radar, R: Realism, d=None, plate_d=0.25):
+    """Raw IF samples of one chirp per scan (wall and plate): the target response at the TRUE
+    instantaneous frequencies f_n + eps_n (quadratic nonlinearity, peak R.fmcw["nonlin"]), times
+    A(f), filtered by the IF high-pass chain (time domain), plus ADC noise. Returns f (nominal),
+    raw wall and plate data, sigma, and the chain matrix F."""
+    fm = R.fmcw
+    f = radar.freqs
+    n = f.size
+    Tc = (f[-1] - f[0]) / fm["S"]
+    fs = (n - 1) / Tc
+    x = np.linspace(-1, 1, n)
+    eps = fm.get("nonlin", 0.0) * (x**2 - 1 / 3)
+    fa = f + eps
+    layers = layers_from_truth(tv, R)
+    Sw, _, _ = received(fa, layers, tv["standoff"] if d is None else d, R)
+    Sp, _, _ = received(fa, layers, plate_d + R.plate_err, R, pec=True)
+    A = W.system_response(radar)
+    F = hpf_matrix(n, fs, fm["hpf"])
+    sig = np.sqrt(1.0 / 10 ** (radar.snr_db / 10) / 2)
+    rng_w, rng_p = np.random.default_rng(radar.seed), np.random.default_rng(radar.seed + 500)
+    yw = F @ (A * system(f, R, Sw, None)) + sig * (rng_w.standard_normal(n) + 1j * rng_w.standard_normal(n))
+    yp = F @ (A * system(f, R, Sp, None)) + sig * (rng_p.standard_normal(n) + 1j * rng_p.standard_normal(n))
+    return f, yw, yp, sig, F
+
+
+def fmcw_calibrate(f, yp, F, plate_d, deg=10):
+    """Estimate the RF response A(f) from a plate scan THROUGH the known IF chain: A is smooth,
+    A = sum_k c_k T_k(x) (Chebyshev, x in [-1, 1]), and y_p = F (A * Gamma_p) is linear in c."""
+    x = 2 * (f - f[0]) / (f[-1] - f[0]) - 1
+    Gp = -np.exp(-2j * 2 * np.pi * f / C0 * plate_d)
+    T = np.polynomial.chebyshev.chebvander(x, deg)                    # (n, deg+1)
+    Amat = F @ (T * Gp[:, None])
+    c, *_ = np.linalg.lstsq(Amat, yp, rcond=None)
+    return T @ c
+
+
+def make_case_fmcw(seed, R: Realism, band2=(60e9, 64e9), model_chain=True):
+    """E031: two-band raw IF data (77-81 GHz top band, second band default 60-64 GHz = IWR6843).
+    With model_chain: returns raw data and the per-band operators L_b = F_b diag(A_hat_b) for the
+    model. Without: the classical calibration y / (plate-derived A) that ignores the IF chain."""
+    import wall_inverse as I
+    rng = np.random.default_rng(seed)
+    d_true = 0.30 + 0.002 * rng.random()
+    _, tv = S.truth_random_v2(rng, d_true)
+    tv["drywall_back.eps_r"] = tv["drywall_front.eps_r"]
+    tv["drywall_back.tan_d"] = tv["drywall_front.tan_d"]
+    bands = [W.Radar(seed=seed), W.Radar(f0=band2[0], f1=band2[1], seed=seed + 1000)]
+    fs_, ys, s2, ops = [], [], [], []
+    for k, radar in enumerate(bands):
+        d = tv["standoff"] + (R.band_offset if k > 0 else 0.0)
+        f, yw, yp, sig, F = fmcw_band(tv, radar, R, d=d)
+        if model_chain:
+            Ah = fmcw_calibrate(f, yp, F, 0.25)
+            ops.append(F @ np.diag(Ah)); ys.append(yw); s2.append(sig**2)
+        else:
+            yc, _ = I.calibrate(yw, yp, f, 0.25)
+            ys.append(yc); s2.append((sig * np.sqrt(1 + np.mean(np.abs(yc) ** 2))) ** 2)
+        fs_.append(f)
+    f = np.concatenate(fs_)
+    y = np.concatenate(ys)
+    if model_chain:     # standoff guess from the chain-equalised top band (only for the guess)
+        yg = np.linalg.lstsq(ops[0], ys[0], rcond=None)[0]
+    else:
+        yg = ys[0]
+    r, p = W.range_profile(fs_[0], yg)
+    sel = (r > 0.2) & (r < 0.4)
+    d0 = r[sel][np.argmax(p[sel])]
+    return f, y, float(np.sqrt(np.mean(s2))), d0, tv, (ops if model_chain else None)

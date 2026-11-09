@@ -62,6 +62,9 @@ def real_presets():
             "cqrough": RL.Realism(dispersion="cq", rough_sigma=1e-4),
             "cqoffset": RL.Realism(dispersion="cq", band_offset=0.3e-3),
             "cqgap": RL.Realism(dispersion="cq", air_gap=3e-3),
+            "fm100": RL.Realism(dispersion="cq", fmcw={"S": 100e12, "hpf": (175e3, 350e3), "nonlin": 0.0}),
+            "fm250": RL.Realism(dispersion="cq", fmcw={"S": 250e12, "hpf": (175e3, 350e3), "nonlin": 0.0}),
+            "fm100nl": RL.Realism(dispersion="cq", fmcw={"S": 100e12, "hpf": (175e3, 350e3), "nonlin": 1e6}),
             "allpw": RL.Realism(dispersion="cq", rough_sigma=1e-4, paper=PAPER, air_gap=3e-3, band_offset=0.3e-3),
             "all": RL.Realism(dispersion="cq", beam_w0=0.02, Hf=0.1, plate_err=0.5e-3, rough_sigma=1e-4,
                               paper=PAPER, air_gap=3e-3, drift=(0.05, 0.01), band_offset=0.3e-3)}
@@ -76,6 +79,12 @@ def make_case(benchmark, seed, plate_d=0.25):
         _, preset, band = benchmark.split(":")
         f, y, s, d0, tv, w0s = RL.make_case_lambot(seed, real_presets()[preset], band2=BANDS2[band])
         _EXTRA["beam"] = w0s
+        return f, y, s, d0, tv
+    if benchmark.startswith("fmcw:"):            # E031: raw IF data, "fmcw:<preset>:<chain|naive>"
+        import realism as RL
+        _, preset, mode = benchmark.split(":")
+        f, y, s, d0, tv, ops = RL.make_case_fmcw(seed, real_presets()[preset], model_chain=(mode == "chain"))
+        _EXTRA["chain"] = ops
         return f, y, s, d0, tv
     if benchmark.startswith("real:"):            # E021+: realistic world (realism.py), "real:<preset>:<band>"
         import realism as RL
@@ -451,6 +460,21 @@ def method_e030():
 
 
 METHODS["e030"] = method_e030()
+
+
+def method_e031():
+    """E031: the whole search applies the measurement operators (IF high-pass chain x calibrated A)
+    to the model on the FULL frequency grid (no coarse subsets, no equalisation: inverting the
+    high-pass chain is ill-conditioned, cond ~1e3, error grows like a random walk)."""
+    def run(f, y, s, d0):
+        kw = dict(CURRENT, standoff_halfwidth=RES_CELL, law="jonscher", pinf_free=True, min_cells=True,
+                  lat_step=1.0, lat0_eps=(2.6,), lat1_eps=(1.15,), hops=(1, -1), amb_ks=(-1, 1),
+                  search_step=1, search_atol=0.01, chain=_EXTRA["chain"])
+        return method_cascade(kw, dict(E009, **{k: v for k, v in kw.items() if k not in CURRENT}, search_step=1))(f, y, s, d0)
+    return run
+
+
+METHODS["e031"] = method_e031()
 
 
 # ----------------------------------------------------------------------------- runner

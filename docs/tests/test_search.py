@@ -352,3 +352,21 @@ def test_gap_layer_matches_realism_and_jacobian():
     a = m.copy(); a.gap.value += h; b = m.copy(); b.gap.value -= h
     fd = (I.forward(a, f, False)[0] - I.forward(b, f, False)[0]) / (2 * h)
     assert np.abs(fd - J[:, j]).max() / np.abs(J[:, j]).max() < 1e-6
+
+
+def test_fmcw_chain_operator_is_exact_and_identity_without_filter():
+    import realism as RL
+    R = RL.Realism(dispersion="cq", fmcw={"S": 100e12, "hpf": (175e3, 350e3), "nonlin": 0.0})
+    f, y, s, d0, tv, ops = RL.make_case_fmcw(3, R)
+    m = S.stud_wall_model(free=("t", "eps_r", "tan_d"), standoff_guess=d0); m.law = "cq"
+    for n, _, p in m.items():
+        if n in tv: p.value = tv[n]
+    m.sync_ties()
+    mc = m.copy(); mc.chain = ops
+    G, J = I.forward(mc, f)
+    chi2n = np.sum(np.abs(G - y) ** 2) / s**2 / (2 * f.size)
+    assert 0.8 < chi2n < 1.25, chi2n                       # the truth fits the raw IF data
+    G0, J0 = I.forward(m, f)
+    assert np.allclose(J[:256], ops[0] @ J0[:256]) and np.allclose(G[256:], ops[1] @ G0[256:])
+    F = RL.hpf_matrix(64, 6.4e6, ())
+    assert np.allclose(F, np.eye(64))                       # no corners: identity

@@ -224,6 +224,7 @@ class Opts:
     rough: bool = False                 # E024: effective front-face roughness (1 param)
     band_offset: bool = False           # E024: phase-centre offset of the second band (1 param)
     gap: bool = False                   # E030: air gap behind the insulation (1 param)
+    chain: object = None                # E031: per-band measurement operators (IF chain x A_hat); search on full grid
     lat_step: float = 0.5               # E025: start-lattice spacing in phase periods
     lat0_eps: tuple = (2.0, 2.6, 3.2)   # E025: drywall eps start values
     lat1_eps: tuple = (1.05, 1.15, 1.3) # E025: insulation eps start values
@@ -496,6 +497,8 @@ def _invert(f, yc, sigma, d0, opts: Opts):
         model.band_offset = I.P(0.0, -1e-3, 1e-3, True)
     if opts.gap:
         model.gap = I.P(2e-3, 3e-4, 1e-2, True)
+    if opts.chain is not None:
+        model.chain = opts.chain
     if opts.pinf_free:
         model.layers[0].pinf = I.P(0.3, 0.0, 0.9, True)
         model.layers[2].pinf = I.P(0.3, 0.0, 0.9, True, tie="drywall_front.pinf")

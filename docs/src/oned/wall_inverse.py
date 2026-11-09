@@ -68,6 +68,7 @@ class WallModel:
     band_offset: "P | None" = None      # E024: phase-centre/standoff offset of the 2nd and later bands
     gap: "P | None" = None              # E030: air gap behind the layer gap_after (cavity depth kept as its t)
     gap_after: str = "insulation"
+    chain: list | None = None   # E031: per-band linear measurement operators L_b (n_b x n_b): data = L_b Gamma
 
     # ---- flat views over parameters -------------------------------------------------
     def items(self):
@@ -301,6 +302,8 @@ def forward(model: WallModel, f, jacobian=True):
     With model.beam set (E023) the result is the beam-received signal S(f) of forward_beam()."""
     f = np.asarray(f, float)
     model.sync_ties()
+    if model.chain is not None:
+        return _forward_chain(model, f, jacobian)
     if model.band_offset is not None and len(band_segments(f)) > 1:
         return _forward_band_offset(model, f, jacobian)
     if model.beam is not None:
@@ -420,6 +423,26 @@ def _forward_fast(model, f, jacobian, FK):
         J[:, col["standoff"]] += G * (-2j * k0[:, 0])
     for o, coef in shift[1].items():
         J[:, col[o]] += coef * G * (-2j * k0[:, 0])
+    return G, J
+
+
+def _forward_chain(model, f, jacobian):
+    """E031: apply the per-band measurement operators (IF chain x calibrated RF response) to the
+    exact reflection and its Jacobian: data_b = L_b Gamma_b, J_b = L_b J_b. Only valid on the full
+    frequency grid the operators were built for; on a subset (coarse search) the chain is skipped,
+    which only affects the search heuristics, never the final fit."""
+    segs = band_segments(f)
+    inner = model.copy()
+    inner.chain = None
+    G, J = forward(inner, f, jacobian)
+    if len(segs) != len(model.chain) or any(b - a != L.shape[0] for (a, b), L in zip(segs, model.chain)):
+        return G, J
+    G = G.copy()
+    J = J.copy() if J is not None else None
+    for (a, b), L in zip(segs, model.chain):
+        G[a:b] = L @ G[a:b]
+        if J is not None:
+            J[a:b] = L @ J[a:b]
     return G, J
 
 
@@ -943,10 +966,17 @@ def best_standoff(model, f, y, sigma, gate=None, step_frac=1 / 16):
     period = C0 / carrier(f) / 2
     grid = np.arange(p.lo, p.hi, period * step_frac)
     m0 = model.copy(); m0.standoff.value = 0.0
+    chain = m0.chain
+    m0.chain = None
     G0, _ = forward(m0, f, jacobian=False)
     k0 = 2 * np.pi * f / C0
     P = np.exp(-2j * np.outer(k0, grid))                      # (F, grid)
-    R = y[:, None] - G0[:, None] * P
+    Mod = G0[:, None] * P
+    if chain is not None:                                     # E031: the ramp acts BEFORE the IF chain
+        segs = band_segments(f)
+        if len(segs) == len(chain) and all(b - a == L.shape[0] for (a, b), L in zip(segs, chain)):
+            Mod = np.vstack([L @ Mod[a:b] for (a, b), L in zip(segs, chain)])
+    R = y[:, None] - Mod
     if gate is not None:
         R = gate.op(f) @ R
     cost = np.sum(np.abs(R) ** 2, axis=0)
