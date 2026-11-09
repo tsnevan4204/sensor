@@ -477,3 +477,23 @@ All keep the exact 1D Hodge stars. Priority list in doc 12 §F.
 
 **Benchmarks:** `lambot:<cq|cqbeam2|cqbeam1|cqbeamhf|cqbeam1hf>:dual60`, seeds 1–10.
 **Hypothesis:** e023 gives success ≥ 9/10 and silent 0 on all beam presets, with err/CRB std ≤ 1.5 (E020 with a plane-wave model: 8/8 flagged, z 30–90). On the beamless preset (cq) it is equivalent to e021b.
+
+### Pre-registered: E024 — Facings, roughness, band phase-centre offset (2026-11-09, before running)
+**Change:** `wall_inverse._effective`: sublayers with derivative maps. All gates pass (48), including:
+- facing = core material is invisible (< 1e-12);
+- facing equals the realism paper truth (< 1e-12);
+- zero band offset is the identity (< 1e-14);
+- Jacobian vs FD < 1e-5 with all features on, plane wave and beam;
+- roughness taper vs Kirchhoff: best σ scale 0.9–1.1 and residual < 10% of the effect for σ ≤ 0.1 mm.
+
+Model features:
+- **paper facing** shared by all four drywall faces (t_p, εr_p, tan δ_p);
+- **front roughness** as a graded taper of thickness h = 2√3σ/1.33 straddling the mean surface. Second-order equivalence: a graded layer reflects ~1 − (n̄k₀h)²/6, Kirchhoff ~1 − 2(k₀σ)²;
+- **band phase-centre offset** δ (the second band sees d + δ).
+
+Method `e024` = Jonscher + all three (plane wave). `e024beam` = the same + the beam model.
+**Benchmarks:** real:<cqpaper|cqrough|cqoffset>:dual60 (E020: paper and offset 8/8 flagged; rough 5/8 flagged, 3 silent), plus lambot:all:dual60 (every E020 effect together incl. beam, H_f, H_i, plate error, drift, air gap) with e024beam. Seeds 1–10.
+**Hypothesis:**
+- e024 gives success ≥ 9/10 and silent 0 on paper, rough and offset.
+- On `all`: success ≥ 8/10, silent 0. The standoff error equals the plate error by construction (it is measured relative to the calibration plane), so it is excluded from z.
+- The 3 mm air gap is not modelled; expect it to cost some success.

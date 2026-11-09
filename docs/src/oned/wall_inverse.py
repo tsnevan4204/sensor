@@ -182,7 +182,11 @@ def n_cells_for(L: LayerSpec, fmax, T):
 
 # ============================================================================ forward + adjoint
 ROUGH_SUB = 4          # sublayers of the graded roughness layer
-ROUGH_H = 2 * np.sqrt(3.0)   # taper thickness / rms height: matches exp(-2 (k sigma)^2) to 2nd order
+# taper thickness / rms height. A graded layer reflects ~ sinc(k_bar h) ~ 1 - (k_bar h)^2/6 with k_bar = n_bar k0
+# the wavenumber INSIDE the taper; Kirchhoff/Ament: exp(-2 (k0 sigma)^2) ~ 1 - 2 (k0 sigma)^2. Equal for
+# h = 2 sqrt(3) sigma / n_bar; n_bar = (1 + n_drywall)/2 ~ 1.33 (E024 check: fitted 1/0.74). sigma is an
+# effective roughness for other front materials.
+ROUGH_H = 2 * np.sqrt(3.0) / 1.33
 
 
 def _effective(model: WallModel, f):
@@ -198,9 +202,13 @@ def _effective(model: WallModel, f):
     own = model.owner
     subs = []
 
+    known = {n for n, _, _ in model.items()}
+
     def dmap(L, d, prefix):
         out = {}
         for key in ("eps_r", "tan_d", "theta", "pinf"):
+            if f"{prefix}.{key}" not in known:
+                continue
             o = own(f"{prefix}.{key}")
             if o is not None:
                 out[o] = out.get(o, 0) + d[key]
@@ -236,7 +244,10 @@ def _effective(model: WallModel, f):
                      (tp, fp[0], dl_face, fp[1], ncell_for(tp, ef))]
         else:
             subs.append((L.t.value, e, {ot: 1.0} if ot is not None else {}, dm, n_cells_for(L, f.max(), T)))
+    shift = (0.0, {})
     if model.rough is not None:
+        # the taper straddles the MEAN surface (Kirchhoff's reference): h/2 comes out of the front
+        # material and h/2 out of the air gap, so the air path is d - h/2 (returned as `shift`)
         h = ROUGH_H * model.rough.value
         orr = own("rough")
         first = subs[0]
@@ -246,8 +257,12 @@ def _effective(model: WallModel, f):
             taper.append((h / ROUGH_SUB, 1 + wi * (first[1] - 1),
                           {orr: ROUGH_H / ROUGH_SUB} if orr is not None else {},
                           {o: wi * dd for o, dd in first[3].items()}, 1))
-        subs = taper + subs
-    return subs
+        dl_first = dict(first[2])
+        if orr is not None:
+            dl_first[orr] = dl_first.get(orr, 0) - ROUGH_H / 2
+        subs = taper + [(first[0] - h / 2, first[1], dl_first, first[3], first[4])] + subs[1:]
+        shift = (-h / 2, {orr: -ROUGH_H / 2} if orr is not None else {})
+    return subs, shift
 
 
 def forward(model: WallModel, f, jacobian=True):
@@ -261,7 +276,7 @@ def forward(model: WallModel, f, jacobian=True):
         return forward_beam(model, f, jacobian)
     names = model.free_names()
     J = np.zeros((f.size, len(names)), complex) if jacobian else None
-    subs = _effective(model, f)
+    subs, shift = _effective(model, f)
     ncell = [sb[4] for sb in subs]
     layer_of_cell = np.repeat(np.arange(len(subs)), ncell)
     ell = np.concatenate([[sb[0] / n] * n for sb, n in zip(subs, ncell)])
@@ -290,7 +305,7 @@ def forward(model: WallModel, f, jacobian=True):
     rhs[:, 0, 1] = 1.0               # adjoint: picks out e_0 (A is symmetric, so A^T = A)
     sol = _tridiag_solve(diag, off, rhs)
     e, lam = sol[..., 0], sol[..., 1]
-    phase = np.exp(-2j * k0[:, 0] * model.standoff.value)
+    phase = np.exp(-2j * k0[:, 0] * (model.standoff.value + shift[0]))
     G = (e[:, 0] - 1) * phase
     if not jacobian:
         return G, None
@@ -314,6 +329,8 @@ def forward(model: WallModel, f, jacobian=True):
             J[:, col[o]] += tk * de
     if model.owner("standoff") is not None:
         J[:, col["standoff"]] += G * (-2j * k0[:, 0])
+    for o, coef in shift[1].items():
+        J[:, col[o]] += coef * G * (-2j * k0[:, 0])
     return G, J
 
 
@@ -358,7 +375,7 @@ def forward_oblique(model: WallModel, f, krho, jacobian=True):
     f = np.asarray(f, float)
     F, K = krho.shape
     names = model.free_names()
-    subs = _effective(model, f)
+    subs, _ = _effective(model, f)        # the air-path shift is applied by forward_beam
     ncell = [sb[4] for sb in subs]
     layer_of_cell = np.repeat(np.arange(len(subs)), ncell)
     ell = np.concatenate([[sb[0] / n] * n for sb, n in zip(subs, ncell)])
@@ -462,15 +479,19 @@ def forward_beam(model: WallModel, f, jacobian=True):
     GTE, GTM, Jo = forward_oblique(model, f, kr, jacobian)
     k0 = 2 * np.pi * f[:, None] / C0
     kz0 = np.sqrt(k0**2 - kr**2 + 0j)
-    ph = np.exp(-2j * kz0 * model.standoff.value)
+    _, shift = _effective(model, f[:1]) if model.rough is not None else (None, (0.0, {}))
+    ph = np.exp(-2j * kz0 * (model.standoff.value + shift[0]))
     Gco = 0.5 * (GTE + GTM)
     S = np.sum(wt * Gco * ph, axis=1)
     if not jacobian:
         return S, None
     names = model.free_names()
     J = np.einsum("fk,fkp->fp", wt * ph, 0.5 * (Jo[0] + Jo[1]))
+    dS_dd = np.sum(wt * Gco * ph * (-2j * kz0), axis=1)
     if model.owner("standoff") is not None:
-        J[:, names.index("standoff")] += np.sum(wt * Gco * ph * (-2j * kz0), axis=1)
+        J[:, names.index("standoff")] += dS_dd
+    for o, coef in shift[1].items():
+        J[:, names.index(o)] += coef * dS_dd
     return S, J
 
 

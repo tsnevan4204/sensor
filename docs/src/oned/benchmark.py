@@ -284,6 +284,15 @@ METHODS = {
     # E023: beam forward model (rotated Gauss-Laguerre over exact oblique stars) with calibrated waists
     "e023": method_cascade(dict(CURRENT, standoff_halfwidth=RES_CELL, law="jonscher", pinf_free=True, beam="auto"),
                            dict(E009, standoff_halfwidth=RES_CELL, law="jonscher", pinf_free=True, beam="auto")),
+    # E024: + facing paper, front roughness, band phase-centre offset (plane wave / beam)
+    "e024": method_cascade(dict(CURRENT, standoff_halfwidth=RES_CELL, law="jonscher", pinf_free=True,
+                                facing=True, rough=True, band_offset=True),
+                           dict(E009, standoff_halfwidth=RES_CELL, law="jonscher", pinf_free=True,
+                                facing=True, rough=True, band_offset=True)),
+    "e024beam": method_cascade(dict(CURRENT, standoff_halfwidth=RES_CELL, law="jonscher", pinf_free=True,
+                                    facing=True, rough=True, band_offset=True, beam="auto"),
+                               dict(E009, standoff_halfwidth=RES_CELL, law="jonscher", pinf_free=True,
+                                    facing=True, rough=True, band_offset=True, beam="auto")),
     "e016": method_cascade(dict(E013, ambiguity="posterior"),
                            dict(E015_FB1(DRYWALL_PRIOR), ambiguity="posterior"),
                            dict(E015_FB2(DRYWALL_PRIOR), ambiguity="posterior")),

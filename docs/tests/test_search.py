@@ -225,3 +225,73 @@ def test_lambot_calibration_recovers_beam():
     import realism as RL
     f, y, s, d0, tv, w0s = RL.make_case_lambot(3, RL.Realism(dispersion="cq", beam_w0=0.015, Hf=0.1, Hi=0.02))
     assert all(abs(w - 0.015) < 0.0008 for w in w0s), w0s
+
+
+def _facing_model(tp=4e-4, ep=2.0, tdp=0.08, law="cq"):
+    m = S.stud_wall_model(free=("t", "eps_r", "tan_d"), standoff_guess=0.30)
+    m.law = law
+    m.layers[0].tan_d.value = 0.035; m.sync_ties()
+    m.facing = I.LayerSpec("facing", I.P(tp, 1e-5, 1.5e-3), I.P(ep, 1.0, 4.0), I.P(tdp, 0.0, 0.3))
+    m.facing_on = ("drywall_front", "drywall_back")
+    return m
+
+
+def test_facing_matches_realism_paper_and_is_invisible_when_core_material():
+    import realism as RL
+    f = np.concatenate([np.linspace(77e9, 81e9, 32), np.linspace(57e9, 64e9, 32)])
+    m = _facing_model()
+    G, _ = I.forward(m, f, False)
+    L = RL.layers_from_truth(m.summary(), RL.Realism(dispersion="cq", paper=(4e-4, 2.0, 0.08)))
+    ref = RL.gamma_layers(f, np.zeros((f.size, 1)), L)[0][:, 0] * np.exp(-2j * 2 * np.pi * f / W.C0 * 0.30)
+    assert np.abs(G - ref).max() < 1e-12
+    m0 = S.stud_wall_model(free=("t", "eps_r", "tan_d"), standoff_guess=0.30); m0.law = "cq"
+    m0.layers[0].tan_d.value = 0.035; m0.sync_ties()
+    mi = _facing_model(ep=m0.layers[0].eps_r.value, tdp=0.035)
+    assert np.abs(I.forward(mi, f, False)[0] - I.forward(m0, f, False)[0]).max() < 1e-12
+
+
+def test_band_offset_zero_is_identity_and_full_jacobian():
+    f = np.concatenate([np.linspace(77e9, 81e9, 32), np.linspace(57e9, 64e9, 32)])
+    m0 = _facing_model()
+    m = _facing_model()
+    m.band_offset = I.P(0.0, -1e-3, 1e-3, True)
+    assert np.abs(I.forward(m, f, False)[0] - I.forward(m0, f, False)[0]).max() < 1e-14
+    m.band_offset.value = 2e-4
+    m.rough = I.P(8e-5, 1e-6, 5e-4, True)
+    for beam in (None, (0.02, 0.015)):
+        mm = m.copy(); mm.beam = beam; mm.beam_K = 3
+        G, J = I.forward(mm, f)
+        assert J.shape[1] == len(mm.free_names()) and "facing.t" in mm.free_names() and "rough" in mm.free_names()
+        worst = 0
+        for j in range(len(mm.free_names())):
+            errs = []
+            for rel in (1e-5, 1e-6, 1e-7):
+                h = rel * max(abs(mm.get()[j]), 1e-4)
+                a = mm.copy(); v = a.get(); v[j] += h; a.set(v)
+                b = mm.copy(); v = b.get(); v[j] -= h; b.set(v)
+                fd = (I.forward(a, f, False)[0] - I.forward(b, f, False)[0]) / (2 * h)
+                errs.append(np.abs(fd - J[:, j]).max() / max(np.abs(J[:, j]).max(), 1e-30))
+            worst = max(worst, min(errs))
+        assert worst < 1e-5, (beam, worst)
+
+
+def test_rough_taper_matches_kirchhoff_to_second_order():
+    """The graded taper reproduces the Kirchhoff coherent factor up to second order: with the
+    n_bar-corrected thickness the best sigma scale is ~1 and the residual is a small fraction of the
+    roughness effect for realistic sigma (<= 0.1 mm)."""
+    import realism as RL
+    from scipy.optimize import minimize_scalar
+    f = np.concatenate([np.linspace(77e9, 81e9, 32), np.linspace(57e9, 64e9, 32)])
+    m = S.stud_wall_model(free=("t",), standoff_guess=0.0); m.standoff.value = 0.0
+    L = RL.layers_from_truth(m.summary(), RL.Realism())
+    smooth = RL.gamma_layers(f, np.zeros((f.size, 1)), L)[0][:, 0]
+    out = []
+    for sig in (2e-5, 1e-4):
+        kir = RL.gamma_layers(f, np.zeros((f.size, 1)), L, rough_sigma=sig)[0][:, 0]
+        def mis(sc):
+            mm = m.copy(); mm.rough = I.P(sig * sc, 1e-7, 1e-3, False)
+            return np.abs(I.forward(mm, f, False)[0] - kir).max()
+        r = minimize_scalar(mis, bounds=(0.3, 1.7), method="bounded")
+        out.append((r.x, r.fun / np.abs(kir - smooth).max()))
+    for scale, rel in out:
+        assert 0.9 < scale < 1.1 and rel < 0.1, out

@@ -219,6 +219,9 @@ class Opts:
     beam: tuple | None = None           # E023: per-band beam waists (m) from the antenna calibration
     beam_K: int = 2                     # E023: rotated Gauss-Laguerre nodes in the search (error ~1e-5 << noise)
     beam_K_final: int = 4               # E023: nodes for the final re-polish (error ~1e-8)
+    facing: bool = False                # E024: shared paper facing on both drywall sheets (3 params)
+    rough: bool = False                 # E024: effective front-face roughness (1 param)
+    band_offset: bool = False           # E024: phase-centre offset of the second band (1 param)
 
 
 def _subset(f, y, k):
@@ -460,6 +463,14 @@ def _invert(f, yc, sigma, d0, opts: Opts):
     model.law = opts.law
     if opts.beam is not None:
         model.beam, model.beam_K, model.beam_dref = tuple(opts.beam), opts.beam_K, float(d0)
+    if opts.facing:
+        model.facing = I.LayerSpec("facing", I.P(3e-4, 5e-5, 1.0e-3, True), I.P(2.2, 1.2, 4.0, True),
+                                   I.P(0.05, 0.0, 0.3, True))
+        model.facing_on = ("drywall_front", "drywall_back")
+    if opts.rough:
+        model.rough = I.P(5e-5, 1e-6, 4e-4, True)
+    if opts.band_offset:
+        model.band_offset = I.P(0.0, -1e-3, 1e-3, True)
     if opts.pinf_free:
         model.layers[0].pinf = I.P(0.3, 0.0, 0.9, True)
         model.layers[2].pinf = I.P(0.3, 0.0, 0.9, True, tie="drywall_front.pinf")
