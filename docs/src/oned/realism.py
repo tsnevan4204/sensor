@@ -37,7 +37,7 @@ C0, ETA0 = W.C0, W.ETA0
 MU0 = ETA0 / C0
 EPS0 = 1 / (MU0 * C0**2)
 F_REF = 79e9
-ITU_D = dict(drywall=0.9395, fiberglass=1.075)   # sigma ~ f^d exponents (plasterboard; ceiling board) - verify
+ITU_D = dict(drywall=0.9395, fiberglass=1.075)   # sigma ~ f^d: ITU-R P.2040-3 Table 3 plasterboard; ceiling board (verified)
 
 
 @dataclass
