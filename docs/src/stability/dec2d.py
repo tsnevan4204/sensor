@@ -280,8 +280,18 @@ class ComplexLU:
         A = sp.csr_matrix(A)
         J = sp.csr_matrix(np.array([[0.0, -1.0], [1.0, 0.0]]))
         R = (sp.kron(A.real, sp.eye(2)) + sp.kron(A.imag, J)).tocsc()
-        self.lu = spla.splu(R, permc_spec="MMD_AT_PLUS_A")
         self.n = A.shape[0]
+        # symmetric-mode ordering with a small pivot threshold keeps fill low (PML matrices);
+        # verified on a random right-hand side, else refactor with full partial pivoting
+        rng = np.random.default_rng(12345)
+        f = rng.standard_normal(self.n) + 1j * rng.standard_normal(self.n)
+        for th in (0.01, 1.0):
+            self.lu = spla.splu(R, permc_spec="MMD_AT_PLUS_A", diag_pivot_thresh=th,
+                                options=dict(SymmetricMode=th < 1))
+            u = self.solve(f)
+            self.residual = np.linalg.norm(A @ u - f) / np.linalg.norm(f)
+            if self.residual < 1e-10:
+                break
 
     def solve(self, f, trans="N"):
         f = np.asarray(f, complex)

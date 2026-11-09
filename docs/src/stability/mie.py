@@ -31,11 +31,26 @@ def total_field(x, y, k, a, eps_r, nmax=None):
     inside = r < a
     ri, po = r[inside], ph[inside]
     ro, pho = r[~inside], ph[~inside]
-    ui = np.zeros(ri.shape, complex); us = np.zeros(ro.shape, complex)
-    for m, A, Cc in zip(n, an, cn):
-        f = (-1j) ** m
-        ui += f * Cc * jv(m, k1 * ri) * np.exp(1j * m * po)
-        us += f * A * hankel2(m, k * ro) * np.exp(1j * m * pho)
+    f = (-1j) ** n
+    ui = _modesum(f * cn, lambda m, r: jv(m, k1 * r), ri, po, n)
+    us = _modesum(f * an, lambda m, r: hankel2(m, k * r), ro, pho, n)
     u[inside] = ui
     u[~inside] = np.exp(-1j * k * x[~inside]) + us
     return u
+
+
+def _modesum(coef, radial, r, ph, n, chunk=20000):
+    """sum_m coef_m radial(m, r) e^{j m ph}; radial evaluated for m >= 0 only (J_-m = (-1)^m J_m,
+    H_-m = (-1)^m H_m), chunked over points."""
+    out = np.zeros(r.shape, complex)
+    mpos = np.arange(0, n.max() + 1)
+    sign = (-1.0) ** mpos
+    cpos = coef[n >= 0]
+    cneg = coef[n <= 0][::-1]                     # coefficient of -m, m = 0..nmax
+    for s in range(0, r.size, chunk):
+        rr, pp = r[s:s + chunk], ph[s:s + chunk]
+        R = radial(mpos[None, :], rr[:, None])    # (pts, m)
+        E = np.exp(1j * mpos[None, :] * pp[:, None])
+        term = R * (cpos[None, :] * E + (mpos > 0)[None, :] * sign[None, :] * cneg[None, :] * np.conj(E))
+        out[s:s + chunk] = term.sum(1)
+    return out
