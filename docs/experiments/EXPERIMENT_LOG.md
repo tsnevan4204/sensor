@@ -730,3 +730,19 @@ e029 + (i) the scaled alarm χ² > n + 3√(2n); (ii) an alarm before the scan t
 ### Pre-registered: E032 — Held-out confirmation with the UWB second band (before running)
 real:cq:dualuwb (77–81 + 3.1–10.6 GHz), seeds 21–120, dense (e025_base) and sparse (e027_s4) search.
 **Hypothesis:** dense ≥ 98 success and ≤ 1 silent (vs 95/0/5 with 57–64 GHz); sparse within 2 of dense.
+
+## E030 — Air-gap layer with model selection  (2026-11-09)
+**Results** (dual60, seeds 1–10):
+
+| data | success/flagged/silent | best basin | gap selected | estimated gap (true 3 mm) | insulation err/CRB std | time |
+|---|---|---|---|---|---|---|
+| real:cqgap | 10/0/0 | 10 | 7/10 | 0.6–0.8 mm | 2.2–2.3 | 62 s |
+| real:allpw (roughness + paper + 3 mm gap + offset) | 6/2/2 | 7 | 6/10 | 0.7–9.3 mm | 1.8–2.1 | 75 s |
+
+**Hypothesis failed:**
+- The gap is selected (Δχ² > 6) but its size is not identified.
+- Air (εr 1) behind a batt (εr ≈ 1.15) is a reflection of only ~3.5% in amplitude, and in optical thickness the gap trades almost one-for-one with the batt's εr.
+- The insulation parameters stay biased by about 2 CRB.
+
+**Conclusion:** a thin, low-contrast layer below the resolution cannot be estimated from this data. It should be treated as a **nuisance**: report cavity depth and insulation εr with uncertainty widened by marginalising over a plausible gap range (profile likelihood over g ∈ [0, 10] mm), rather than as a point estimate. Recorded as an identifiability limit (doc 12 §A7). The all-plane-wave-effects failures (2 flagged, 2 silent) need separate examination once the E031/E032 runs finish.
+**Artifacts:** results/2026-11-09_E030_gap/
