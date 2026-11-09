@@ -126,7 +126,7 @@ def _lsq(res_b, q0, lo, hi, max_nfev=60):
     return least_squares(fun, q0, jac=jac, bounds=(lo, hi), method="trf", x_scale="jac", max_nfev=max_nfev)
 
 
-def _fit_step(B, n_prevs, starts, r_win, d_free=None, top=4):
+def _fit_step(B, n_prevs, starts, r_win, d_free=None, top=6):
     """Least squares of the gated half-space model; all starts are scored without optimisation and
     only the `top` best are optimised. Returns sorted (cost, p, water, d, ndof)."""
     ops = [_gate(f, r_win) for f in B.fs]
@@ -213,7 +213,7 @@ def _model_block(p, f, n_prev):
     return (r1 + G * e1) / (1 + r1 * G * e1)
 
 
-def _fit_block(B, n_prevs, echoes, d_free=None, top=4, keep=2):
+def _fit_block(B, n_prevs, echoes, d_free=None, top=6, keep=2):
     """Cascade: low band only (few phase cycles), then all bands from the best low-band blocks with
     +-2 high-band cycles on each thickness (GNSS-style wide-lane -> narrow-lane)."""
     lo = B.low()
@@ -497,7 +497,7 @@ def peel_invert(f, y, sigma, nmax=12, beam=3, keep=2, verbose=False):
                 L2, bk = L2
             mm = ST.rebuild(model, layers=L2, back=bk)
             ST.set_dispersion_free(mm, True)
-            mm, cm = ST._fit(mm, f, y, sigma, atol=1e-2, max_iter=8)   # screening only; the winner is fully converged
+            mm, cm = ST._fit(mm, f, y, sigma, atol=1e-2)
             if best_t is None or cm < best_t[1]:
                 best_t = (mm, cm)
         if best_t is not None:
