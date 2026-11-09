@@ -399,6 +399,21 @@ def peel_invert(f, y, sigma, nmax=12, beam=3, keep=2, verbose=False):
     model = ST._drop_trailing_air(ST._drop_leading_air(model))
     ST.set_dispersion_free(model, True)
     model, cost = ST._fit(model, f, y, sigma)
+    # identical neighbours (same type, eps within 3 %) are one physical layer: merge, keep if the exact
+    # refit still fits (chi2 rise < kappa)
+    lay = ST.describe(model)
+    i = 0
+    while i + 1 < len(lay):
+        a, b = lay[i], lay[i + 1]
+        if a["water"] == b["water"] and abs(a["er"] - b["er"]) <= 0.03 * max(a["er"], b["er"]):
+            merged = lay[:i] + [dict(a, t=a["t"] + b["t"])] + lay[i + 2:]
+            mm = ST.rebuild(model, layers=merged)
+            ST.set_dispersion_free(mm, True)
+            mm, cm = ST._fit(mm, f, y, sigma)
+            if cm - cost < 4 * np.log(n_all):
+                model, cost, lay = mm, cm, ST.describe(mm)
+                continue
+        i += 1
     # exact pruning (Schwarz/BIC): drop or merge any layer whose removal costs < kappa
     kappa = 4 * np.log(n_all)
     changed = True
