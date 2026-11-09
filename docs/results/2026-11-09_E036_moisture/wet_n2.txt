@@ -10,3 +10,24 @@ seed 3: truth [('brick', 63.5, 0.091), ('wood', 11.9, 0.075)] air d 0.3015
 seed 4: truth [('water', 5.2, 0), ('tile', 7.8, 0)] air d 0.3017
    fit  [(5.2, 1.0, 'W'), (7.7, 6.22, 0.0)] air d 0.3017 chi2 1060/1024 alarm False 21s
    class ['water', 'tile']
+seed 5: truth [('batt', 31.8, 0.015), ('concrete', 149.8, 0.117)] air d 0.3018
+   fit  [(31.7, 1.25, 0.0), (2.5, 5.82, 0.0), (113.0, 4.36, 0.0)] air d 0.3018 chi2 1064/1024 alarm False 110s
+   class ['ceiling_board', 'concrete', 'concrete']
+seed 6: truth [('plywood', 9.2, 0.046)] air d 0.3014
+   fit  [(6.6, 3.69, 0.0), (1.4, 1.94, 0.17), (17.5, 1.1, 0.0)] air d 0.3014 chi2 1043/1024 alarm False 78s
+   class ['floorboard', 'concrete', 'batt']
+seed 7: truth [('marble', 10.5, 0), ('foam', 37.5, 0)] air d 0.3006
+   fit  [(10.5, 7.49, 0.0), (37.5, 1.06, 0.0)] air d 0.3006 chi2 933/1024 alarm False 36s
+   class ['marble', 'batt']
+seed 8: truth [('glass', 8.6, 0), ('wood', 17.5, 0.038)] air d 0.3004
+   fit  [(8.5, 6.17, 0.0), (16.7, 2.42, 0.0), (3.1, 1.44, 0.0)] air d 0.3004 chi2 1017/1024 alarm False 115s
+   class ['glass', 'chipboard', 'foam']
+seed 9: truth [('tile', 10.3, 0)] metal d 0.3017
+   fit  [(10.3, 6.12, 0.0)] metal d 0.3017 chi2 1110/1024 alarm False 23s
+   class ['tile']
+seed 10: truth [('water', 4.0, 0), ('wood', 12.3, 0.115)] air d 0.3017
+   fit  [(4.0, 1.0, 'W'), (12.3, 4.13, 0.0)] air d 0.3017 chi2 1063/1024 alarm False 18s
+   class ['water', 'floorboard']
+seed 11: truth [('brick', 61.1, 0.024)] air d 0.3019
+   fit  [(61.4, 4.12, 0.0), (133.4, 1.0, 0.0)] air d 0.3019 chi2 1096/1024 alarm False 23s
+   class ['floorboard', 'batt']

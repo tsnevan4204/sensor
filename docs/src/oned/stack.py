@@ -349,6 +349,17 @@ def _drop_leading_air(m):
     return m
 
 
+def _drop_trailing_air(m):
+    """An air layer in front of an air backing is no layer at all (exact degeneracy)."""
+    while len(m.layers) > 1 and m.back == "air" and m.layers[-1].theta.value < 0.5 \
+            and m.layers[-1].eps_r.value < 1.03 and m.layers[-1].tan_d.value < 2e-3:
+        mm = rebuild(m, layers=describe(m)[:-1])
+        for L, Lo in zip(mm.layers, m.layers):
+            L.pinf.value, L.pinf.free = Lo.pinf.value, Lo.pinf.free
+        m = mm
+    return m
+
+
 def _retype(m):
     """Same layer count, one layer's material type changed (dielectric <-> water / air),
     keeping its optical thickness at 5 GHz."""
@@ -360,6 +371,10 @@ def _retype(m):
         tau = np.sqrt(eps[0]).real * L.t.value
         if not cur[i]["water"]:
             out.append(cur[:i] + [dict(t=tau / 8.7, er=1.0, td=0.0, water=True)] + cur[i + 1:])
+            if L.eps_r.value > 1.15 and not cur[i].get("moist"):     # E036: wet version of the same layer
+                for th in (0.04, 0.10):
+                    out.append(cur[:i] + [dict(cur[i], moist=True, theta=th, er=max(1.1, L.eps_r.value * (1 - 2 * th)))]
+                               + cur[i + 1:])
             if L.eps_r.value > 1.15:
                 out.append(cur[:i] + [dict(t=tau, er=1.0, td=0.0, water=False)] + cur[i + 1:])
         else:
@@ -391,6 +406,7 @@ def _best_of(models, f, y, sigma, backs=("air", "metal"), atol=0.0, stage_f=None
     for lay in models:
         for bk in backs:
             m = build(lay, best_d[0], back=bk, water_T=WATER_T0 if water_T is None else water_T)
+            set_dispersion_free(m, True)      # E036: a frozen dispersion shape is mimicked by fake layers
             if stage_f is not None:          # continuation: lowest third of the band first
                 m, _ = _fit(m, *stage_f, sigma, atol=atol)
             mo, c = _fit(m, fs, ys, sigma, atol=max(atol, 1e-2))
@@ -515,7 +531,7 @@ def invert(f, y, sigma, d0=None, nmax=NMAX, bic_per_layer=None, verbose=False):
             if cost - cc > kappa_all:
                 model, cost = cand, cc
     # --- prune
-    m2 = _drop_leading_air(model)
+    m2 = _drop_trailing_air(_drop_leading_air(model))
     if m2 is not model:
         set_dispersion_free(m2, True)
         model, cost = _fit(m2, f, y, sigma)
