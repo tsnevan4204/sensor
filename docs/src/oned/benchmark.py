@@ -66,7 +66,9 @@ def real_presets():
             "fm100": RL.Realism(dispersion="cq", fmcw={"S": 100e12, "hpf": (175e3, 350e3), "nonlin": 0.0}),
             "fm250": RL.Realism(dispersion="cq", fmcw={"S": 250e12, "hpf": (175e3, 350e3), "nonlin": 0.0}),
             "fm100nl": RL.Realism(dispersion="cq", fmcw={"S": 100e12, "hpf": (175e3, 350e3), "nonlin": 1e6}),
-            **{f"cqsnr{v}": RL.Realism(dispersion="cq", snr_db=float(v)) for v in (35, 30, 25, 20)},
+            **{f"cqsnr{v}": RL.Realism(dispersion="cq", snr_db=float(v)) for v in (35, 30, 25, 20, 15, 10)},
+            "cqtilt2": RL.Realism(dispersion="cq", tilt_deg=2.0),
+            "cqtilt4": RL.Realism(dispersion="cq", tilt_deg=4.0),
             "cqdrift": RL.Realism(dispersion="cq", field_drift=(0.5, 0.3, 0.3, 3.0)),
             "cqdriftref": RL.Realism(dispersion="cq", field_drift=(0.5, 0.3, 0.3, 3.0), leak_ref=True,
                                      untracked=(0.1, 0.02)),
@@ -536,8 +538,31 @@ def method_e039(lat_step=1.0, k_amb=(-1, 1), fallback=True):
     return run
 
 
+def sigma_hat(f, y):
+    """E040: noise level from the data alone: per band, the range-profile bins beyond 1.5 m hold no
+    wall echo; for white noise of std sigma per component, |DFT bin|^2 / N has mean 2 sigma^2."""
+    import wall_inverse as I
+    v = []
+    for a, b in I.band_segments(f):
+        w = np.hanning(b - a)
+        Y = np.fft.ifft(y[a:b] * w) * (b - a) / np.sqrt(np.sum(w ** 2))   # Hann: wall sidelobes die fast
+        r = np.arange(b - a) * W.C0 / (2 * (f[a + 1] - f[a]) * (b - a))
+        sel = (r > 1.5) & (r < r.max() - 0.5)
+        v.append(np.mean(np.abs(Y[sel]) ** 2) / 2)
+    return float(np.sqrt(np.mean(v)))
+
+
+def with_sigma_hat(meth):
+    def run(f, yc, s, d0):
+        sh = sigma_hat(f, yc)
+        r = meth(f, yc, sh, d0)
+        return r[0], r[1] * (sh / s) ** 2, r[2], dict(r[3], sigma_hat=sh, sigma_true=s)
+    return run
+
+
 METHODS["e039"] = method_e039()
 METHODS["e039_s2"] = method_e039(lat_step=2.0)
+METHODS["e040_sig"] = with_sigma_hat(METHODS["e035_full"])
 
 
 def method_e031():

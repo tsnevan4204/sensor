@@ -56,6 +56,8 @@ class Realism:
     field_drift: tuple | None = None    # E035: (sd gain dB, sd gain slope dB, sd phase rad, sd delay ps) of the
                                         # radar CHAIN between factory calibration and the field scan (per band, random)
     untracked: tuple = (0.0, 0.0)       # E035: (sd gain dB, sd phase rad) of the antenna/lens part (not seen by leakage)
+    tilt_deg: float = 0.0               # E040: antenna tilt; Gaussian-beam monostatic factor exp(-(k0 w0 sin th)^2 / 2)
+    tilt_w0: float = 0.02               # E040: effective waist for the tilt factor (m)
     snr_db: float | None = None         # E037: radar SNR of a perfect reflector (None = Radar default 40 dB)
     leak_ref: bool = False              # E035: correct the chain drift with the internal Tx->Rx leakage reference
     n_quad: int = 160                    # 48 was 6e-5 off for w0 = 1 cm (E023 check); 160: 6e-15
@@ -218,7 +220,7 @@ def measure_band(tv, radar: W.Radar, R: Realism, plate_d=0.25, d=None):
     drift = 10 ** (R.drift[0] / 20 * np.cos(2 * np.pi * x)) * np.exp(1j * R.drift[1] * np.sin(np.pi * x))
     rng = np.random.default_rng(radar.seed)
     sig = np.sqrt(1.0 / 10 ** (radar.snr_db / 10) / 2)
-    drift = drift * field_drift(f, R, radar.seed)
+    drift = drift * field_drift(f, R, radar.seed) * np.exp(-(2 * np.pi * f / C0 * R.tilt_w0 * np.sin(np.deg2rad(R.tilt_deg))) ** 2 / 2)
     yw = A * drift * yw_clean + sig * (rng.standard_normal(f.size) + 1j * rng.standard_normal(f.size))
     rng_p = np.random.default_rng(radar.seed + 500)
     yp = A * yp_clean + sig * (rng_p.standard_normal(f.size) + 1j * rng_p.standard_normal(f.size))
@@ -284,7 +286,7 @@ def measure_band_lambot(tv, radar: W.Radar, R: Realism, d_plates=None, d=None):
         rng = np.random.default_rng(seed)
         return clean + sig * (rng.standard_normal(f.size) + 1j * rng.standard_normal(f.size))
     S_w, _, _ = received(f, layers, tv["standoff"] if d is None else d, R)
-    drift = drift * field_drift(f, R, radar.seed)
+    drift = drift * field_drift(f, R, radar.seed) * np.exp(-(2 * np.pi * f / C0 * R.tilt_w0 * np.sin(np.deg2rad(R.tilt_deg))) ** 2 / 2)
     yw = noisy(A * drift * system(f, R, S_w, None), radar.seed)
     yps = []
     for k, dp in enumerate(d_plates):

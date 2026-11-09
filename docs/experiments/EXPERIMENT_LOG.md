@@ -837,3 +837,17 @@ Prototype pair (60–64 GHz + UWB), seeds 1–10, e027_s4-type search. Drift bet
 **Hypothesis** (with reference + fitted gain ≥ 9/10, 0 silent, err/CRB ≤ 1.5): **failed** for gain-only (8/10, biased); **passed** with the full 4-parameter self-calibration (10/10, std 1.0).
 **Decision:** the field workflow is a one-time factory calibration (antenna + lens, Lambot multi-distance plates), with no plate in the field and the per-band drift fitted with each wall. Next refinement: use the leakage reference as a Gaussian prior on the drift parameters (instead of dividing it out) to recover part of the ×4.6 information loss.
 **Artifacts:** results/2026-11-09_E035_fieldcal/
+
+## E037 — Signal-to-noise sweep  (2026-11-09)
+Prototype pair (60–64 GHz + UWB), real:cq, 20 walls per level, e035_none (e027_s4-type search). SNR = that of a perfect reflector per frequency sample.
+
+| SNR | outcome | εr front err/CRB std | CRB εr front | CRB insulation t | CRB back drywall t |
+|---|---|---|---|---|---|
+| 40 dB (E035) | 10/0/0 | 0.98 | 0.0037 | 0.096 mm | 0.012 mm |
+| 35 dB | 20/0/0 | 0.96 | 0.0066 | 0.17 mm | 0.021 mm |
+| 30 dB | 20/0/0 | 0.95 | 0.012 | 0.30 mm | 0.037 mm |
+| 25 dB | 20/0/0 | 0.94 | 0.021 | 0.54 mm | 0.067 mm |
+| 20 dB | 20/0/0 | 0.92 | 0.037 | 0.96 mm | 0.12 mm |
+
+**Finding:** with the UWB band there is **no SNR cliff down to 20 dB**. The search finds the right basin on every wall, and the errors simply scale as 1/SNR (the CRB) with calibrated error bars. The cycle-ambiguity collapse that made single-band operation fragile does not appear, because UWB phase periods are ~6× longer than the noise-induced phase error. 15 and 10 dB are queued to find the break point. Averaging N chirps adds 10 log₁₀ N dB (100 chirps ≈ 2 ms ≈ +20 dB), so 20 dB per chirp is ample.
+**Artifacts:** results/2026-11-09_E037_snr/
