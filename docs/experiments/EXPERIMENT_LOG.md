@@ -378,3 +378,23 @@ Two bands + resolution-cell standoff box + the E015 cascade, with no priors (fal
 - **Met:** success ≥ 98% (100/100); silent failures 0; err/CRB std 0.8–1.5; forward exactness ≤ 1e-12.
 - **Not met:** inversion time ≤ 1 s (10 s now).
 - **Not yet tested:** generalization to the full B5 family (unknown layer count, other materials).
+
+### Pre-registered: E020 — Reality-gap study (2026-11-09, before running)
+**Change (data only; the inversion model is not changed):** `src/oned/realism.py` is a more physical data generator, with each effect a switch (gates `tests/test_realism.py`; all-off reproduces v2dual to < 1e-12):
+- causal constant-Q dispersion (Kjartansson);
+- ITU-style power-law conductivity;
+- a Gaussian antenna beam (plane-wave-spectrum integral of oblique TE/TM reflections);
+- antenna–wall multiple reflections (Lambot form, Hf);
+- plate-distance error;
+- Kirchhoff surface roughness;
+- drywall face paper;
+- an insulation air gap;
+- calibration-to-scan drift;
+- all of these together.
+
+Methods: the best two-band method (e019dual) and the best single-band method (e018b), seeds 1–10 each.
+**Hypotheses** (quantitative expectations to compare against):
+- **(a)** Causal dispersion: drywall εr differs by 2.3% between 24 and 79 GHz, about 20× the εr CRB. Expect the two-band fit to be flagged by χ² or biased by > 3 CRB; the single-band method little affected.
+- **(b)** Beam spreading changes the relative amplitude of later echoes by roughly r_front/r_back ≈ 0.7. Expect large εr biases.
+- **(c)** Plate error of 0.5 mm: the standoff estimate shifts by about 0.5 mm (≫ CRB of 1 µm), with other parameters nearly unaffected.
+- **(d)** At least one effect produces silent bias (χ²/n ≤ 1.2 with z > 3). These are the dangerous ones and set the priorities.
