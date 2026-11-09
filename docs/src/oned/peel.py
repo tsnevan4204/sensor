@@ -335,6 +335,42 @@ def _remainder(B):
     return ca / max(n, 1), cm / max(n, 1)
 
 
+def _merge_prune(model, cost, f, y, sigma, n_all):
+    """Merge identical neighbours (same type, eps within 3 %), then drop/merge/cut-tail any layer
+    whose removal raises chi2 by less than kappa = 4 ln n (Schwarz)."""
+    kappa = 4 * np.log(n_all)
+    lay = ST.describe(model)
+    i = 0
+    while i + 1 < len(lay):
+        a, b = lay[i], lay[i + 1]
+        if a["water"] == b["water"] and abs(a["er"] - b["er"]) <= 0.03 * max(a["er"], b["er"]):
+            mm = ST.rebuild(model, layers=lay[:i] + [dict(a, t=a["t"] + b["t"])] + lay[i + 2:])
+            for Lm, Lo in zip(mm.layers, model.layers[:i + 1] + model.layers[i + 2:]):
+                Lm.pinf.value, Lm.pinf.free = Lo.pinf.value, Lo.pinf.free
+            mm, cm = ST._fit(mm, f, y, sigma)
+            if cm - cost < kappa:
+                model, cost, lay = mm, cm, ST.describe(mm)
+                continue
+        i += 1
+    return model, cost
+
+
+def _release_dispersion(model, cost, f, y, sigma, n_all):
+    """Last stage: free each dielectric layer's Jonscher shape p (starts 0.02 and 0.95, inside the
+    box), keep the better fit, then merge/prune again (a dispersive layer that was imitated by
+    several pieces can now be one layer)."""
+    best = (model, cost)
+    for p0 in (0.02, 0.95):
+        mm = model.copy()
+        for L in mm.layers:
+            if L.theta.value < 0.5:
+                L.pinf.value, L.pinf.free = p0, True
+        mm, cm = ST._fit(mm, f, y, sigma)
+        if cm < best[1]:
+            best = (mm, cm)
+    return _merge_prune(*best, f, y, sigma, n_all)
+
+
 def peel_invert(f, y, sigma, nmax=12, beam=3, keep=2, verbose=False):
     """Returns (model, chi2, info). y = Gamma e^{-2j k0 d} + noise (calibrated plane-wave data)."""
     t0 = time.time()
@@ -389,15 +425,10 @@ def peel_invert(f, y, sigma, nmax=12, beam=3, keep=2, verbose=False):
         m = ST.build(L, d, back=back, water_T=Tw)
         ST.set_dispersion_free(m, True)
         for bk in (back, "metal" if back == "air" else "air"):
-          for p0 in (0.0, 0.95):                   # dispersion shape: dielectric-like, conduction-like
+          for p0 in (0.0,):
             mm = ST.rebuild(m, back=bk) if bk != back else m.copy()
-            for Lx in mm.layers:                  # stage 1: shape held fixed (geometry settles first;
-                Lx.pinf.value, Lx.pinf.free = p0, False   # a free shape early drags thicknesses off-cycle)
+            ST.set_dispersion_free(mm, True)      # p = 0 sits on its logit bound: constant-Q shape (geometry first)
             mo, c = ST._fit(mm, f, y, sigma)
-            for Lx in mo.layers:
-                Lx.pinf.value = max(Lx.pinf.value, 0.02)
-            ST.set_dispersion_free(mo, True)      # stage 2: release the shape
-            mo, c = ST._fit(mo, f, y, sigma)
             bic = c + 4 * len(lays) * np.log(n_all)
             if best is None or bic < best[2]:
                 best = (mo, c, bic)
@@ -446,6 +477,7 @@ def peel_invert(f, y, sigma, nmax=12, beam=3, keep=2, verbose=False):
             mm, cm = ST._fit(best_t[0], f, y, sigma)
             if cm - cost < kappa:
                 model, cost, changed = mm, cm, True
+    model, cost = _release_dispersion(model, cost, f, y, sigma, n_all)
     info = dict(wall_s=time.time() - t0, chi2=cost, alarm=bool(cost > ST.chi2_alarm(n_all)),
                 n_hyp=len(done))
     info["classes"] = ST.classify(model, f, sigma)
