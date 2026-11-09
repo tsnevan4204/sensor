@@ -213,6 +213,7 @@ class Opts:
     ambiguity: str = "scan"       # E012: "scan" | "ils"
     fit_tan: bool = True
     priors: tuple = ()            # E013: ((name, mean, sd), ...) Gaussian priors
+    standoff_halfwidth: float = 0.010   # E018: search box guess +- this; resolution cell c/2B = 0.0375
 
 
 def _subset(f, y, k):
@@ -446,7 +447,7 @@ def invert(f, yc, sigma, d0, opts: Opts = Opts()):
 def _invert(f, yc, sigma, d0, opts: Opts):
     import scenarios as S
     free = ("t", "eps_r", "tan_d") if opts.fit_tan else ("t", "eps_r")
-    model = S.stud_wall_model(free=free, standoff_guess=d0)
+    model = S.stud_wall_model(free=free, standoff_guess=d0, standoff_halfwidth=opts.standoff_halfwidth)
     all_free = {n for n, _, p in model.items() if p.free}
     stages = stud_stages(d0, opts.fit_tan)
     info = {"starts": []}

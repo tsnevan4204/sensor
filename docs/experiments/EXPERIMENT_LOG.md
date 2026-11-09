@@ -302,3 +302,37 @@ Method: the current method (E009 + E011b), **no priors**.
 Seed 7 stays flagged in every variant (χ²/n 1.20–1.23; the truth fits better by Δχ² 160–176). It is a front-stage search failure that none of the three searches finds; examine it separately.
 **Conclusion:** accepted. The cascade turns flagged failures into fits at modest cost. The best single-band method is now E015 (sourced priors only) or E015b (with the assumed stud prior).
 **Artifacts:** results/2026-11-09_E015_cascade/
+
+## E017 — Two bands (77–81 + 22–26 GHz), no priors  (2026-11-09)
+**Results** (v2dual: same walls and same 77–81 GHz data as v2; current method E009 + E011b, no priors, no cascade):
+
+| | success | flagged | silent | best in truth basin | front t | insulation t (90%) | back t (90%) | εr drywall / insulation | right cycle front/ins/back | work |
+|---|---|---|---|---|---|---|---|---|---|---|
+| single band, same method | 5 | 5 | 10 | 1/20 | 0.015 mm | 3.48 (7.1) mm | 2.32 (4.1) mm | 0.2 % / 3.5 % | 0.80/0.27/0.13 | 1007 |
+| **two bands** | **19** | 1 | **0** | **19/20** | **0.0065 mm** | **0.066 (0.34) mm** | **0.0057 (0.019) mm** | **0.10 % / 0.15 %** | **1.00/1.00/1.00** | 902 |
+
+Within the right basin, err/CRB is calibrated (std 0.6–1.2), so the CRB is now the real error bar.
+**Hypotheses:** all **passed**:
+- silent 0 (target ≤ 1);
+- back and insulation in the right cycle on 100% of fitted walls (targets 90% / 80%);
+- insulation median error 0.066 mm (target < 0.5);
+- work 0.9× single band (target ≤ 2.5×). Two bands cost about the same as one: less hopping, because the wrong basins do not exist.
+
+**Failure examined:** seed 7 (χ²/n 234, flagged) also fails in every single-band method. Cause: the range-profile standoff guess is 10.8 mm off, while the standoff box is guess ± 10 mm. **The truth lies outside the search box**, the same mistake class as E007's first run. Fix in E018.
+**Conclusion:** accepted. A second band turns the 1D layered-wall problem from ambiguous into well posed: µm-level thickness, 0.1% permittivity, no priors, no silent failures, about 10 s per wall. This confirms E014's information analysis in the full pipeline.
+**Artifacts:** results/2026-11-09_E017_dual_band/
+
+## E016 — Posterior credible sets (single band, drywall prior + cascade)  (2026-11-09)
+**Results:** success 16, flagged 1, silent 3 (E015: 15/1/4). The truth basin is inside the 95% set for 16/19 non-flagged walls (84%). Mean reported P(best basin) 0.42 vs observed 0.30 (within ±0.15). Work 1414 (1.27× E015).
+**Hypotheses:**
+- **Failed:** coverage target ≥ 90% (silent ≤ 2): 3 silent remain (seeds 11, 16, 19).
+- **Passed:** calibration within ±0.15 (0.42 vs 0.30).
+- **Passed:** work ≤ 2× E015.
+
+**Failures examined:** in all three, the truth's insulation cycle is off by more than the enumeration window, or its χ² + prior sits just outside the 95% mass. With one band the posterior over insulation cycles is wide, and the equal-volume Laplace approximation is crude.
+**Conclusion:** partial. The posterior set is better calibrated than the Δχ² < 4 set, but full coverage with one band needs a wider enumeration (cost). E017 makes this moot for two-band hardware. Keep E016 reporting as the default for single-band use.
+**Artifacts:** results/2026-11-09_E016_posterior/
+
+### Pre-registered: E018 (2026-11-09, before running)
+**Change:** standoff search box = range-profile guess ± one range-resolution cell, c/2B = 37.5 mm, replacing the arbitrary ±10 mm. Rationale: the peak of an unresolved echo group locates it only to within one resolution cell (seed 7: 10.8 mm off). Option `Opts.standoff_halfwidth`; the default stays 0.010 so earlier experiments reproduce.
+**Hypothesis:** seed 7 becomes a noise-level fit on v2dual (E017 method) and with E015b on v2, and no other seed changes outcome.

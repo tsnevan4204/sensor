@@ -41,6 +41,7 @@ OWNER = {"drywall_back.eps_r": "drywall_front.eps_r", "drywall_back.tan_d": "dry
 
 
 # ----------------------------------------------------------------------------- data
+RES_CELL = W.C0 / (2 * 4e9)   # E018: range-resolution cell of the 4 GHz band (37.5 mm)
 DUAL_BAND = (22e9, 26e9)     # E017 second band (E014: removes the back-of-wall cycle ambiguity)
 
 
@@ -223,6 +224,10 @@ METHODS = {
     "e013": method_search(**E013),
     "e013b": method_search(**E013B),
     "e017": method_search(**CURRENT),                 # run on benchmark v2dual, no priors
+    "e018dual": method_search(**dict(CURRENT, standoff_halfwidth=RES_CELL)),
+    "e018b": method_cascade(dict(E013B, standoff_halfwidth=RES_CELL),
+                            dict(E015_FB1(DRYWALL_PRIOR + STUD_PRIOR), standoff_halfwidth=RES_CELL),
+                            dict(E015_FB2(DRYWALL_PRIOR + STUD_PRIOR), standoff_halfwidth=RES_CELL)),
     "e016": method_cascade(dict(E013, ambiguity="posterior"),
                            dict(E015_FB1(DRYWALL_PRIOR), ambiguity="posterior"),
                            dict(E015_FB2(DRYWALL_PRIOR), ambiguity="posterior")),
