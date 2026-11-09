@@ -398,7 +398,7 @@ def _release_dispersion(model, cost, f, y, sigma, n_all):
     return _merge_prune(*best, f, y, sigma, n_all)
 
 
-def peel_invert(f, y, sigma, nmax=12, beam=3, keep=2, verbose=False):
+def peel_invert(f, y, sigma, nmax=12, beam=6, keep=3, n_polish=6, verbose=False):
     """Returns (model, chi2, info). y = Gamma e^{-2j k0 d} + noise (calibrated plane-wave data)."""
     t0 = time.time()
     d0 = ST.front_guess(f, y)
@@ -445,7 +445,13 @@ def peel_invert(f, y, sigma, nmax=12, beam=3, keep=2, verbose=False):
     done.sort(key=lambda h: h[0] / len(h[1]))
     best = None
     n_all = 2 * f.size
-    for score, lays, d, back in done[:beam]:
+    # dedupe structures (same layer count and thicknesses within 0.5 mm) before the exact polish
+    uniq = []
+    for h in done:
+        key = (len(h[1]), h[3]) + tuple(round(l[2] * 2e3) for l in h[1])
+        if key not in [u[0] for u in uniq]:
+            uniq.append((key, h))
+    for score, lays, d, back in [u[1] for u in uniq][:n_polish]:
         L = [dict(t=l[2], er=l[0] if not l[3] else 1.0, td=l[1] if not l[3] else 0.0, water=l[3]) for l in lays]
         Tw = next((l[4] for l in lays if l[3]), 20.0)
         ST.SBOX = (d - 0.01, d + 0.01)
