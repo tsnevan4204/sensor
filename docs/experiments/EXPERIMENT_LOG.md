@@ -883,3 +883,21 @@ real:cq:proto, seeds 21–120: **100/0/0, best basin 100/100, err/CRB std 0.93�
 **Algorithm (`peel.py`):** per depth, a gated "layer over half-space" fit on the low band with window continuation (the widest time window still consistent with noise), ~18 physics-guided starts scored cheaply, top 4 optimised. When thin neighbours merge (no consistent window), *block peeling* fits two layers on all bands and keeps the top one. Beam search keeps the 3 best hypotheses; termination when the peeled remainder is noise (air behind) or a mirror (metal). Then one exact joint LM on the original data, a back-medium check and BIC pruning (κ = 4 ln n per layer).
 **First results (3 layers, seeds 1–6, before block peeling):** batt/wood/brick exactly right (58.0/15.1/77.8 mm, εr 1.14/2.04/4.03). The failures, all *flagged*, are adjacent thin layers below UWB time resolution (chipboard 11 mm + marble 13 mm; floorboard 10 + tile 6 mm) and a weak foam front ahead of water. Time 2–80 s (scipy least squares with finite differences; to be replaced).
 **Hypotheses (to test):** 3 layers ≥ 9/10 correct, 0 silent; 7 layers ≥ 8/10 correct-or-flagged, ≤ 1 silent; median time < 1 s after the speed work (analytic step Jacobians, compiled recursion).
+
+## E041 — progress on 3-layer stacks (development seeds 1–6)  (2026-11-09)
+Iterations and what each fixed (all exact physics; only the search changed):
+1. Window continuation per depth (widest time window consistent with noise), fixed short windows (3/5/8 cm) accepted only when consistent (a short window looks "consistent" because it sees little data).
+2. Block peeling for thin neighbours below UWB time resolution: two layers fitted together, UWB first then ±2 high-band cycles (bug found: the standoff box had lo = hi, so the block never ran).
+3. Tail-cut pruning (drop the tail, either backing) and merging of identical neighbours.
+4. **Bug: a free Jonscher shape p started exactly on its bound p = 0; in logit coordinates it can never move**, so dispersive materials (brick, plywood, wet layers) could only be imitated by fake extra layers. Releasing p early, however, drags thicknesses off-cycle. Final design: geometry with p = 0 (constant-Q shape) throughout, then release p at the end (starts 0.02 and 0.95), then merge/prune again.
+
+**Result (dev seeds 1–6):** 5/6 structure and thicknesses exact; the remaining failure is flagged, none silent.
+| wall | truth (mm) | fit (mm) | εr fit |
+|---|---|---|---|
+| batt / wood / brick | 58.0 / 15.1 / 78.0 | 58.0 / 15.1 / 77.8 | 1.14 / 2.04 / 4.03 |
+| batt / brick / wood | 33.3 / 93.7 / 19.1 | 33.3 / 93.5 / 19.1 | 1.11 / 3.68 / 2.03 |
+| chipboard / marble / plywood | 18.8 / 14.9 / 16.0 | 18.8 / 14.9 / 16.0 | 2.64 / 6.66 / 2.48 |
+| chipboard / marble / batt + metal | 11.4 / 13.2 / 54.2 | 11.4 / 13.3 / 54.4 | 2.54 / 6.51 / 1.09 |
+| floorboard / tile / concrete | 10.4 / 6.2 / 94.7 | 10.5 / (tile + concrete merged 108.8) | flagged (χ²/n 5.3) |
+| foam / water / tile (seed 4, earlier version) | — | weak foam front missed | flagged |
+Time 7–124 s (prototype: scipy least squares with finite differences). Next: weak front faces, then speed (analytic Jacobians, own LM, compiled recursion), then held-out seeds and 5/7-layer benchmarks.
