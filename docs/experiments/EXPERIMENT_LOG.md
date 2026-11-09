@@ -336,3 +336,45 @@ Within the right basin, err/CRB is calibrated (std 0.6–1.2), so the CRB is now
 ### Pre-registered: E018 (2026-11-09, before running)
 **Change:** standoff search box = range-profile guess ± one range-resolution cell, c/2B = 37.5 mm, replacing the arbitrary ±10 mm. Rationale: the peak of an unresolved echo group locates it only to within one resolution cell (seed 7: 10.8 mm off). Option `Opts.standoff_halfwidth`; the default stays 0.010 so earlier experiments reproduce.
 **Hypothesis:** seed 7 becomes a noise-level fit on v2dual (E017 method) and with E015b on v2, and no other seed changes outcome.
+
+## E018 — Standoff box = one range-resolution cell  (2026-11-09)
+**Results:**
+- **Single band, E015b + cascade (`e018b`):** success 18, flagged **0**, silent 2 (E015b: 17/1/2). Seed 7 fixed (χ²/n 0.86). Seed 11 silent → success, seed 15 success → silent: a noise-level insulation-cycle swap, expected with one band.
+- **Two bands, no cascade (`e018dual`):** success 18, flagged 2, silent 0 (E017: 19/1/0). Seed 7 still flagged (χ²/n 76), and seed 17 newly flagged (50).
+
+**Hypothesis:**
+- **Passed** for single band with the cascade.
+- **Failed** for the two-band method without a cascade. The wider box gives the front stage more room to go wrong, and nothing recovers it. Both failures are flagged, not silent.
+
+**Conclusion:** the range-cell box is the right physical bound (it contains the truth), but it needs the cascade as a safety net → E019.
+**Artifacts:** results/2026-11-09_E018_standoff_box/
+
+### Pre-registered: E019 (2026-11-09, before running)
+Two bands + resolution-cell standoff box + the E015 cascade, with no priors (fallbacks: E009 physical-coordinate search, then dense search).
+**Hypothesis:** on v2dual seeds 1–20: success ≥ 19, silent 0, flagged ≤ 1; median work ≤ 1.3× E017.
+
+## E019 — Two bands + range-cell standoff box + cascade, no priors  (2026-11-09)
+**Results** (v2dual seeds 1–20): **success 20/20, flagged 0, silent 0, best model in the truth basin 20/20**; the cascade was used on 2 walls; median 10.8 s, work 920 (1.02× E017).
+
+| quantity | median | 90% | max | err/CRB std |
+|---|---|---|---|---|
+| standoff | 0.4 µm | 0.9 µm | 1.9 µm | 1.00 |
+| front drywall t | 6.7 µm | 18 µm | 22 µm | 1.08 |
+| drywall εr | 0.11 % | 0.26 % | 0.37 % | 1.11 |
+| drywall tan δ | 0.0002 | 0.0006 | 0.0011 | 1.02 |
+| insulation t | 69 µm | 0.31 mm | 0.74 mm | 1.08 |
+| insulation εr | 0.17 % | 0.68 % | 1.7 % | 1.09 |
+| insulation tan δ | 0.0001 | 0.0002 | 0.0003 | 0.95 |
+| back drywall t | 6.3 µm | 21 µm | 40 µm | 1.13 |
+
+**Hypothesis passed** (success ≥ 19, silent 0, flagged ≤ 1, work ≤ 1.3×). The errors are exactly CRB-calibrated (err/CRB std 0.95–1.13, roadmap target 0.8–1.5). The insulation's larger absolute error is its t/εr trade-off, which the CRB itself reports.
+**Note:** the Δχ² < 4 "plausible basins" list still shows 2–5 entries per wall. These are mostly duplicate convergences to the same basin from different hops (the old scan does not de-duplicate); `posterior_scan` (E016) de-duplicates. To clean up.
+**Conclusion:** accepted as the **best 1D method: two bands + E019**. Confirmation on 100 held-out walls follows (seeds 21–120, never used during development).
+**Artifacts:** results/2026-11-09_E019_dual_cascade/
+
+### E019 held-out confirmation (seeds 21–120, never used in development)
+**success 100/100, flagged 0, silent 0, best model in the truth basin 100/100.** χ²/n 0.91–1.10. Median 10.1 s per wall (1 core), work 881. err/CRB within the right basin: mean |bias| ≤ 0.18, std 0.89–1.11 for every parameter (target 0.8–1.5). 95% upper bound on the failure rate from 0/100 is about 3% (rule of three).
+**Roadmap 1D targets** (doc 07), for this benchmark family (three-layer dry stud wall, loss unknown, two bands):
+- **Met:** success ≥ 98% (100/100); silent failures 0; err/CRB std 0.8–1.5; forward exactness ≤ 1e-12.
+- **Not met:** inversion time ≤ 1 s (10 s now).
+- **Not yet tested:** generalization to the full B5 family (unknown layer count, other materials).

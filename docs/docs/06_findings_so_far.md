@@ -73,3 +73,25 @@ Source: `results/2026-11-06_E007_validation/` (validation_log.txt, validation.pn
   - 1D learned stars that are symmetric and cell-passive in their *modal* admittances give a uniquely solvable system, with a k- and mesh-independent bound.
   - In 2D, passivity alone is not sufficient. A full-side absorber or strict loss is needed, and β ≈ 1.2/k.
   - 2D needs learned stars because the local Trefftz space is infinite-dimensional. Exact fine-relative stars are dense Schur complements, and coarse learned stars need patch stencils (m ≈ log k).
+
+## Update 2026-11-09, later (E013–E019): current best 1D method
+
+**Best method: two bands (77–81 + 22–26 GHz) + E019** (`benchmark.py` method `e019dual`):
+- coarse early-stopped search;
+- optical-thickness coordinates kept inside the prior box;
+- standoff box = one range-resolution cell;
+- fallback cascade for χ²-flagged walls;
+- no priors.
+
+On 100 held-out honest-benchmark walls (loss unknown): **100/100 correct, 0 silent, 0 flagged.** Median errors:
+- front drywall 7 µm, back drywall 6 µm, insulation 0.07 mm;
+- εr 0.1–0.2 %;
+- tan δ 1–2e-4;
+- error bars exactly CRB-calibrated (err/CRB std ≈ 1);
+- about 10 s per wall on 1 core.
+
+**Single-band hardware (77–81 GHz only):** the best is E018b (E015b + range-cell box), which uses the drywall prior (ASTM C36) and an assumed stud-depth prior. It reaches 18/20 correct, 0 flagged, 2 silent; median errors are front 13 µm, back drywall 40 µm, insulation 1.1 mm. Without priors, one band cannot determine the cycle counts of the back layers (E009–E014).
+
+**Lessons:**
+- The second band is worth more than any amount of search or computation (E014: wrong-cycle basins vanish).
+- Search bounds must come from physics (the range-resolution cell), not from convenience: seed 7's truth was outside a ±10 mm box.
