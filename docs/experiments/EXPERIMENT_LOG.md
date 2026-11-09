@@ -532,3 +532,26 @@ Method `e024` = Jonscher + all three (plane wave). `e024beam` = the same + the b
 **Variants** of the E021b method (Jonscher, cascade): `e025_base` (current), `s1` (1-period steps), `s2` (s1 + one εr start per stage), `s3` (2-period steps, one εr), `s4` (s2 + hops ±1 and ambiguity shifts ±1), `s5` (s3 + small hop sets).
 **Benchmarks:** real:cq:dual60 and real:itucausal:dualuwb, seeds 1–20.
 **Hypothesis:** at least one variant keeps success, silent and best-basin counts within ±1 of the base on both benchmarks, with ≥ 4× less work.
+
+## E024 — Facings, roughness, band offset  (2026-11-09)
+**Results** (dual60, seeds 1–10):
+
+| data | method | success / flagged / silent | best basin | time/wall |
+|---|---|---|---|---|
+| face paper | e021b (no facing, control) | 0 / 10 / 0 | 9 | 37 s |
+| face paper | **e024** (facing) | **10 / 0 / 0** | 9 | 23 s |
+| roughness 0.1 mm | **e024** (taper) | **9 / 0 / 1** | 8 | 22 s |
+| band offset 0.3 mm | e024 (δ fitted only in the joint LM) | 2 / 8 / 0 | 3 | 115 s |
+| band offset | **e024b** (δ in the front stage) | 3 / 0 / 0 on the seeds 1–3 smoke | 3 | — |
+| all effects + beam (lambot:all) | e024beam (before the stage fix) | 0 / 9 / 1 | 0 | 511 s |
+
+**Failures examined:**
+- **Band offset:** the front-stage fit held δ = 0, so both bands' front echoes disagreed and the stage locked into wrong basins. With δ in the front stage, 3/3.
+- **All effects:** LM started from the truth reaches χ²/n 0.96, 1.18, 1.05 (seeds 1–3) without modelling the 3 mm air gap, and 0.95, 0.98, 0.97 with an explicit gap layer. So these are **search failures**, not model inadequacy. The run predates the stage fix: the front stage held δ, facing and roughness fixed although all three shape the front echo.
+- Note: the automatic "χ² at truth" diagnostic is meaningless when the truth is not expressible in the stored parameters (plate-error shift, facing, unmodelled gap). It printed +6e4…+6e5 here. The protocol diagnostic must use LM-from-truth in such cases.
+
+**Fix:** front stage now includes band_offset, facing.t, facing.εr and rough when enabled (`stud_stages`).
+**Status:** paper and roughness accepted. Offset and all-effects are rerun below as E024b.
+
+### Pre-registered: E024b (before running)
+e024b on real:cqoffset:dual60 (seeds 1–10): success ≥ 9, silent 0. e024beam with the stage fix on lambot:all:dual60 (seeds 1–5): success ≥ 4/5, silent 0, standoff error ≈ plate error (excluded).
