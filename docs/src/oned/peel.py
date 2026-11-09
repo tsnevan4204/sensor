@@ -389,12 +389,15 @@ def peel_invert(f, y, sigma, nmax=12, beam=3, keep=2, verbose=False):
         m = ST.build(L, d, back=back, water_T=Tw)
         ST.set_dispersion_free(m, True)
         for bk in (back, "metal" if back == "air" else "air"):
-          for p0 in (0.02, 0.95):                  # dispersion-shape starts: dielectric-like, conduction-like
+          for p0 in (0.0, 0.95):                   # dispersion shape: dielectric-like, conduction-like
             mm = ST.rebuild(m, back=bk) if bk != back else m.copy()
-            for Lx in mm.layers:
-                Lx.pinf.value = p0
-            ST.set_dispersion_free(mm, True)
+            for Lx in mm.layers:                  # stage 1: shape held fixed (geometry settles first;
+                Lx.pinf.value, Lx.pinf.free = p0, False   # a free shape early drags thicknesses off-cycle)
             mo, c = ST._fit(mm, f, y, sigma)
+            for Lx in mo.layers:
+                Lx.pinf.value = max(Lx.pinf.value, 0.02)
+            ST.set_dispersion_free(mo, True)      # stage 2: release the shape
+            mo, c = ST._fit(mo, f, y, sigma)
             bic = c + 4 * len(lays) * np.log(n_all)
             if best is None or bic < best[2]:
                 best = (mo, c, bic)
