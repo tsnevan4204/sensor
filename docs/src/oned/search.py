@@ -36,9 +36,10 @@ class Coords:
         self.names = model.free_names()
         self.tidx = {}                       # index in q of tau_L -> layer index
         if kind == "optical":
+            layer_names = [L.name for L in model.layers]
             for i, n in enumerate(self.names):
-                if n.endswith(".t"):
-                    li = [L.name for L in model.layers].index(n[:-2])
+                if n.endswith(".t") and n[:-2] in layer_names:      # facing.t etc. stay physical
+                    li = layer_names.index(n[:-2])
                     if model.layers[li].theta.free or model.layers[li].theta.value != 0:
                         raise ValueError("optical coordinates implemented for dry layers only")
                     self.tidx[i] = li

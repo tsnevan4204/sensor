@@ -295,3 +295,20 @@ def test_rough_taper_matches_kirchhoff_to_second_order():
         out.append((r.x, r.fun / np.abs(kir - smooth).max()))
     for scale, rel in out:
         assert 0.9 < scale < 1.1 and rel < 0.1, out
+
+
+def test_optical_coords_with_facing_and_extras():
+    f = np.concatenate([np.linspace(77e9, 81e9, 32), np.linspace(57e9, 64e9, 32)])
+    m = _facing_model()
+    m.rough = I.P(5e-5, 1e-6, 4e-4, True); m.band_offset = I.P(1e-4, -1e-3, 1e-3, True)
+    C = SR.Coords(m, "optical")
+    assert set(C.tidx.values()) == {0, 1, 2}                     # only real layers are reparameterised
+    q = C.q_of(m)
+    assert np.allclose(C.apply(m, q).get(), m.get(), rtol=1e-13, atol=0)
+    G, Jp = I.forward(m, f)
+    Jq = Jp @ C.dpdq(m)
+    for j in range(len(q)):
+        h = 1e-6 * max(abs(q[j]), 1e-4)
+        qa, qb = q.copy(), q.copy(); qa[j] += h; qb[j] -= h
+        fd = (I.forward(C.apply(m, qa), f, False)[0] - I.forward(C.apply(m, qb), f, False)[0]) / (2 * h)
+        assert np.abs(fd - Jq[:, j]).max() / np.abs(Jq[:, j]).max() < 1e-5
