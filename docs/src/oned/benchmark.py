@@ -56,7 +56,8 @@ def real_presets():
             "itucausal": RL.Realism(dispersion="itucausal"),
             "cqbeam2": RL.Realism(dispersion="cq", beam_w0=0.02),
             "cqbeam1": RL.Realism(dispersion="cq", beam_w0=0.01),
-            "cqbeamhf": RL.Realism(dispersion="cq", beam_w0=0.02, Hf=0.1),
+            "cqbeamhf": RL.Realism(dispersion="cq", beam_w0=0.02, Hf=0.1, Hi=0.02),
+            "cqbeam1hf": RL.Realism(dispersion="cq", beam_w0=0.01, Hf=0.1, Hi=0.02),
             "cqpaper": RL.Realism(dispersion="cq", paper=PAPER),
             "cqrough": RL.Realism(dispersion="cq", rough_sigma=1e-4),
             "cqoffset": RL.Realism(dispersion="cq", band_offset=0.3e-3),
@@ -64,7 +65,16 @@ def real_presets():
                               paper=PAPER, air_gap=3e-3, drift=(0.05, 0.01), band_offset=0.3e-3)}
 
 
+_EXTRA = {}          # per-case side information for methods (E023: calibrated beam waists)
+
+
 def make_case(benchmark, seed, plate_d=0.25):
+    if benchmark.startswith("lambot:"):          # E023: multi-distance plate calibration, "lambot:<preset>:<band>"
+        import realism as RL
+        _, preset, band = benchmark.split(":")
+        f, y, s, d0, tv, w0s = RL.make_case_lambot(seed, real_presets()[preset], band2=BANDS2[band])
+        _EXTRA["beam"] = w0s
+        return f, y, s, d0, tv
     if benchmark.startswith("real:"):            # E021+: realistic world (realism.py), "real:<preset>:<band>"
         import realism as RL
         _, preset, band = benchmark.split(":")
@@ -189,7 +199,10 @@ def method_search(**kw):
     import search as SR
 
     def run(f, yc, s, d0):
-        return SR.invert(f, yc, s, d0, SR.Opts(**kw))
+        k = dict(kw)
+        if k.get("beam") == "auto":
+            k["beam"] = _EXTRA["beam"]
+        return SR.invert(f, yc, s, d0, SR.Opts(**k))
     return run
 
 
@@ -217,6 +230,9 @@ def method_cascade(*stages, flag=1.2):
     def run(f, yc, s, d0):
         best, used = None, []
         for k, kw in enumerate(stages):
+            kw = dict(kw)
+            if kw.get("beam") == "auto":
+                kw["beam"] = _EXTRA["beam"]
             m, c, plaus, info = SR.invert(f, yc, s, d0, SR.Opts(**kw))
             post = c + info.get("prior_penalty", 0.0)
             used.append(dict(stage=k, chi2n=c / (2 * f.size), post=post))
@@ -265,6 +281,9 @@ METHODS = {
     # E021b: Jonscher law, drywall eps_inf fraction free (shared by both sheets), insulation constant-Q
     "e021b": method_cascade(dict(CURRENT, standoff_halfwidth=RES_CELL, law="jonscher", pinf_free=True),
                             dict(E009, standoff_halfwidth=RES_CELL, law="jonscher", pinf_free=True)),
+    # E023: beam forward model (rotated Gauss-Laguerre over exact oblique stars) with calibrated waists
+    "e023": method_cascade(dict(CURRENT, standoff_halfwidth=RES_CELL, law="jonscher", pinf_free=True, beam="auto"),
+                           dict(E009, standoff_halfwidth=RES_CELL, law="jonscher", pinf_free=True, beam="auto")),
     "e016": method_cascade(dict(E013, ambiguity="posterior"),
                            dict(E015_FB1(DRYWALL_PRIOR), ambiguity="posterior"),
                            dict(E015_FB2(DRYWALL_PRIOR), ambiguity="posterior")),

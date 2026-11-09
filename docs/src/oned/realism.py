@@ -52,7 +52,7 @@ class Realism:
     air_gap: float = 0.0
     drift: tuple = (0.0, 0.0)
     band_offset: float = 0.0            # second band's phase-centre offset (m), unknown to the model
-    n_quad: int = 48
+    n_quad: int = 160                    # 48 was 6e-5 off for w0 = 1 cm (E023 check); 160: 6e-15
 
 
 # ----------------------------------------------------------------------------- materials
@@ -211,3 +211,62 @@ def make_case_real(seed, R: Realism, dual=True, plate_d=0.25, band2=None):
     sel = (r > 0.2) & (r < 0.4)
     d0 = r[sel][np.argmax(p[sel])]
     return np.concatenate(fs), np.concatenate(ys), float(np.sqrt(np.mean(s2))), d0, tv
+
+
+def plate_positions(f, bases=(0.20, 0.30), steps=3):
+    """Calibration plate distances: at each base distance, `steps` positions spaced lambda_c/6
+    (60 deg of round-trip phase) so the per-frequency (a, b', c) solve stays well conditioned at
+    every frequency of the band (equal spacings of a whole number of half-wavelengths make the
+    plate responses identical and the solve singular: E023 first attempt); two separated bases make
+    the beam spreading, hence w0, identifiable."""
+    lam_c = C0 / np.mean(f)
+    return tuple(b + k * lam_c / 6 for b in bases for k in range(steps))
+
+
+def measure_band_lambot(tv, radar: W.Radar, R: Realism, d_plates=None, d=None):
+    """E023: raw (uncalibrated) wall scan and metal-plate scans at several distances, all through
+    the same antenna physics (beam, Hf, Hi, A(f)); then the multi-distance Lambot calibration of
+    antenna.py. Plate distances are the NOMINAL values used by the calibration; the true plates sit
+    at d_p + plate_err. Returns f, calibrated wall beam response, sigma, calibration info."""
+    import antenna as AN
+    f = radar.freqs
+    if d_plates is None:
+        d_plates = plate_positions(f)
+    layers = layers_from_truth(tv, R)
+    A = W.system_response(radar)
+    x = (f - f.mean()) / (f.max() - f.min())
+    drift = 10 ** (R.drift[0] / 20 * np.cos(2 * np.pi * x)) * np.exp(1j * R.drift[1] * np.sin(np.pi * x))
+    sig = np.sqrt(1.0 / 10 ** (radar.snr_db / 10) / 2)
+
+    def noisy(clean, seed):
+        rng = np.random.default_rng(seed)
+        return clean + sig * (rng.standard_normal(f.size) + 1j * rng.standard_normal(f.size))
+    S_w, _, _ = received(f, layers, tv["standoff"] if d is None else d, R)
+    yw = noisy(A * drift * system(f, R, S_w, None), radar.seed)
+    yps = []
+    for k, dp in enumerate(d_plates):
+        S_p, _, _ = received(f, layers, dp + R.plate_err, R, pec=True)
+        yps.append(noisy(A * system(f, R, S_p, None), radar.seed + 500 + k))
+    Sw_cal, info = AN.calibrate(f, yw, yps, d_plates)
+    sigma = sig * np.sqrt(np.mean(info["var_per_sigma2"]))     # propagated (wall + calibration) noise
+    return f, Sw_cal, float(sigma), info
+
+
+def make_case_lambot(seed, R: Realism, band2=(57e9, 64e9)):
+    """E023: two-band case with multi-distance plate calibration; returns the calibrated beam
+    responses, sigma, standoff guess, truth, and the per-band estimated beam waists."""
+    rng = np.random.default_rng(seed)
+    d_true = 0.30 + 0.002 * rng.random()
+    _, tv = S.truth_random_v2(rng, d_true)
+    tv["drywall_back.eps_r"] = tv["drywall_front.eps_r"]
+    tv["drywall_back.tan_d"] = tv["drywall_front.tan_d"]
+    bands = [W.Radar(seed=seed), W.Radar(f0=band2[0], f1=band2[1], seed=seed + 1000)]
+    fs, ys, s2, w0s = [], [], [], []
+    for k, radar in enumerate(bands):
+        d = tv["standoff"] + (R.band_offset if k > 0 else 0.0)
+        f, Sw, sg, info = measure_band_lambot(tv, radar, R, d=d)
+        fs.append(f); ys.append(Sw); s2.append(sg**2); w0s.append(info["w0"])
+    r, p = W.range_profile(fs[0], ys[0])
+    sel = (r > 0.2) & (r < 0.4)
+    d0 = r[sel][np.argmax(p[sel])]
+    return np.concatenate(fs), np.concatenate(ys), float(np.sqrt(np.mean(s2))), d0, tv, tuple(w0s)

@@ -467,3 +467,13 @@ All keep the exact 1D Hodge stars. Priority list in doc 12 §F.
 - Simulated data must themselves be causal: a material table is not a material law.
 
 **Artifacts:** results/2026-11-09_E021_causal_bands/
+
+### Pre-registered: E023 — Antenna beam model + multi-distance calibration (2026-11-09, before running)
+**Change:**
+- `wall_inverse.forward_oblique`: exact oblique stars (TE/TM, b = −jY/sin(k_zℓ), M = jY tan(k_zℓ/2)) with an adjoint Jacobian. Gates: equals an independent TMM to < 1e-12 at sin θ up to 0.8; Jacobian vs FD 6e-9.
+- `forward_beam`: Gaussian-beam angular-spectrum integral by Gauss–Laguerre quadrature on a **rotated contour** u = v/(1 − jβ), β = 2d/(k₀w₀²) (steepest descent). Accuracy vs a 160-point Legendre truth: 1e-5 at K = 2, 6e-9 at K = 4, 1e-11 at K = 6. Without rotation, K = 20 was still 0.04 off for w₀ = 1 cm.
+- `antenna.py`: multi-distance (5 plates, 0.20–0.30 m) Lambot calibration y = a + bS/(1 − cS), linear per frequency in (a, b − ac, c); w₀ by 1D search. It recovers w₀ = 2.00 cm, and 1.03/1.01 cm with H_f = 0.1 and H_i = 0.02.
+- Method `e023` = Jonscher + beam (K = 2 search, K = 4 final polish) on calibrated beam responses. Bands 77–81 + 57–64 GHz (mmWave antennas; a UWB 3–10 GHz antenna is not a Gaussian beam and needs a measured pattern, which is open).
+
+**Benchmarks:** `lambot:<cq|cqbeam2|cqbeam1|cqbeamhf|cqbeam1hf>:dual60`, seeds 1–10.
+**Hypothesis:** e023 gives success ≥ 9/10 and silent 0 on all beam presets, with err/CRB std ≤ 1.5 (E020 with a plane-wave model: 8/8 flagged, z 30–90). On the beamless preset (cq) it is equivalent to e021b.

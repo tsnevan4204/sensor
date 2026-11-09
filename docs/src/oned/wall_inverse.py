@@ -58,12 +58,26 @@ class WallModel:
     water_T: float = 20.0
     law: str = "const"          # host material law: "const" (E007) or "cq" causal constant-Q (E021)
     f_ref: float = 79e9         # reference frequency of the "cq" law (eps_r, tan_d are the values there)
+    beam: tuple | None = None   # E023: Gaussian beam waist (m) per band segment; None = plane wave
+    beam_K: int = 10            # E023: Gauss-Laguerre nodes of the k_rho integral
+    beam_dref: float | None = 0.30   # E023: distance fixing the rotated contour (None = real nodes)
+    facing: "LayerSpec | None" = None   # E024: thin facing (paper) on both faces of the layers in facing_on
+    facing_on: tuple = ()
+    rough: "P | None" = None            # E024: rms roughness of the front face (graded transition layer)
+    band_offset: "P | None" = None      # E024: phase-centre/standoff offset of the 2nd and later bands
 
     # ---- flat views over parameters -------------------------------------------------
     def items(self):
         for i, L in enumerate(self.layers):
             for key in ("t", "eps_r", "tan_d", "theta", "pinf"):
                 yield f"{L.name}.{key}", (i, key), getattr(L, key)
+        if self.facing is not None:
+            for key in ("t", "eps_r", "tan_d"):
+                yield f"facing.{key}", (None, key), getattr(self.facing, key)
+        if self.rough is not None:
+            yield "rough", (None, "rough"), self.rough
+        if self.band_offset is not None:
+            yield "band_offset", (None, "band_offset"), self.band_offset
         yield "standoff", (None, "standoff"), self.standoff
 
     def free_names(self):
@@ -167,18 +181,92 @@ def n_cells_for(L: LayerSpec, fmax, T):
 
 
 # ============================================================================ forward + adjoint
+ROUGH_SUB = 4          # sublayers of the graded roughness layer
+ROUGH_H = 2 * np.sqrt(3.0)   # taper thickness / rms height: matches exp(-2 (k sigma)^2) to 2nd order
+
+
+def _effective(model: WallModel, f):
+    """Sublayers actually discretized (E024), each as (length, eps (F,), {owner: d length},
+    {owner: d eps (F,)}, ncell). Without facing/rough these are exactly model.layers (same cells).
+      facing   : layer L in facing_on -> [facing t_p, core t - 2 t_p, facing t_p]; t keeps meaning
+                 the total sheet thickness.
+      rough    : graded layer of thickness h = 2 sqrt(3) sigma in front, ROUGH_SUB sublayers with
+                 eps_i = 1 + w_i (eps_front - 1), w_i = (i + 1/2)/ROUGH_SUB. A linear taper reduces
+                 the reflection by 1 - (k h)^2/6 + ..., the Kirchhoff coherent factor exp(-2 (k sigma)^2)
+                 by 1 - 2 (k sigma)^2 + ...: equal at second order for h = 2 sqrt(3) sigma."""
+    T = model.water_T
+    own = model.owner
+    subs = []
+
+    def dmap(L, d, prefix):
+        out = {}
+        for key in ("eps_r", "tan_d", "theta", "pinf"):
+            o = own(f"{prefix}.{key}")
+            if o is not None:
+                out[o] = out.get(o, 0) + d[key]
+        return out
+
+    fp = None
+    if model.facing is not None:
+        ep, dp = layer_eps_and_derivs(model.facing, f, T, model.law, model.f_ref)
+        fp = (ep, dmap(model.facing, dp, "facing"))
+    kmax = 2 * np.pi * f.max() / C0
+
+    def ncell_for(length, eps_fmax):
+        return max(1, int(np.ceil(kmax * abs(np.sqrt(eps_fmax)) * length / (0.9 * np.pi))))
+
+    for L in model.layers:
+        e, d = layer_eps_and_derivs(L, f, T, model.law, model.f_ref)
+        dm = dmap(L, d, L.name)
+        ot = own(f"{L.name}.t")
+        if fp is not None and L.name in model.facing_on:
+            tp = model.facing.t.value
+            otp = own("facing.t")
+            core = L.t.value - 2 * tp
+            dl_core = {}
+            if ot is not None:
+                dl_core[ot] = 1.0
+            if otp is not None:
+                dl_core[otp] = dl_core.get(otp, 0) - 2.0
+            dl_face = {otp: 1.0} if otp is not None else {}
+            ef = layer_eps_and_derivs(model.facing, np.array([f.max()]), T, model.law, model.f_ref)[0][0]
+            ec = layer_eps_and_derivs(L, np.array([f.max()]), T, model.law, model.f_ref)[0][0]
+            subs += [(tp, fp[0], dl_face, fp[1], ncell_for(tp, ef)),
+                     (core, e, dl_core, dm, ncell_for(core, ec)),
+                     (tp, fp[0], dl_face, fp[1], ncell_for(tp, ef))]
+        else:
+            subs.append((L.t.value, e, {ot: 1.0} if ot is not None else {}, dm, n_cells_for(L, f.max(), T)))
+    if model.rough is not None:
+        h = ROUGH_H * model.rough.value
+        orr = own("rough")
+        first = subs[0]
+        taper = []
+        for i in range(ROUGH_SUB):
+            wi = (i + 0.5) / ROUGH_SUB
+            taper.append((h / ROUGH_SUB, 1 + wi * (first[1] - 1),
+                          {orr: ROUGH_H / ROUGH_SUB} if orr is not None else {},
+                          {o: wi * dd for o, dd in first[3].items()}, 1))
+        subs = taper + subs
+    return subs
+
+
 def forward(model: WallModel, f, jacobian=True):
-    """Gamma(f) at the radar plane and (optionally) dGamma/dp for all FREE parameters."""
+    """Gamma(f) at the radar plane and (optionally) dGamma/dp for all FREE parameters.
+    With model.beam set (E023) the result is the beam-received signal S(f) of forward_beam()."""
     f = np.asarray(f, float)
     model.sync_ties()
+    if model.band_offset is not None and len(band_segments(f)) > 1:
+        return _forward_band_offset(model, f, jacobian)
+    if model.beam is not None:
+        return forward_beam(model, f, jacobian)
     names = model.free_names()
     J = np.zeros((f.size, len(names)), complex) if jacobian else None
-    T = model.water_T
-    ncell = [n_cells_for(L, f.max(), T) for L in model.layers]
-    layer_of_cell = np.repeat(np.arange(len(model.layers)), ncell)
-    ell = np.concatenate([[L.t.value / n] * n for L, n in zip(model.layers, ncell)])
+    subs = _effective(model, f)
+    ncell = [sb[4] for sb in subs]
+    layer_of_cell = np.repeat(np.arange(len(subs)), ncell)
+    ell = np.concatenate([[sb[0] / n] * n for sb, n in zip(subs, ncell)])
     Nc = ell.size
-    eps_all, deps_all = zip(*[layer_eps_and_derivs(L, f, T, model.law, model.f_ref) for L in model.layers])
+    eps_all = [sb[1] for sb in subs]
     n_back = _sqrt_branch(np.array([model.eps_back]))[0]
     col = {nm: j for j, nm in enumerate(names)}
 
@@ -216,19 +304,174 @@ def forward(model: WallModel, f, jacobian=True):
     dM_dl = 1j * k**2 * sec2 / (2 * w * MU0)
     Tk = db_dk * Q1 + dM_dk * Q2                 # per-cell sensitivity to k
     Tl = db_dl * Q1 + dM_dl * Q2                 # per-cell sensitivity to cell length
-    for li, L in enumerate(model.layers):
+    for li, sb in enumerate(subs):
         sel = layer_of_cell == li
-        o = model.owner(f"{L.name}.t")
-        if o is not None:
-            J[:, col[o]] += -phase * Tl[:, sel].sum(1) / ncell[li]
-        dk_deps = k0[:, 0] / (2 * n_l[:, li])
-        for key in ("eps_r", "tan_d", "theta", "pinf"):
-            o = model.owner(f"{L.name}.{key}")
-            if o is not None:
-                J[:, col[o]] += -phase * Tk[:, sel].sum(1) * dk_deps * deps_all[li][key]
+        tl = -phase * Tl[:, sel].sum(1) / ncell[li]
+        for o, coef in sb[2].items():
+            J[:, col[o]] += coef * tl
+        tk = -phase * Tk[:, sel].sum(1) * k0[:, 0] / (2 * n_l[:, li])
+        for o, de in sb[3].items():
+            J[:, col[o]] += tk * de
     if model.owner("standoff") is not None:
         J[:, col["standoff"]] += G * (-2j * k0[:, 0])
     return G, J
+
+
+def _forward_band_offset(model, f, jacobian):
+    """E024: bands after the first see standoff d + delta (separate phase centre). Each band is
+    solved with its own standoff; d Gamma / d delta = d Gamma / d standoff on those bands."""
+    names = model.free_names()
+    inner = model.copy()
+    inner.band_offset = None
+    inner.standoff.free = True
+    inner_names = inner.free_names()
+    G = np.zeros(f.size, complex)
+    J = np.zeros((f.size, len(names)), complex) if jacobian else None
+    ob = model.owner("band_offset")
+    for k, (a, b) in enumerate(band_segments(f)):
+        inner.standoff.value = model.standoff.value + (model.band_offset.value if k > 0 else 0.0)
+        if model.beam is not None:
+            inner.beam = (model.beam[k],)
+        Gk, Jk = forward(inner, f[a:b], jacobian)
+        G[a:b] = Gk
+        if jacobian:
+            for j, nm in enumerate(inner_names):
+                if nm in names:
+                    J[a:b, names.index(nm)] += Jk[:, j]
+            if k > 0 and ob is not None:
+                J[a:b, names.index(ob)] += Jk[:, inner_names.index("standoff")]
+    return G, J
+
+
+EPS0 = 1 / (MU0 * C0**2)
+
+
+def forward_oblique(model: WallModel, f, krho, jacobian=True):
+    """E023. Exact-star DEC reflection at the front face (no air path) for oblique plane waves.
+    f (F,), krho (F, K). Returns Gamma_TE, Gamma_TM (F, K) and, if jacobian, their derivatives
+    (F, K, n_free). Every (f, k_rho, polarisation) is an independent 1D problem: in each cell
+        k_z = sqrt(eps k0^2 - k_rho^2) (Im <= 0),  Y = k_z/(w mu0) (TE) or w eps0 eps / k_z (TM),
+        b = -j Y / sin(k_z l),  M = j Y tan(k_z l / 2)          (exact 2-port of a uniform line)
+    which at k_rho = 0 is the normal-incidence star of forward(). Ports: air admittance Y0 with
+    source 2 Y0 (unit incident field), back half-space admittance; Gamma = e_0 - 1 (tangential E).
+    Adjoint as in forward(): dGamma/dp = -sum_cells [db/dp Q1 + dM/dp Q2]."""
+    f = np.asarray(f, float)
+    F, K = krho.shape
+    names = model.free_names()
+    subs = _effective(model, f)
+    ncell = [sb[4] for sb in subs]
+    layer_of_cell = np.repeat(np.arange(len(subs)), ncell)
+    ell = np.concatenate([[sb[0] / n] * n for sb, n in zip(subs, ncell)])
+    eps_l = np.stack([sb[1] for sb in subs], axis=1)                    # (F, sublayers)
+    # rows: (pol, f, k): R = 2 F K
+    w = np.tile(np.repeat(2 * np.pi * f, K), 2)[:, None]
+    k0 = w / C0
+    kr = np.tile(krho.reshape(-1), 2)[:, None]
+    tm = np.repeat([False, True], F * K)[:, None]
+    epsc = np.tile(np.repeat(eps_l[:, layer_of_cell], K, axis=0), (2, 1))   # (R, cells)
+
+    def kz_of(eps):
+        q = np.sqrt(eps * k0**2 - kr**2 + 0j)
+        return np.where(q.imag > 0, -q, q)
+
+    def Y_of(eps, kz):
+        return np.where(tm, w * EPS0 * eps / kz, kz / (w * MU0))
+
+    kz = kz_of(epsc)
+    Y = Y_of(epsc, kz)
+    x = kz * ell[None, :]
+    sx, cx = np.sin(x), np.cos(x)
+    b = -1j * Y / sx
+    M = 1j * Y * np.tan(x / 2)
+    one = np.ones((w.shape[0], 1), complex)
+    kz0 = kz_of(one)
+    Y0 = Y_of(one, kz0)
+    eb = model.eps_back * one
+    Yb = Y_of(eb, kz_of(eb))
+    Nc = ell.size
+    diag = np.zeros((w.shape[0], Nc + 1), complex)
+    diag[:, :-1] += b + M
+    diag[:, 1:] += b + M
+    diag[:, 0] += Y0[:, 0]
+    diag[:, -1] += Yb[:, 0]
+    rhs = np.zeros((w.shape[0], Nc + 1, 2), complex)
+    rhs[:, 0, 0] = 2 * Y0[:, 0]
+    rhs[:, 0, 1] = 1.0
+    sol = _tridiag_solve(diag, -b, rhs)
+    e, lam = sol[..., 0], sol[..., 1]
+    G = (e[:, 0] - 1).reshape(2, F, K)
+    if not jacobian:
+        return G[0], G[1], None
+    col = {nm: j for j, nm in enumerate(names)}
+    J = np.zeros((w.shape[0], len(names)), complex)
+    Q1 = (lam[:, :-1] - lam[:, 1:]) * (e[:, :-1] - e[:, 1:])
+    Q2 = lam[:, :-1] * e[:, :-1] + lam[:, 1:] * e[:, 1:]
+    db_dx = 1j * Y * cx / sx**2
+    dM_dx = 1j * Y / (2 * np.cos(x / 2) ** 2)
+    Tx = db_dx * Q1 + dM_dx * Q2                      # per-cell sensitivity to x = k_z l
+    TY = (b / Y) * Q1 + (M / Y) * Q2                  # per-cell sensitivity to Y
+    dkz = k0**2 / (2 * kz)                            # d k_z / d eps
+    dY = np.where(tm, w * EPS0 / kz - w * EPS0 * epsc / kz**2 * dkz, dkz / (w * MU0))
+    Te = Tx * ell[None, :] * dkz + TY * dY            # d/d eps (per cell)
+    Tl = Tx * kz                                      # d/d cell length
+    for li, sb in enumerate(subs):
+        sel = layer_of_cell == li
+        tl = -Tl[:, sel].sum(1) / ncell[li]
+        for o, coef in sb[2].items():
+            J[:, col[o]] += coef * tl
+        te = -Te[:, sel].sum(1)
+        for o, de in sb[3].items():
+            J[:, col[o]] += te * np.tile(np.repeat(de, K), 2)
+    J = J.reshape(2, F, K, len(names))
+    return G[0], G[1], J
+
+
+def beam_nodes(f, w0, K, d_ref=None):
+    """Quadrature for the Gaussian beam: int_0^inf exp(-u) g(u) du, u = (k_rho w0)^2 / 2.
+    Without d_ref: plain Gauss-Laguerre in u (evanescent nodes dropped, weights renormalised).
+    With d_ref (contour rotation / steepest descent): g(u) carries the Fresnel phase
+    exp(-2j k_z0 d) ~ exp(-2j k0 d) exp(j beta u), beta = 2 d_ref / (k0 w0^2), which makes the real
+    nodes inefficient. The integrand is analytic in u, so substitute u = v/(1 - j beta):
+        int e^-u g(u) du = 1/(1 - j beta) int e^-v [g(u(v)) e^{-j beta u(v)}] dv,
+    i.e. Gauss-Laguerre in v at complex nodes u(v); the integral is unchanged (Cauchy).
+    Returns k_rho (possibly complex) and weights for sum_q w_q g(u_q)."""
+    v, wq = np.polynomial.laguerre.laggauss(K)
+    k0 = 2 * np.pi * f[:, None] / C0
+    if d_ref is None:
+        kr = np.sqrt(2 * v)[None, :] / w0 * np.ones((f.size, 1))
+        wts = np.where(kr < 0.999 * k0, wq[None, :], 0.0)
+        return kr, wts / wts.sum(1, keepdims=True)
+    beta = 2 * d_ref / (k0 * w0**2)                                  # (F, 1)
+    u = v[None, :] / (1 - 1j * beta)
+    kr = np.sqrt(2 * u + 0j) / w0
+    wts = wq[None, :] / (1 - 1j * beta) * np.exp(-1j * beta * u)
+    return kr, wts
+
+
+def forward_beam(model: WallModel, f, jacobian=True):
+    """E023. Received co-polar signal of a Gaussian beam (waist model.beam[band]) on the layered
+    wall at standoff d:  S(f) = sum_q w_q (Gamma_TE + Gamma_TM)/2 exp(-2j k_z0 d).
+    Each node is an exact oblique-star solve, so the only approximation is the quadrature."""
+    segs = band_segments(f)
+    K = model.beam_K
+    krs, wts = [], []
+    for (a, bnd), w0 in zip(segs, model.beam):
+        kr, wt = beam_nodes(f[a:bnd], w0, K, model.beam_dref)
+        krs.append(kr); wts.append(wt)
+    kr, wt = np.vstack(krs), np.vstack(wts)
+    GTE, GTM, Jo = forward_oblique(model, f, kr, jacobian)
+    k0 = 2 * np.pi * f[:, None] / C0
+    kz0 = np.sqrt(k0**2 - kr**2 + 0j)
+    ph = np.exp(-2j * kz0 * model.standoff.value)
+    Gco = 0.5 * (GTE + GTM)
+    S = np.sum(wt * Gco * ph, axis=1)
+    if not jacobian:
+        return S, None
+    names = model.free_names()
+    J = np.einsum("fk,fkp->fp", wt * ph, 0.5 * (Jo[0] + Jo[1]))
+    if model.owner("standoff") is not None:
+        J[:, names.index("standoff")] += np.sum(wt * Gco * ph * (-2j * kz0), axis=1)
+    return S, J
 
 
 def _tridiag_solve(diag, off, rhs, check=1e-10):

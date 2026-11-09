@@ -216,6 +216,9 @@ class Opts:
     standoff_halfwidth: float = 0.010   # E018: search box guess +- this; resolution cell c/2B = 0.0375
     law: str = "const"                  # E021: host material law of the model ("const" | "cq" | "jonscher")
     pinf_free: bool = False             # E021b: free Jonscher eps_inf fraction of the drywall (tied sheets)
+    beam: tuple | None = None           # E023: per-band beam waists (m) from the antenna calibration
+    beam_K: int = 2                     # E023: rotated Gauss-Laguerre nodes in the search (error ~1e-5 << noise)
+    beam_K_final: int = 4               # E023: nodes for the final re-polish (error ~1e-8)
 
 
 def _subset(f, y, k):
@@ -437,6 +440,10 @@ def invert(f, yc, sigma, d0, opts: Opts = Opts()):
     _PRIORS = (GaussianPrior(tuple(opts.priors)),) if opts.priors else ()
     try:
         model, cost, plaus, info = _invert(f, yc, sigma, d0, opts)
+        if opts.beam is not None and opts.beam_K_final > opts.beam_K:     # E023: final re-polish
+            model.beam_K = opts.beam_K_final
+            model, cost = lm(model, f, yc, sigma, coords=opts.coords)
+            info["beam_K_final"] = opts.beam_K_final
     finally:
         pri = _PRIORS
         _PRIORS = ()
@@ -451,6 +458,8 @@ def _invert(f, yc, sigma, d0, opts: Opts):
     free = ("t", "eps_r", "tan_d") if opts.fit_tan else ("t", "eps_r")
     model = S.stud_wall_model(free=free, standoff_guess=d0, standoff_halfwidth=opts.standoff_halfwidth)
     model.law = opts.law
+    if opts.beam is not None:
+        model.beam, model.beam_K, model.beam_dref = tuple(opts.beam), opts.beam_K, float(d0)
     if opts.pinf_free:
         model.layers[0].pinf = I.P(0.3, 0.0, 0.9, True)
         model.layers[2].pinf = I.P(0.3, 0.0, 0.9, True, tie="drywall_front.pinf")

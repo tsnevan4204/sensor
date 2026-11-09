@@ -198,3 +198,30 @@ def test_jonscher_law_reduces_to_cq_jacobian_and_matches_causal_itu_truth():
     L = I.LayerSpec("x", I.P(0.01, 0, 1), I.P(2.6, 1, 4), I.P(td, 0, 1), pinf=I.P(pp, 0, 0.9))
     e_model, _ = I.layer_eps_and_derivs(L, f, 20.0, "jonscher", 79e9)
     assert np.abs(e_truth - e_model).max() < 1e-12
+
+
+def test_oblique_stars_match_tmm_and_beam_converges():
+    import realism as RL
+    f = np.concatenate([np.linspace(77e9, 81e9, 24), np.linspace(57e9, 64e9, 24)])
+    m = S.stud_wall_model(free=("t", "eps_r", "tan_d"), standoff_guess=0.30); m.law = "cq"
+    m.layers[0].tan_d.value = 0.035; m.sync_ties()
+    G0, _ = I.forward(m, f, False)
+    GTE, GTM, _ = I.forward_oblique(m, f, np.zeros((f.size, 1)), False)
+    ph = np.exp(-2j * 2 * np.pi * f / W.C0 * 0.30)
+    assert np.abs(GTE[:, 0] * ph - G0).max() < 1e-12 and np.abs(GTM[:, 0] * ph - G0).max() < 1e-12
+    kr = np.outer(2 * np.pi * f / W.C0, [0.0, 0.3, 0.7])
+    L = RL.layers_from_truth(m.summary(), RL.Realism(dispersion="cq"))
+    RTE, RTM = RL.gamma_layers(f, kr, L)
+    GTE, GTM, _ = I.forward_oblique(m, f, kr, False)
+    assert np.abs(GTE - RTE).max() < 1e-12 and np.abs(GTM - RTM).max() < 1e-12
+    for w0 in (0.02, 0.01):
+        truth = np.concatenate([RL.received(f[:24], L, 0.30, RL.Realism(beam_w0=w0))[0],
+                                RL.received(f[24:], L, 0.30, RL.Realism(beam_w0=w0))[0]])
+        mm = m.copy(); mm.beam = (w0, w0); mm.beam_K = 6
+        assert np.abs(I.forward(mm, f, False)[0] - truth).max() < 1e-9
+
+
+def test_lambot_calibration_recovers_beam():
+    import realism as RL
+    f, y, s, d0, tv, w0s = RL.make_case_lambot(3, RL.Realism(dispersion="cq", beam_w0=0.015, Hf=0.1, Hi=0.02))
+    assert all(abs(w - 0.015) < 0.0008 for w in w0s), w0s
