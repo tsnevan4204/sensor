@@ -234,3 +234,28 @@ A 30° view helps the insulation (Δ ≈ 15) but not enough for the back drywall
 **Conclusion:** the remaining 1D silent failures are an **information** problem with a clear hardware answer: add a second band. 22–26 GHz (an ISM/automotive band) or UWB 3.1–10.6 GHz remove the ambiguity entirely; 57–64 GHz nearly does. A second angle is a weaker alternative.
 **Next:** implement multi-band data in the benchmark and inversion (exact stars need no change), then rerun the full inversion with the chosen band to confirm in practice. The prior (E013) is the fallback for single-band hardware.
 **Artifacts:** results/2026-11-09_E014_information/
+
+## E013 / E013b — Manufacturing priors on thickness (single band)  (2026-11-09)
+**Change:** `search.GaussianPrior` (MAP residual rows; gate `test_gaussian_prior_rows_and_penalty`). Methods `e013` (drywall priors) and `e013b` (+ stud-depth prior, sd assumed) in `benchmark.py`, built on the current method (E009 + E011b). 34 tests pass.
+**Results** (B1-dry-v2 seeds 1–20; errors over walls with χ²/n ≤ 1.2):
+
+| method | success | flagged | silent | front t | insulation t (90%) | back t (90%) | ins εr | back right cycle | ins right cycle | work |
+|---|---|---|---|---|---|---|---|---|---|---|
+| current (E009+E011b) | 5 | 5 | 10 | 0.015 mm | 3.48 (7.1) mm | 2.32 (4.1) mm | 3.5 % | 13 % | 27 % | 1007 |
+| E013 drywall prior | 10 | 7 | 3 | 0.011 mm | 1.78 (10.8) mm | **0.03 (0.64) mm** | 7.0 % | 92 % | 46 % | 877 |
+| E013b + stud prior (sd assumed) | **14** | 5 | **1** | 0.013 mm | **1.23 (3.3) mm** | **0.04 (0.21) mm** | 2.8 % | 100 % | 60 % | 665 |
+
+**Hypotheses:**
+- **E013 passed:** back-drywall median error 2.32 → 0.03 mm (target < 0.5); silent 10 → 3 (target ≤ 5); work 0.87× the current method.
+- **E013b passed:** insulation median error 3.48 → 1.23 mm (target < 1.5).
+
+**Failures examined:** all 5 flagged runs of E013b (seeds 7, 12, 14, 16, 18) are front-stage **search** failures. The truth fits better by Δχ² 97–3900 and χ²/n flags them, so none is silent. The single silent failure is an insulation cycle slip within the stud prior's spread.
+**Caveats:**
+- The drywall prior is physically sourced (ASTM C36).
+- The stud-depth sd is assumed, and matches the benchmark's spread, so E013b is a best case.
+- Priors only help when the true wall respects them. A non-standard wall (shimmed or double drywall) would be biased; χ² and the prior penalty must be monitored (see E016).
+**Conclusion:** accepted. For single-band hardware, the drywall prior resolves the back-drywall cycles. The new best method is E013 (or E013b where stud depth is known). The insulation is resolved only partly; the full fix is a second band (E014).
+**Next:**
+- **(E015)** For χ²-flagged front-stage failures, rerun the search with the dense physical-coordinate lattice (E009/E010 settings). Only flagged walls pay. Target: flagged 5 → ≤ 1.
+- **(E017)** Multi-band data in the benchmark and inversion (22–26 GHz), confirming E014 in the full pipeline without any prior.
+**Artifacts:** results/2026-11-09_E013_priors/
