@@ -236,14 +236,16 @@ def _fit_block1(B, n_prevs, echoes, d_free=None, top=4, keep=2, full=False, seed
     sc = []
     cand = [(p0, None) for p0 in starts] if seeds is None else seeds
     for p0, dd in cand:
-        q0 = np.clip(pre(p0, dd), pre(lo_b), pre(hi_b))
+        q0 = np.clip(pre(p0, dd), ([d_free[1]] if d_free is not None else []) + lo_b,
+                     ([d_free[2]] if d_free is not None else []) + hi_b)
         v = res_fn(np.array(q0, float))
         c = float(v @ v)
         if np.isfinite(c):
             sc.append((c, q0))
     sc.sort(key=lambda t: t[0])
     out = []
-    ql, qh = np.array(pre(lo_b), float), np.array(pre(hi_b), float)
+    ql = np.array(([d_free[1]] if d_free is not None else []) + lo_b, float)
+    qh = np.array(([d_free[2]] if d_free is not None else []) + hi_b, float)
     for _, q0 in sc[:top]:
         q0 = np.clip(np.array(q0, float), ql + 1e-9, qh - 1e-9)
         try:
