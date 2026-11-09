@@ -208,14 +208,14 @@ def _fit_block1(B, n_prevs, echoes, d_free=None, top=4, keep=2, full=False, seed
     """Window continuation for the block: windows end just past each echo (ascending); use the
     widest window whose best fit is consistent with noise, else the best per-dof fit."""
     best_ok, best_any = None, None
-    wins = sorted(set([0.03, 0.05, 0.08] + [e + 0.012 for e in echoes[:3]]))
-    for win in wins:
+    echo_wins = {round(e + 0.012, 6) for e in echoes[:3]}
+    for win in sorted(set([0.03, 0.05, 0.08]) | echo_wins):
         ech = [e for e in echoes if e < win] or [win - 0.012]
         r = _fit_block_win(B, n_prevs, ech, win, d_free, top, keep, full, seeds)
         if not r:
             continue
         cd = r[0][0] / r[0][4]
-        if best_any is None or cd < best_any[0]:
+        if (round(win, 6) in echo_wins or not echoes) and (best_any is None or cd < best_any[0]):
             best_any = (cd, r)
         if cd < 2.5:
             best_ok = (cd, r)
@@ -288,13 +288,15 @@ def _fit_layer(B, n_prevs, sig_low, d_free=None, keep=2):
     npl = [n_prevs[lo]]
     echoes = sorted(_echo_ranges(Bl.fs[0], Bl.Gs[0], sig_low, k=5)) or [0.02]
     best_ok, best_any = None, None
-    for win in sorted(set([0.03, 0.05, 0.08] + [e + 0.012 for e in echoes])):
+    echo_wins = {round(e + 0.012, 6) for e in echoes}
+    for win in sorted(set([0.03, 0.05, 0.08]) | echo_wins):
         ech = [e for e in echoes if e < win] or [win - 0.012]
         res = _fit_step(Bl, npl, _starts(Bl, npl[0], ech), win, d_free)
         if not res:
             continue
         cd = res[0][0] / res[0][4]
-        if best_any is None or cd < best_any[0]:
+        # fixed short windows only count when consistent: per-dof cost favours windows that see little
+        if round(win, 6) in echo_wins and (best_any is None or cd < best_any[0]):
             best_any = (cd, res)
         if cd < 2.5:
             best_ok = (cd, res)                # widest consistent window wins (no early stop: a
