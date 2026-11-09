@@ -304,6 +304,8 @@ METHODS = {
            "e025_s4": dict(lat_step=1.0, lat0_eps=(2.6,), lat1_eps=(1.15,), hops=(1, -1), amb_ks=(-1, 1)),
            "e025_s5": dict(lat_step=2.0, lat0_eps=(2.6,), lat1_eps=(1.15,), hops=(1, -1), amb_ks=(-1, 1)),
        }.items()},
+    "e024b": method_cascade(dict(CURRENT, standoff_halfwidth=RES_CELL, law="jonscher", pinf_free=True, band_offset=True),
+                            dict(E009, standoff_halfwidth=RES_CELL, law="jonscher", pinf_free=True, band_offset=True)),
     "e016": method_cascade(dict(E013, ambiguity="posterior"),
                            dict(E015_FB1(DRYWALL_PRIOR), ambiguity="posterior"),
                            dict(E015_FB2(DRYWALL_PRIOR), ambiguity="posterior")),

@@ -257,6 +257,12 @@ def stud_stages(d0, fit_tan=True, opts=None):
     e1 = getattr(opts, "lat1_eps", (1.05, 1.15, 1.3)) if opts is not None else (1.05, 1.15, 1.3)
     off = lambda a: np.arange(-a, a + 1e-9, step)
     s0 = ("standoff", "drywall_front.t", "drywall_front.eps_r") + (("drywall_front.tan_d",) if fit_tan else ())
+    if opts is not None and getattr(opts, "band_offset", False):
+        s0 = s0 + ("band_offset",)      # E024b: the front echo pins the per-band phase centre
+    if opts is not None and getattr(opts, "facing", False):
+        s0 = s0 + ("facing.t", "facing.eps_r")   # E024b: facings shape the front echo too
+    if opts is not None and getattr(opts, "rough", False):
+        s0 = s0 + ("rough",)
     s1 = ("insulation.t", "insulation.eps_r", "drywall_back.t") + (("insulation.tan_d",) if fit_tan else ())
     return [I.Stage(s0, I.Gate(d0 - 0.03, d0 + 0.06),
                     lattice={"drywall_front.t": off(4), "drywall_front.eps_r": list(e0)}),
