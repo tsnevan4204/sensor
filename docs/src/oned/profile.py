@@ -242,8 +242,43 @@ def invert(f, y, sigma, verbose=False):
         if best is None or c < best[1]:
             best = (mod, c)
     model, cost = best
+    model, cost = prune(model, cost, f, y, sigma, n_all)
     model, cost = PL._release_dispersion(model, cost, f, y, sigma, n_all)
+    model, cost = prune(model, cost, f, y, sigma, n_all)
     info.update(wall_s=time.time() - t0, chi2=cost, alarm=bool(cost > ST.chi2_alarm(n_all)),
                 n_segments=len(segs), segments=segs)
     info["classes"] = ST.classify(model, f, sigma)
     return model, cost, info
+
+
+def prune(model, cost, f, y, sigma, n_all):
+    """Exact model-order reduction (Schwarz/BIC, kappa = 4 ln n per layer): fold leading air into the
+    standoff, then repeatedly try every single-layer drop, every neighbour merge and every tail cut
+    (either backing); keep the cheapest change if chi2 rises by less than kappa."""
+    kappa = 4 * np.log(n_all)
+    m2 = ST._drop_trailing_air(ST._drop_leading_air(model))
+    if m2 is not model:
+        ST.set_dispersion_free(m2, True)
+        model, cost = ST._fit(m2, f, y, sigma)
+    while len(model.layers) > 1:
+        lay = ST.describe(model)
+        trials = []
+        for i in range(len(lay)):
+            trials.append((lay[:i] + lay[i + 1:], None))
+            if i + 1 < len(lay):
+                trials.append((lay[:i] + [dict(lay[i], t=lay[i]["t"] + lay[i + 1]["t"])] + lay[i + 2:], None))
+                trials.append((lay[:i] + [dict(lay[i + 1], t=lay[i]["t"] + lay[i + 1]["t"])] + lay[i + 2:], None))
+        trials += [(lay[:k], bk) for k in range(1, len(lay)) for bk in ("air", "metal")]
+        best = None
+        for L2, bk in trials:
+            mm = ST.rebuild(model, layers=L2, back=bk)
+            ST.set_dispersion_free(mm, True)
+            mm, cm = ST._fit(mm, f, y, sigma, atol=1e-2)
+            if best is None or cm < best[1]:
+                best = (mm, cm)
+        mm, cm = ST._fit(best[0], f, y, sigma)
+        if cm - cost < kappa:
+            model, cost = ST._drop_trailing_air(ST._drop_leading_air(mm)), cm
+        else:
+            break
+    return model, cost
