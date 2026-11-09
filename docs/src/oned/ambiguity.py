@@ -76,7 +76,10 @@ def decorrelate(Q):
         for i in range(K):
             for j in range(K):
                 if i != j:
-                    mu = int(np.round(Qz[i, j] / Qz[j, j]))
+                    ratio = Qz[i, j] / Qz[j, j]
+                    if not np.isfinite(ratio) or abs(ratio) > 1e6:
+                        continue
+                    mu = int(np.round(ratio))
                     if mu != 0:
                         Zn = Z.copy()
                         Zn[i] -= mu * Z[j]
@@ -162,13 +165,13 @@ def resolve(model, f, y, sigma, opts, box=2, margin=8.0, dchi2=4.0, max_recentre
     try:
         Wp = 0.5 * (W + W.T)
         ev = np.linalg.eigvalsh(Wp)
-        if ev.min() <= 0:
-            raise np.linalg.LinAlgError
+        if ev.min() <= 0 or not np.all(np.isfinite(Wp)) or ev.max() / ev.min() > 1e10:
+            raise np.linalg.LinAlgError       # ambiguity (nearly) unconstrained: rates undefined
         Q = np.linalg.inv(Wp)
         a_hat = Q @ b
         p_boot = bootstrap_success(Q)
         p_mc = ils_success_mc(Q)
-    except np.linalg.LinAlgError:
+    except (np.linalg.LinAlgError, ValueError, FloatingPointError):
         Q, a_hat, p_boot, p_mc = None, None, float("nan"), float("nan")
     # posterior basin probabilities under a flat prior over the plausible set
     cs = np.array([c for _, c in plaus])

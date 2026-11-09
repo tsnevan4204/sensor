@@ -104,11 +104,19 @@ def lm(model, f, y, sigma, regs=(), max_iter=200, tol=1e-12, gate=None, atol=0.0
     """Bounded LM in u = logit((q-lo)/(hi-lo)). With coords="phys" and atol=0 this is
     step-for-step the same algorithm as wall_inverse.levenberg_marquardt."""
     model = model.copy()
-    C = Coords(model, coords)
+    box = coords == "optical_box"          # E011b: optical coordinates + physical box kept
+    C = Coords(model, "optical" if box else coords)
     lo, hi = C.bounds(model)
+    plo, phi = model.bounds()
     u = _to_u(C.q_of(model), lo, hi)
     q, dqdu = _from_u(u, lo, hi)
     model = C.apply(model, q)
+    if box:                                   # start strictly inside the physical box
+        pv = model.get()
+        model.set(np.clip(pv, plo + 1e-9 * (phi - plo), phi - 1e-9 * (phi - plo)))
+        u = _to_u(C.q_of(model), lo, hi)
+        q, dqdu = _from_u(u, lo, hi)
+        model = C.apply(model, q)
     r, Jp = I.residuals(model, f, y, sigma, regs, gate)
     cost = r @ r
     mu = 1e-3
@@ -124,6 +132,11 @@ def lm(model, f, y, sigma, regs=(), max_iter=200, tol=1e-12, gate=None, atol=0.0
             u_new = u + du
             q_new, dqdu_new = _from_u(u_new, lo, hi)
             trial = C.apply(model, q_new)
+            if box:
+                pv = trial.get()
+                if np.any(pv <= plo) or np.any(pv >= phi):   # outside the prior box: reject the
+                    mu *= 4                                   # step exactly like a cost increase
+                    continue
             r_new, Jp_new = I.residuals(trial, f, y, sigma, regs, gate)
             n_eval += 1
             c_new = r_new @ r_new
@@ -167,7 +180,7 @@ class Opts:
     search_atol: float = 0.0      # E009: early stop of search LMs at this chi2 decrease
     n_polish: int = 3             # E009: distinct best starts re-converged on all frequencies
     init: str = "lattice"         # E010: "lattice" | "pencil"
-    coords: str = "phys"          # E011: "phys" | "optical"
+    coords: str = "phys"          # E011: "phys" | "optical" | "optical_box" (E011b)
     ambiguity: str = "scan"       # E012: "scan" | "ils"
     fit_tan: bool = True
 

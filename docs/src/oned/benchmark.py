@@ -160,6 +160,8 @@ E009 = dict(search_step=8, search_atol=0.01)
 E010 = dict(E009, init="pencil")
 E011 = dict(E010, coords="optical")
 E012 = dict(E011, ambiguity="ils")
+E011B = dict(E010, coords="optical_box")       # E011 with the physical box enforced
+E012B = dict(E011B, ambiguity="ils")
 
 METHODS = {
     "e007": lambda f, yc, s, d0: method_e007(f, yc, s, d0, fit_tan=False),
@@ -169,6 +171,8 @@ METHODS = {
     "e010": method_search(**E010),
     "e011": method_search(**E011),
     "e012": method_search(**E012),
+    "e011b": method_search(**E011B),
+    "e012b": method_search(**E012B),
 }
 
 

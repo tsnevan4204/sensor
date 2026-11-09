@@ -140,3 +140,4 @@ New tests in `tests/test_stability.py` (19 tests) and `tests/conftest.py` (pins 
 - (c) Delaunay meshes: is unique continuation available (Q2)?
 - (d) Ask Kaibo Hu Q1–Q6.
 **Artifacts:** results/2026-11-09_S001_stability/
+- **E011b** (added 2026-11-09, before running; reason: in E011 the LM in τ-coordinates left the physical prior box, e.g. insulation t = 185 mm vs box 80–100 mm, and settled in worse basins): LM in optical coordinates, but any trial step whose physical parameters leave the box is rejected (damping raised, as for a cost increase), so iterates stay feasible. Hypothesis: search failures (truth-basin χ² < returned χ²) back to ≤ E010's count, outcomes not worse than E010, work lower than E010. **E012b** = E011b + integer least squares (same hypothesis as E012).

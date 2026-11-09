@@ -86,3 +86,13 @@ def test_bootstrap_success_diagonal_and_bound():
     assert pb <= pm + 3 * np.sqrt(pm * (1 - pm) / 40000) + 1e-3
     Z = AM.decorrelate(Qc)
     assert round(abs(np.linalg.det(Z))) == 1
+
+
+def test_optical_box_lm_stays_in_box():
+    f, yc, sigma, d0 = _data(15)
+    m = S.stud_wall_model(free=("t", "eps_r", "tan_d"), standoff_guess=d0)
+    m.standoff.value = I.best_standoff(m, f, yc, sigma)
+    mo, c = SR.lm(m, f, yc, sigma, coords="optical_box")
+    lo, hi = mo.bounds()
+    v = mo.get()
+    assert np.all(v > lo) and np.all(v < hi)
