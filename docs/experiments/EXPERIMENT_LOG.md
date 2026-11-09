@@ -901,3 +901,11 @@ Iterations and what each fixed (all exact physics; only the search changed):
 | floorboard / tile / concrete | 10.4 / 6.2 / 94.7 | 10.5 / (tile + concrete merged 108.8) | flagged (χ²/n 5.3) |
 | foam / water / tile (seed 4, earlier version) | — | weak foam front missed | flagged |
 Time 7–124 s (prototype: scipy least squares with finite differences). Next: weak front faces, then speed (analytic Jacobians, own LM, compiled recursion), then held-out seeds and 5/7-layer benchmarks.
+
+## E041 — held-out reality check  (2026-11-09)
+Held-out 3-layer walls (seeds 101–108, never used for tuning):
+- baseline peeling (commit bc7151e): **1/7 exact, 6 flagged, 0 silent**, 108–700 s per wall;
+- + conduction-like dispersion kind in the per-depth fits: **1/8 exact, 7 flagged, 0 silent**, median 359 s; development walls fell from 4/6 to 3/6 with one **silent** failure (brick split again).
+Failure pattern: water layers (2–7 mm) in 5 of 7 held-out failures, thin high-contrast glass/tile (3–8 mm), plywood fronts, thick lossy concrete split into pieces.
+**Conclusion:** the development result (4/6) was optimistic; the greedy per-depth peeling is brittle on band-limited, lossy data with strong multiples (water, glass, tile), and search tweaks trade one wall for another. The information is there (CRB 0.01–0.3 mm at the truth, E041 check), so this is a search-design problem.
+**Next design (not yet implemented):** replace the discrete per-depth decisions by a *global* continuous inversion, then segmentation. Fine sublayers (e.g. 2 mm optical) each with (ε′, tan δ, water fraction), exact TMM forward and adjoint Jacobian (O(F N), already built), total-variation (blocky) regularisation à la Occam/TV inversion (Constable et al. 1987), frequency continuation from low UWB to all bands; then merge sublayers into layers (change-point segmentation) and polish the blocky model exactly with BIC pruning. All depths are solved at once, so a wrong early choice cannot propagate.
