@@ -126,7 +126,7 @@ def _lsq(res_b, q0, lo, hi, max_nfev=60):
     return least_squares(fun, q0, jac=jac, bounds=(lo, hi), method="trf", x_scale="jac", max_nfev=max_nfev)
 
 
-def _fit_step(B, n_prevs, starts, r_win, d_free=None, top=2):
+def _fit_step(B, n_prevs, starts, r_win, d_free=None, top=4):
     """Least squares of the gated half-space model; all starts are scored without optimisation and
     only the `top` best are optimised. Returns sorted (cost, p, water, d, ndof)."""
     ops = [_gate(f, r_win) for f in B.fs]
@@ -213,7 +213,7 @@ def _model_block(p, f, n_prev):
     return (r1 + G * e1) / (1 + r1 * G * e1)
 
 
-def _fit_block(B, n_prevs, echoes, d_free=None, top=2, keep=2):
+def _fit_block(B, n_prevs, echoes, d_free=None, top=4, keep=2):
     """Cascade: low band only (few phase cycles), then all bands from the best low-band blocks with
     +-2 high-band cycles on each thickness (GNSS-style wide-lane -> narrow-lane)."""
     lo = B.low()
@@ -240,7 +240,7 @@ def _fit_block1(B, n_prevs, echoes, d_free=None, top=4, keep=2, full=False, seed
     widest window whose best fit is consistent with noise, else the best per-dof fit."""
     best_ok, best_any = None, None
     echo_wins = {round(e + 0.012, 6) for e in echoes[:3]}
-    for win in sorted(echo_wins | ({0.03, 0.05} if len(echo_wins) < 2 else set())):
+    for win in sorted(set([0.03, 0.05, 0.08]) | echo_wins):
         ech = [e for e in echoes if e < win] or [win - 0.012]
         r = _fit_block_win(B, n_prevs, ech, win, d_free, top, keep, full, seeds)
         if not r:
@@ -328,11 +328,6 @@ def _fit_layer(B, n_prevs, sig_low, d_free=None, keep=2):
             best_any = (cd, res)
         if cd < 2.5:
             best_ok = (cd, res)                # widest consistent window wins
-            n_bad = 0
-        elif best_ok is not None:
-            n_bad = locals().get("n_bad", 0) + 1
-            if n_bad >= 2:                     # two wider windows inconsistent: deeper echoes are in
-                break
     if best_ok is None:                        # no single-layer window is consistent: thin neighbours
         blk = _fit_block(B, n_prevs, echoes, d_free, keep=keep)
         if blk and (best_any is None or blk[0][0] / blk[0][4] < best_any[0]):
