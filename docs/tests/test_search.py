@@ -140,3 +140,61 @@ def test_dual_benchmark_reuses_v2_truth_and_high_band():
     G, _ = I.forward(m, f, jacobian=False)
     chi2n = np.sum(np.abs(G - yc) ** 2) / s**2 / (2 * f.size)
     assert 0.8 < chi2n < 1.25, chi2n
+
+
+def test_cq_law_exact_at_fref_jacobian_and_matches_realism():
+    import realism as RL
+    f = np.concatenate([np.linspace(77e9, 81e9, 32), np.linspace(57e9, 64e9, 32)])
+    m = S.stud_wall_model(free=("t", "eps_r", "tan_d"), standoff_guess=0.30)
+    m.layers[0].tan_d.value = 0.035
+    m.sync_ties()
+    mc = m.copy(); mc.law = "cq"
+    fr = np.array([79e9])
+    assert np.abs(I.forward(m, fr, False)[0] - I.forward(mc, fr, False)[0]).max() < 1e-14
+    G, J = I.forward(mc, f)
+    worst = 0
+    for j in range(len(mc.free_names())):
+        h = 1e-7 * max(abs(mc.get()[j]), 1e-3)
+        a = mc.copy(); v = a.get(); v[j] += h; a.set(v)
+        b = mc.copy(); v = b.get(); v[j] -= h; b.set(v)
+        fd = (I.forward(a, f, False)[0] - I.forward(b, f, False)[0]) / (2 * h)
+        worst = max(worst, np.abs(fd - J[:, j]).max() / np.abs(J[:, j]).max())
+    assert worst < 1e-5, worst
+    # the model's cq law equals the realism generator's cq truth (independent TMM)
+    tv = {n: p.value for n, _, p in mc.items()}
+    L = RL.layers_from_truth(tv, RL.Realism(dispersion="cq"))
+    GTE, _ = RL.gamma_layers(f, np.zeros((f.size, 1)), L)
+    ref = GTE[:, 0] * np.exp(-2j * 2 * np.pi * f / W.C0 * mc.standoff.value)
+    assert np.abs(G - ref).max() < 1e-12
+
+
+def test_jonscher_law_reduces_to_cq_jacobian_and_matches_causal_itu_truth():
+    import realism as RL
+    f = np.concatenate([np.linspace(77e9, 81e9, 32), np.linspace(57e9, 64e9, 32)])
+    m = S.stud_wall_model(free=("t", "eps_r", "tan_d"), standoff_guess=0.30)
+    m.layers[0].tan_d.value = 0.035; m.sync_ties()
+    mc, mj = m.copy(), m.copy()
+    mc.law, mj.law = "cq", "jonscher"
+    assert np.abs(I.forward(mc, f, False)[0] - I.forward(mj, f, False)[0]).max() < 1e-13    # p = 0
+    mj.layers[0].pinf = I.P(0.45, 0, 0.9, True)
+    mj.layers[2].pinf = I.P(0.45, 0, 0.9, True, tie="drywall_front.pinf"); mj.sync_ties()
+    G, J = I.forward(mj, f)
+    worst = 0
+    for j in range(len(mj.free_names())):
+        errs = []                    # best of three steps: truncation vs round-off differ per parameter
+        for rel in (1e-5, 1e-6, 1e-7):
+            h = rel * max(abs(mj.get()[j]), 1e-3)
+            a = mj.copy(); v = a.get(); v[j] += h; a.set(v)
+            b = mj.copy(); v = b.get(); v[j] -= h; b.set(v)
+            fd = (I.forward(a, f, False)[0] - I.forward(b, f, False)[0]) / (2 * h)
+            errs.append(np.abs(fd - J[:, j]).max() / np.abs(J[:, j]).max())
+        worst = max(worst, min(errs))
+    assert worst < 1e-6, worst
+    # causal-ITU truth (drywall a' = 1 - 0.9395) equals the Jonscher model with the matching p
+    td = 0.035
+    ap = max(1 - RL.ITU_D["drywall"], 2 / np.pi * np.arctan(td))
+    pp = 1 - td / np.tan(np.pi * ap / 2)
+    e_truth = RL.eps_material(2.6, td, f, "itucausal", "drywall")
+    L = I.LayerSpec("x", I.P(0.01, 0, 1), I.P(2.6, 1, 4), I.P(td, 0, 1), pinf=I.P(pp, 0, 0.9))
+    e_model, _ = I.layer_eps_and_derivs(L, f, 20.0, "jonscher", 79e9)
+    assert np.abs(e_truth - e_model).max() < 1e-12

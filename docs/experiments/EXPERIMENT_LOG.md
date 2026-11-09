@@ -422,3 +422,48 @@ Methods: the best two-band method (e019dual) and the best single-band method (e0
 
 All keep the exact 1D Hodge stars. Priority list in doc 12 §F.
 **Artifacts:** results/2026-11-09_E020_reality_gap/
+
+### Pre-registered: E021 + E022 (2026-11-09, before running)
+**E021 change:** `WallModel.law = "cq"`: host law ε(f) = εr(1 − j tan δ)(f/f_ref)^(−α), α = (2/π) arctan(tan δ), f_ref = 79 GHz. This is Kjartansson constant-Q: exactly causal and passive, with the same two parameters, and equal to the old law at f_ref. Gates: Jacobian vs FD < 1e-5; equal to the independent realism TMM to < 1e-12. Method `e021` = e019dual_lite + cq law.
+**E022 change:** a legal second band in place of 22–26 GHz: 57–64 GHz (FCC 15.255) or 3.1–10.6 GHz (15.509 wall imaging). Benchmarks `real:<cq|itu>:<dual24|dual60|dualuwb>`, seeds 1–10.
+**Hypotheses:**
+- **E021:** on real:cq:dual24 (8/8 flagged in E020), flagged ≤ 1/10, silent 0, z ≤ 2.
+- **E022:** both legal bands give success ≥ 9/10, silent 0. Dual60 is expected to be slightly weaker than dual24 (E014 worst-case gap 62), dualuwb as good or better.
+- **ITU law** (not constant-Q, so a mild mismatch): flagged or z ≤ 3 (no silent z > 3).
+
+### Pre-registered: E021b (2026-11-09, before running)
+**Context:** E022 on the ITU-law data (real:itu:dual60) gave 8/10 flagged and 1 silent with the cq model. The ITU table form (ε′ constant, σ = c f^d) is not causal: its loss implies by Kramers–Kronig an ε′ drift of about 2.5% between bands. Real materials are causal but need not be exactly constant-Q.
+**Change:**
+- **Model:** Jonscher universal response, ε = εr[p + (1 − p − j tan δ)(f/f_ref)^(−α′)] with α′ = (2/π) arctan(tan δ/(1 − p)). It is causal and passive; p = ε∞/εr, and p = 0 gives constant-Q exactly. The drywall p is free (tied across sheets); the insulation stays constant-Q.
+- **Truth:** `itucausal`, the ITU loss slope made causal (α′ = max(1 − d, α_cq)).
+- Gates: reduction to cq < 1e-13; Jacobian vs FD < 1e-6; the truth law equals the model law with matching p to < 1e-12.
+
+**Hypothesis:** on real:itucausal (dual60 and dualuwb), e021b gives success ≥ 9/10 and silent 0, while e021 (cq) is flagged on most walls. On real:cq:dual60, e021b loses at most 1 success against e021.
+
+## E021 / E022 / E021b — Causal material laws and legal second bands  (2026-11-09)
+**Results** (seeds 1–10; "real:" = realism.py data; outcomes success/flagged/silent; best-basin count):
+
+| data | second band | model law | outcome | best basin | notes |
+|---|---|---|---|---|---|
+| constant-Q | 22–26 | const (E020) | 0/8/0 | — | z 8–18 |
+| constant-Q | 22–26 | **cq** (E021) | **10/0/0** | 10 | err/CRB std 0.7–1.6 |
+| constant-Q | **57–64** (legal) | cq | **10/0/0** | 9 | 8.0 s/wall |
+| constant-Q | **3.1–10.6 UWB** (legal) | cq | **10/0/0** | 10 | insulation t error 85 µm |
+| ITU table form (acausal) | 57–64 | cq | 1/8/1 | 6 | the acausal truth cannot be fitted by a causal law |
+| ITU slope, causal (`itucausal`) | 57–64 | cq | 10/0/0 | 9 | biases < 1 CRB |
+| itucausal | 57–64 | **Jonscher** (E021b) | 10/0/0 | 9 | biases < 0.6 CRB |
+| itucausal | UWB | cq | 10/0/0 | 10 | **silent tan δ bias: mean err/CRB +3.1 (drywall), +3.5 (insulation)** |
+| itucausal | UWB | **Jonscher** | **10/0/0** | 10 | all mean err/CRB ≤ 0.35 |
+| constant-Q | 57–64 | Jonscher | 10/0/0 | 9 | the extra parameter costs nothing measurable |
+
+**Hypotheses:**
+- **E021 passed:** the constant-Q law removes the dispersion failure (8/8 flagged → 10/10 success).
+- **E022 passed:** both legal bands give 10/10 with no silent failures. 57–64 GHz has 9/10 best-basin; UWB has 10/10 and the smallest insulation error.
+- **E021b passed**, after a correction: the ITU failure was caused by the acausal form of the ITU table itself. ITU-R P.2040 §2.1.3 itself says ε′ falls above 5–10 GHz, while Table 3 sets b = 0 for simplicity. With the causally completed ITU slope, the narrow span (57–81 GHz) is fine even with constant-Q. **Over a wide span (3–81 GHz) constant-Q leaves silent tan δ biases of 3 CRB**, which the Jonscher law removes.
+
+**Conclusion:** accepted.
+- The default material law for multi-band data is **Jonscher**: drywall p free, insulation constant-Q. Constant-Q is adequate for a narrow span.
+- Legal second band: **3.1–10.6 GHz UWB** gives the best accuracy (needs Part 15.509 eligibility), and **57–64 GHz** is the unlicensed alternative.
+- Simulated data must themselves be causal: a material table is not a material law.
+
+**Artifacts:** results/2026-11-09_E021_causal_bands/

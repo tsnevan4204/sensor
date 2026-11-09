@@ -45,7 +45,31 @@ RES_CELL = W.C0 / (2 * 4e9)   # E018: range-resolution cell of the 4 GHz band (3
 DUAL_BAND = (22e9, 26e9)     # E017 second band (E014: removes the back-of-wall cycle ambiguity)
 
 
+BANDS2 = {"dual24": (22e9, 26e9), "dual60": (57e9, 64e9), "dualuwb": (3.1e9, 10.6e9)}
+
+
+def real_presets():
+    import realism as RL
+    PAPER = (0.4e-3, 2.0, 0.08)
+    return {"cq": RL.Realism(dispersion="cq"),
+            "itu": RL.Realism(dispersion="itu"),
+            "itucausal": RL.Realism(dispersion="itucausal"),
+            "cqbeam2": RL.Realism(dispersion="cq", beam_w0=0.02),
+            "cqbeam1": RL.Realism(dispersion="cq", beam_w0=0.01),
+            "cqbeamhf": RL.Realism(dispersion="cq", beam_w0=0.02, Hf=0.1),
+            "cqpaper": RL.Realism(dispersion="cq", paper=PAPER),
+            "cqrough": RL.Realism(dispersion="cq", rough_sigma=1e-4),
+            "cqoffset": RL.Realism(dispersion="cq", band_offset=0.3e-3),
+            "all": RL.Realism(dispersion="cq", beam_w0=0.02, Hf=0.1, plate_err=0.5e-3, rough_sigma=1e-4,
+                              paper=PAPER, air_gap=3e-3, drift=(0.05, 0.01), band_offset=0.3e-3)}
+
+
 def make_case(benchmark, seed, plate_d=0.25):
+    if benchmark.startswith("real:"):            # E021+: realistic world (realism.py), "real:<preset>:<band>"
+        import realism as RL
+        _, preset, band = benchmark.split(":")
+        return RL.make_case_real(seed, real_presets()[preset], dual=band != "single",
+                                 plate_d=plate_d, band2=BANDS2.get(band))
     dual = benchmark.endswith("dual")
     benchmark = benchmark[:-4] if dual else benchmark
     rng = np.random.default_rng(seed)
@@ -235,6 +259,12 @@ METHODS = {
     "e019dual_lite": method_cascade(dict(CURRENT, standoff_halfwidth=RES_CELL), dict(E009, standoff_halfwidth=RES_CELL)),
     "e018b_lite": method_cascade(dict(E013B, standoff_halfwidth=RES_CELL),
                                  dict(E015_FB1(DRYWALL_PRIOR + STUD_PRIOR), standoff_halfwidth=RES_CELL)),
+    # E021: causal constant-Q material law in the model (else = e019dual_lite)
+    "e021": method_cascade(dict(CURRENT, standoff_halfwidth=RES_CELL, law="cq"),
+                           dict(E009, standoff_halfwidth=RES_CELL, law="cq")),
+    # E021b: Jonscher law, drywall eps_inf fraction free (shared by both sheets), insulation constant-Q
+    "e021b": method_cascade(dict(CURRENT, standoff_halfwidth=RES_CELL, law="jonscher", pinf_free=True),
+                            dict(E009, standoff_halfwidth=RES_CELL, law="jonscher", pinf_free=True)),
     "e016": method_cascade(dict(E013, ambiguity="posterior"),
                            dict(E015_FB1(DRYWALL_PRIOR), ambiguity="posterior"),
                            dict(E015_FB2(DRYWALL_PRIOR), ambiguity="posterior")),

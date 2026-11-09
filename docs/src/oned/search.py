@@ -214,6 +214,8 @@ class Opts:
     fit_tan: bool = True
     priors: tuple = ()            # E013: ((name, mean, sd), ...) Gaussian priors
     standoff_halfwidth: float = 0.010   # E018: search box guess +- this; resolution cell c/2B = 0.0375
+    law: str = "const"                  # E021: host material law of the model ("const" | "cq" | "jonscher")
+    pinf_free: bool = False             # E021b: free Jonscher eps_inf fraction of the drywall (tied sheets)
 
 
 def _subset(f, y, k):
@@ -448,6 +450,11 @@ def _invert(f, yc, sigma, d0, opts: Opts):
     import scenarios as S
     free = ("t", "eps_r", "tan_d") if opts.fit_tan else ("t", "eps_r")
     model = S.stud_wall_model(free=free, standoff_guess=d0, standoff_halfwidth=opts.standoff_halfwidth)
+    model.law = opts.law
+    if opts.pinf_free:
+        model.layers[0].pinf = I.P(0.3, 0.0, 0.9, True)
+        model.layers[2].pinf = I.P(0.3, 0.0, 0.9, True, tie="drywall_front.pinf")
+        model.sync_ties()
     all_free = {n for n, _, p in model.items() if p.free}
     stages = stud_stages(d0, opts.fit_tan)
     info = {"starts": []}

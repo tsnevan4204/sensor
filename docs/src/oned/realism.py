@@ -65,6 +65,14 @@ def eps_material(eps_r, tan_d, f, kind, material):
         # eps_r (1 - j tan_d) at f_ref up to the factor 1/cos(pi a/2) ~ 1 + O(tan_d^2): normalise
         mag = eps_r * np.sqrt(1 + tan_d**2)
         return mag * (f / F_REF) ** (-a) * np.exp(-1j * np.pi * a / 2)
+    if kind == "itucausal":
+        # ITU-R P.2040 loss slope (eps'' ~ f^(d-1)) made causal: Jonscher eps_inf + C (jf/f_ref)^(-a'),
+        # a' = max(1 - d, a_cq); eps_inf fixed by matching eps_r (1 - j tan_d) at f_ref
+        a_cq = 2 / np.pi * np.arctan(tan_d)
+        ap = max(1 - ITU_D[material], a_cq)
+        pp = 1 - tan_d / np.tan(np.pi * ap / 2)
+        g = (f / F_REF) ** (-ap)
+        return eps_r * (pp + (1 - pp - 1j * tan_d) * g)
     if kind == "itu":
         d = ITU_D[material]
         sig_ref = tan_d * eps_r * 2 * np.pi * F_REF * EPS0
@@ -182,7 +190,7 @@ def measure_band(tv, radar: W.Radar, R: Realism, plate_d=0.25, d=None):
     return f, yc, sigma
 
 
-def make_case_real(seed, R: Realism, dual=True, plate_d=0.25):
+def make_case_real(seed, R: Realism, dual=True, plate_d=0.25, band2=None):
     """Same truths as benchmark v2/v2dual (same rng sequence), data through the realistic world."""
     rng = np.random.default_rng(seed)
     d_true = 0.30 + 0.002 * rng.random()
@@ -192,7 +200,8 @@ def make_case_real(seed, R: Realism, dual=True, plate_d=0.25):
     bands = [W.Radar(seed=seed)]
     if dual:
         import benchmark as B
-        bands.append(W.Radar(f0=B.DUAL_BAND[0], f1=B.DUAL_BAND[1], seed=seed + 1000))
+        b2 = B.DUAL_BAND if band2 is None else band2
+        bands.append(W.Radar(f0=b2[0], f1=b2[1], seed=seed + 1000))
     fs, ys, s2 = [], [], []
     for k, radar in enumerate(bands):
         d = tv["standoff"] + (R.band_offset if k > 0 else 0.0)

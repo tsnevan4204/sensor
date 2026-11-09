@@ -47,6 +47,7 @@ class LayerSpec:
     eps_r: P
     tan_d: P
     theta: P = field(default_factory=lambda: P(0.0, 0.0, 0.3, False))
+    pinf: P = field(default_factory=lambda: P(0.0, 0.0, 0.9, False))   # E021b Jonscher: eps_inf / eps_r
 
 
 @dataclass
@@ -55,11 +56,13 @@ class WallModel:
     standoff: P
     eps_back: complex = 1.0 + 0j
     water_T: float = 20.0
+    law: str = "const"          # host material law: "const" (E007) or "cq" causal constant-Q (E021)
+    f_ref: float = 79e9         # reference frequency of the "cq" law (eps_r, tan_d are the values there)
 
     # ---- flat views over parameters -------------------------------------------------
     def items(self):
         for i, L in enumerate(self.layers):
-            for key in ("t", "eps_r", "tan_d", "theta"):
+            for key in ("t", "eps_r", "tan_d", "theta", "pinf"):
                 yield f"{L.name}.{key}", (i, key), getattr(L, key)
         yield "standoff", (None, "standoff"), self.standoff
 
@@ -100,9 +103,47 @@ class WallModel:
 
 
 # ============================================================================ materials
-def layer_eps_and_derivs(L: LayerSpec, f, T):
-    """eps(f) and d eps / d(eps_r, tan_d, theta), all exact (analytic)."""
-    h = L.eps_r.value * (1 - 1j * L.tan_d.value)
+def layer_eps_and_derivs(L: LayerSpec, f, T, law="const", f_ref=79e9):
+    """eps(f) and d eps / d(eps_r, tan_d, theta), all exact (analytic).
+    Host law "const": h = eps_r (1 - j tan_d) at every f (not causal over wide bands).
+    Host law "cq" (E021, Kjartansson constant-Q, exactly causal and passive):
+        h(f) = eps_r (1 - j tan_d) (f / f_ref)^(-a),  a = (2/pi) arctan(tan_d),
+    i.e. eps_r sqrt(1+tan_d^2) (j f/f_ref)^(-a) since tan(pi a / 2) = tan_d. Same two parameters,
+    equal to "const" at f_ref; eps' falls as f^-a, the loss angle is constant."""
+    f = np.asarray(f, float)
+    if law == "jonscher":
+        # E021b: eps = eps_r [ p + (1 - p - j t) g ],  g = (f/f_ref)^(-a'),  a' = (2/pi) atan(t/(1-p))
+        # = eps_inf + C (j f/f_ref)^(-a') (Jonscher universal response): causal, passive, p = 0 is "cq"
+        er, t, pp = L.eps_r.value, L.tan_d.value, L.pinf.value
+        u = t / (1 - pp)
+        a = 2 / np.pi * np.arctan(u)
+        lg = -np.log(f / f_ref)
+        g = np.exp(a * lg)
+        core = (1 - pp - 1j * t) * g
+        h = er * (pp + core)
+        da_dt = 2 / np.pi / (1 + u**2) / (1 - pp)
+        da_dp = 2 / np.pi / (1 + u**2) * t / (1 - pp) ** 2
+        dh_der = h / er
+        dh_dtd = er * (-1j * g + core * lg * da_dt)
+        dh_dp = er * (1 - g + core * lg * da_dp)
+        eps, d = _crim(L, f, T, h, dh_der, dh_dtd)
+        d["pinf"] = d["eps_r"] / dh_der * dh_dp
+        return eps, d
+    if law == "cq":
+        t = L.tan_d.value
+        a = 2 / np.pi * np.arctan(t)
+        g = (f / f_ref) ** (-a)
+        h = L.eps_r.value * (1 - 1j * t) * g
+        dh_der = h / L.eps_r.value
+        dh_dtd = L.eps_r.value * (-1j) * g + h * (-np.log(f / f_ref)) * (2 / np.pi) / (1 + t**2)
+    else:
+        h = L.eps_r.value * (1 - 1j * L.tan_d.value) * np.ones_like(f)
+        dh_der = (1 - 1j * L.tan_d.value) * np.ones_like(f)
+        dh_dtd = (-1j * L.eps_r.value) * np.ones_like(f)
+    return _crim(L, f, T, h, dh_der, dh_dtd)
+
+
+def _crim(L, f, T, h, dh_der, dh_dtd):
     w = eps_water_debye(f, T)
     sh, sw = np.sqrt(h), np.sqrt(w)
     th = L.theta.value
@@ -110,16 +151,17 @@ def layer_eps_and_derivs(L: LayerSpec, f, T):
     eps = s ** 2
     de_dh = s * (1 - th) / sh
     return eps, {
-        "eps_r": de_dh * (1 - 1j * L.tan_d.value),
-        "tan_d": de_dh * (-1j * L.eps_r.value),
+        "eps_r": de_dh * dh_der,
+        "tan_d": de_dh * dh_dtd,
         "theta": 2 * s * (sw - sh),
+        "pinf": 0 * eps,
     }
 
 
 def n_cells_for(L: LayerSpec, fmax, T):
     """Cells so that |k| l <= pi/2 at the top frequency (keeps stars positive and
     far from sin(kl)=0). The answer is exact for ANY cell count; this is only conditioning."""
-    eps, _ = layer_eps_and_derivs(L, np.array([fmax]), T)
+    eps, _ = layer_eps_and_derivs(L, np.array([fmax]), T)          # conditioning only
     k = 2 * np.pi * fmax / C0 * abs(np.sqrt(eps[0]))
     return max(1, int(np.ceil(k * L.t.value / (0.9 * np.pi))))
 
@@ -136,7 +178,7 @@ def forward(model: WallModel, f, jacobian=True):
     layer_of_cell = np.repeat(np.arange(len(model.layers)), ncell)
     ell = np.concatenate([[L.t.value / n] * n for L, n in zip(model.layers, ncell)])
     Nc = ell.size
-    eps_all, deps_all = zip(*[layer_eps_and_derivs(L, f, T) for L in model.layers])
+    eps_all, deps_all = zip(*[layer_eps_and_derivs(L, f, T, model.law, model.f_ref) for L in model.layers])
     n_back = _sqrt_branch(np.array([model.eps_back]))[0]
     col = {nm: j for j, nm in enumerate(names)}
 
@@ -180,7 +222,7 @@ def forward(model: WallModel, f, jacobian=True):
         if o is not None:
             J[:, col[o]] += -phase * Tl[:, sel].sum(1) / ncell[li]
         dk_deps = k0[:, 0] / (2 * n_l[:, li])
-        for key in ("eps_r", "tan_d", "theta"):
+        for key in ("eps_r", "tan_d", "theta", "pinf"):
             o = model.owner(f"{L.name}.{key}")
             if o is not None:
                 J[:, col[o]] += -phase * Tk[:, sel].sum(1) * dk_deps * deps_all[li][key]
@@ -443,7 +485,7 @@ def _phase_periods(model, f):
     out = {}
     for L in model.layers:
         if L.t.free:
-            eps, _ = layer_eps_and_derivs(L, np.array([fc]), model.water_T)
+            eps, _ = layer_eps_and_derivs(L, np.array([fc]), model.water_T, model.law, model.f_ref)
             out[f"{L.name}.t"] = lam_c / (2 * np.sqrt(eps[0]).real)
     if model.standoff.free:
         out["standoff"] = lam_c / 2
