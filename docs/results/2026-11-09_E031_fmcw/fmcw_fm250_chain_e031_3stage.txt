@@ -1,0 +1,21 @@
+benchmark fmcw:fm250:chain  method e031  seeds 1-10  wall 79s
+runs 10: success 10, flagged 0, silent 0
+best model in the truth's basin (all layers): 10/10
+chi2/n: 0.91, 0.97, 0.95, 1.00, 0.97, 1.01, 0.94, 1.00, 0.99, 0.99
+chi2(truth) - chi2(best): +11.6, +11.2, +8.2, +8.1, +14.8, +8.0, +12.4, +6.5, +33.4, +6.2
+outcome per seed: 1:s, 2:s, 3:s, 4:s, 5:s, 6:s, 7:s, 8:s, 9:s, 10:s
+wall time per inversion (1 core): median 14.8 s; forward solves (with J) median 9177, (no J) median 43
+work (forward solves in units of one 256-frequency solve): median 18440
+err/CRB over runs whose best model is in the truth basin (10):
+  drywall_front.t        mean|err| 7.26e-06  CRB 1.3e-05  err/CRB mean -0.14 std 0.82 max|.| 2.1
+  drywall_front.eps_r    mean|err| 3.22e-03  CRB 5.4e-03  err/CRB mean +0.12 std 0.82 max|.| 2.1
+  drywall_front.tan_d    mean|err| 7.20e-04  CRB 9.5e-04  err/CRB mean -0.46 std 0.67 max|.| 1.4
+  insulation.t           mean|err| 1.12e-03  CRB 1.2e-03  err/CRB mean -0.48 std 0.91 max|.| 1.6
+  insulation.eps_r       mean|err| 2.90e-02  CRB 3.1e-02  err/CRB mean +0.46 std 0.91 max|.| 1.6
+  insulation.tan_d       mean|err| 1.87e-04  CRB 2.5e-04  err/CRB mean +0.08 std 0.83 max|.| 1.4
+  drywall_back.t         mean|err| 2.64e-05  CRB 2.4e-05  err/CRB mean +0.28 std 1.19 max|.| 2.0
+  standoff               mean|err| 1.05e-06  CRB 8.1e-07  err/CRB mean +0.40 std 1.41 max|.| 2.8
+  tau[drywall_front]        mean|err| 1.94e-06  CRB 2.3e-06  err/CRB mean -0.17 std 0.90 max|.| 1.5
+  tau[insulation   ]        mean|err| 1.37e-05  CRB 1.2e-05  err/CRB mean +0.16 std 1.20 max|.| 2.5
+  tau[drywall_back ]        mean|err| 3.60e-05  CRB 3.0e-05  err/CRB mean +0.49 std 1.29 max|.| 2.6
+plausible basins per run: [1, 1, 1, 1, 1, 1, 1, 1, 2, 1]

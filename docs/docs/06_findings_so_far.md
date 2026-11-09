@@ -95,3 +95,13 @@ On 100 held-out honest-benchmark walls (loss unknown): **100/100 correct, 0 sile
 **Lessons:**
 - The second band is worth more than any amount of search or computation (E014: wrong-cycle basins vanish).
 - Search bounds must come from physics (the range-resolution cell), not from convenience: seed 7's truth was outside a ±10 mm box.
+
+## Update 2026-11-09, latest (E021–E032): realism fixes, prototype chain, band choice
+
+- **Material law:** causal Jonscher (constant-Q at p = 0) with the same parameters plus one; required for multi-band data (E021/E021b). A material *table* such as ITU-R P.2040 Table 3 is not a causal *law*.
+- **Antenna:** beam model (rotated-contour Gauss–Laguerre quadrature over exact oblique stars, K = 2–4) plus multi-distance staggered-plate calibration with exact noise propagation (E023). A beam waist ≥ 2 cm at the working distance is required (1 cm loses 11–14 dB, ambiguity returns).
+- **Wall micro-structure:** drywall face paper (facing layer) and roughness (graded taper centred on the mean surface, h = 2√3σ/1.33) solved (E024). The band phase-centre offset is solved once fitted in the front stage. A thin low-contrast air gap behind insulation is **not identifiable**; treat it as a nuisance (E030).
+- **Prototype chip chain:** the IF high-pass filters must be modelled as a measurement operator (ignoring them fails 10/10). Use the maximum chirp slope (250 MHz/µs → 10/10). A 1 MHz chirp nonlinearity is negligible (E031).
+- **Second band:** UWB 3.1–10.6 GHz gives **100/100 held-out, 0 silent**, even with the sparse 1.3 s search. 57–64 GHz leaves ~5% silent back-of-wall ambiguity (E032 vs held-out baselines).
+- **Speed:** compiled per-layer chain kernel plus minimal pole-safe cells: forward + Jacobian 26 → 1.1 ms, exact (E026/E027). The full robust inversion takes ~1 s. A learned initializer + integer least squares gives 16–54 ms exact inversions when its start is right, but must be held-out-validated (E029b failed on 57–64 GHz).
+- **Protocol additions:** every speed shortcut must pass the 100 held-out walls; the χ² alarm is χ² > n + 3√(2n); a verification step must never rescue an alarmed fast path.

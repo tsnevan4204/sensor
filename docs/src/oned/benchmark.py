@@ -470,7 +470,10 @@ def method_e031():
         kw = dict(CURRENT, standoff_halfwidth=RES_CELL, law="jonscher", pinf_free=True, min_cells=True,
                   lat_step=1.0, lat0_eps=(2.6,), lat1_eps=(1.15,), hops=(1, -1), amb_ks=(-1, 1),
                   search_step=1, search_atol=0.01, chain=_EXTRA["chain"])
-        return method_cascade(kw, dict(E009, **{k: v for k, v in kw.items() if k not in CURRENT}, search_step=1))(f, y, s, d0)
+        fb = {k: v for k, v in kw.items() if k not in CURRENT}
+        return method_cascade(kw, dict(E009, **fb, search_step=1),
+                              dict(**{k: v for k, v in fb.items() if k not in ("lat_step", "lat0_eps", "lat1_eps", "hops", "amb_ks")},
+                                   search_step=1))(f, y, s, d0)
     return run
 
 

@@ -34,3 +34,7 @@
 - Infineon BGT60TR13C product page and datasheet (58–63.5 GHz, 5.5 GHz bandwidth, 1 Tx / 3 Rx antennas in package).
 - TI IWR1843 product page (76–81 GHz, 3 Tx / 4 Rx).
 - Small-distance-increment permittivity with a COTS TI radar: arXiv 2403.12726.
+
+## Update after E031/E032
+- **IF chain:** modelled exactly as a linear operator (never inverted). With it, 10/10 at **S = 250 MHz/µs** (9/10 at 100 MHz/µs); ignoring it fails on every wall. A chirp nonlinearity of 1 MHz is negligible.
+- **Second band decision: UWB 3.1–10.6 GHz** (E032: 100/100 held-out, 0 silent), not 76–81 GHz IWR1843 / 57–64 GHz alone. So the prototype pair is IWR6843 (60–64 GHz) + a UWB wall-imaging front end. Next: rerun the two-band benchmarks with 60–64 GHz as the TOP band paired with UWB, with the IF chain of each chip.

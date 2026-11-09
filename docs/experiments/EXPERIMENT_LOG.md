@@ -746,3 +746,39 @@ real:cq:dualuwb (77–81 + 3.1–10.6 GHz), seeds 21–120, dense (e025_base) an
 
 **Conclusion:** a thin, low-contrast layer below the resolution cannot be estimated from this data. It should be treated as a **nuisance**: report cavity depth and insulation εr with uncertainty widened by marginalising over a plausible gap range (profile likelihood over g ∈ [0, 10] mm), rather than as a point estimate. Recorded as an identifiability limit (doc 12 §A7). The all-plane-wave-effects failures (2 flagged, 2 silent) need separate examination once the E031/E032 runs finish.
 **Artifacts:** results/2026-11-09_E030_gap/
+
+## E031 — FMCW chain of the prototype chip  (2026-11-09)
+**Results** (77–81 GHz + 60–64 GHz, raw IF data, HPF 175/350 kHz, seeds 1–10):
+
+| data | method | success/flagged/silent | best basin | time |
+|---|---|---|---|---|
+| S = 100 MHz/µs | classical calibration (chain ignored), e027_s4 | 0/10/0 | 6 | — |
+| S = 250 MHz/µs | chain ignored | 0/10/0 | 6 | 3.4 s |
+| S = 100 MHz/µs | **chain modelled**, 2-stage cascade | 7/3/0 | 7 | 11.6 s |
+| S = 100 MHz/µs | **chain modelled**, 3-stage cascade | **9/0/1** | 9 | 13.6 s |
+| **S = 250 MHz/µs** | **chain modelled**, 3-stage cascade | **10/0/0** | 10 | 14.8 s |
+| S = 100 MHz/µs + 1 MHz chirp nonlinearity (unmodelled) | chain, 2-stage | 7/3/0 (identical to without) | 7 | — |
+
+**Hypotheses:**
+- (a) passed: ignoring the IF chain fails on every wall (flagged).
+- (b) passed with the 3-stage cascade: 10/10 at 250 MHz/µs.
+- (c) failed in form: both naive slopes fail completely, so the slope matters only once the chain is modelled. There, 250 MHz/µs is better: 10/0/0 vs 9/0/1, err/CRB std 0.9–1.3 vs 1.4.
+- (d) passed: a 1 MHz quadratic chirp nonlinearity is negligible. Phase error 2π·ε·τ ≈ 0.013 rad at τ = 2 ns.
+
+**Failures examined:** the 2-stage cascade's 3 flagged walls were search misses (the truth fits the raw IF data at χ²/n 0.92–1.00). The dense third stage fixes them. A crash on naive data (the pencil returned no starts) is fixed: an empty pencil start set falls back to the lattice, and non-finite candidates are dropped.
+**Conclusion:** accepted.
+- The IF high-pass chain enters the model as a fixed linear measurement operator (never inverted: cond ≈ 1e3).
+- Use the maximum practical chirp slope (250 MHz/µs on the IWR6843) so the wall beat frequencies sit well above the HPF corners.
+
+**Artifacts:** results/2026-11-09_E031_fmcw/
+
+## E032 — Held-out confirmation with the UWB second band  (2026-11-09)
+**Results** (real:cq:dualuwb, 77–81 + 3.1–10.6 GHz, seeds 21–120):
+- dense search (e025_base): **100 / 0 / 0**, best basin 100/100, median 3.9 s;
+- sparse search (e027_s4): **100 / 0 / 0**, best basin 100/100, median 1.3 s;
+- err/CRB within the basin: mean |·| ≤ 0.17, std 0.95–0.98.
+
+With 57–64 GHz the same methods gave 95/0/5 (dense) and 88/7/5 (sparse).
+**Hypothesis passed.** The UWB second band removes the residual back-of-wall ambiguity, and the speed shortcuts lose nothing with it.
+**Decision:** the second band of the prototype is **3.1–10.6 GHz UWB** (FCC §15.509 wall imaging for construction, with Part 90 eligibility, to be confirmed) alongside the IWR6843 at 60–64 GHz. The fast path (E029) is to be retrained and held-out-validated for this band pair.
+**Artifacts:** results/2026-11-09_E032_uwb_heldout/

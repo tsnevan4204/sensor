@@ -291,6 +291,8 @@ def lattice_stage(m, f, y, sigma, st, opts, starts=None):
     re-converge the n_polish best distinct basins on all frequencies."""
     fs, ys = _subset(f, y, opts.search_step)
     per = phase_periods(m, f)
+    if starts is not None and len(starts) == 0:      # pencil found nothing usable: regular lattice
+        starts = None
     if starts is None:
         starts = []
         keys = list(st.lattice)
@@ -308,7 +310,8 @@ def lattice_stage(m, f, y, sigma, st, opts, starts=None):
         if st.profile_standoff and "standoff" in s.free_names() and "standoff" not in (st.lattice or {}):
             s.standoff.value = I.best_standoff(s, fs, ys, sigma, st.gate)
         mo, c = lm(s, fs, ys, sigma, gate=st.gate, atol=opts.search_atol, coords=opts.coords)
-        cands.append((c, mo))
+        if np.isfinite(c):
+            cands.append((c, mo))
     if opts.search_step == 1 and opts.search_atol == 0:
         c, mo = min(cands, key=lambda t: t[0])
         return mo, c, len(starts)
