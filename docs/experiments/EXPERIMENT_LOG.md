@@ -891,7 +891,7 @@ Iterations and what each fixed (all exact physics; only the search changed):
 3. Tail-cut pruning (drop the tail, either backing) and merging of identical neighbours.
 4. **Bug: a free Jonscher shape p started exactly on its bound p = 0; in logit coordinates it can never move**, so dispersive materials (brick, plywood, wet layers) could only be imitated by fake extra layers. Releasing p early, however, drags thicknesses off-cycle. Final design: geometry with p = 0 (constant-Q shape) throughout, then release p at the end (starts 0.02 and 0.95), then merge/prune again.
 
-**Result (dev seeds 1–6):** 5/6 structure and thicknesses exact; the remaining failure is flagged, none silent.
+**Result (dev seeds 1–6):** 4/6 structure and thicknesses exact (corrected from "5/6": two failures, both flagged), none silent. Reproduced after restoring this configuration (commit bc7151e) when later search tweaks (fewer/more starts, screening, wider beam) each made it worse: the per-depth search is fragile, see E041 notes.
 | wall | truth (mm) | fit (mm) | εr fit |
 |---|---|---|---|
 | batt / wood / brick | 58.0 / 15.1 / 78.0 | 58.0 / 15.1 / 77.8 | 1.14 / 2.04 / 4.03 |
