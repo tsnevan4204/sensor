@@ -636,3 +636,52 @@ These are E026–E028.
 - Always run a ±1-cycle ambiguity check (a few cheap LM runs) before accepting the fast path.
 
 **Artifacts:** results/2026-11-09_E028_initializer/ (training logs), src/oned/init_net.py, init_net_weights.npz (9.6k parameters).
+
+### Pre-registered: E029 — Phase-aware initializer + integer least squares (before running)
+**Change:**
+- **Network outputs**, 9.7k parameters: coarse values plus cos/sin of each layer's optical thickness on a wide lane P_w = c/(2Δf_c) = 8.10 mm and a narrow lane P_n = 1.90 mm. Cascade decoding coarse → wide → narrow.
+- **Validation (within half a cycle):** front 51% → 92%. Insulation and back are not resolved by the cascade (wide-lane phase error 1.2–1.7 rad), **but their narrow-lane phases are accurate (0.25 / 0.58 rad)**: good float ambiguities.
+- **Method e029:**
+  1. Integer candidates N ∈ round(coarse) ± (4 insulation, 3 back), τ = P_n(N + φ).
+  2. χ² at each candidate without optimisation (coarse data).
+  3. Exact LM (min cells) on the best 3.
+  4. ±1 ambiguity scan.
+  5. If χ²/n > 1.2, fall back to e027_s4.
+
+**Hypothesis:** real:cq:dual60 seeds 1–20: outcomes within ±1 of e027_s4 (19/1/0, best basin 18), the fast path taken on ≥ 15/20, median time ≤ 0.15 s. `e029_noamb` (without the ambiguity scan) shows what the scan costs and buys.
+
+## E029 — Phase-aware initializer + integer least squares (results)  (2026-11-09)
+**Results** (real:cq:dual60, seeds 1–20):
+
+| method | success/flagged/silent | best basin | fast path | median time |
+|---|---|---|---|---|
+| e027_s4 (search) | 19/1/0 | 18 | — | 0.9 s |
+| e029 | 19/0/**1** | 18 | 16/20 | 0.32 s |
+| e029_noamb | 18/0/**2** | 18 | 14/20 | 0.24 s |
+
+**Failure examined (seed 18, silent):** deterministic logic error.
+- The integer search gave a bad start (χ² 1442, χ²/n 1.41). The ±1 scan then "rescued" it into a still-wrong basin (back drywall +1 cycle, χ² 1162, χ²/n 1.135). That passed the fixed χ²/n ≤ 1.2 alarm. The truth basin has χ² 1081.
+- Lesson 1: a verification step must never be allowed to rescue an alarmed fast path; an alarm means fall back.
+- Lesson 2: the fixed 1.2 alarm is a 4.4σ excess at n = 1024 (std of χ²/n = √(2/n) = 0.044). It was tuned for one band. Use χ² > n + 3√(2n).
+
+**Conclusion:** partial (fast path on 16/20, but one silent failure and 0.32 s against a target of 0.15 s). Fix → E029b.
+
+### Pre-registered: E029b (before running)
+e029 + (i) the scaled alarm χ² > n + 3√(2n); (ii) an alarm before the scan triggers the fallback directly.
+**Hypothesis:** real:cq:dual60 seeds 1–20: silent 0, success ≥ 19. Then held-out seeds 21–120: success ≥ 98, silent ≤ 1.
+
+## E029b — Scaled alarm + verify-only scan; held-out check  (2026-11-09)
+**Development seeds 1–20:** **20/0/0**, best basin 19/20, fast path 14/20, median 0.38 s.
+**Held-out seeds 21–120:** **86 / 3 / 11** (success/flagged/silent), best basin 85/100, fast path 46/100 (median 273 ms), overall median 1.02 s. err/CRB within the right basin is calibrated (std 0.8–1.1).
+**Silent failures examined (LM from the truth):**
+- **Fallback search (e027_s4, sparse E025 settings): 3** (seeds 34, 36, 64). The insulation is +4 cycles off and the truth basin is better by Δχ² 50–200. χ²/n 1.02–1.04 looks statistically fine, so no alarm can catch this: a **search miss of the sparse lattice**.
+- **Fast path: 8**, all in the **back drywall** (−1 or ±3 cycles). 5 are search misses (truth better by Δχ² 4–87); 3 are genuine ambiguity (truth worse).
+
+**Conclusion: hypothesis failed (≥ 98 success, ≤ 1 silent).**
+- (i) Speed shortcuts validated on 20 development walls (E025 s4, the E029 fast path) do not hold on 100 fresh walls. **Every speed variant must be validated on the held-out set before acceptance**; that is now part of the protocol.
+- (ii) With 57–64 GHz as the second band, the back drywall's cycle is only marginally determined (E014 worst gap Δ = 62), so reduced search effort costs accuracy. UWB 3.1–10.6 GHz removes those basins (E014, E025).
+
+**Next:**
+- Held-out baselines for the dense (e025_base) and sparse (e027_s4) searches on dual60 (running).
+- A back-drywall verification with ±1…±3 cycles polished on all data.
+- The fast path trained and validated on the UWB second band.

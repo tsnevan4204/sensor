@@ -295,6 +295,68 @@ def method_e028(hybrid=False, fallback=True):
     return run
 
 
+def chi2_alarm(cost, n_data):
+    """Statistically scaled alarm: chi2 exceeds its expectation by more than 3 standard deviations,
+    chi2 > n + 3 sqrt(2 n)  (chi2/n ~ 1.13 for n = 1024, 1.19 for n = 512)."""
+    return cost > n_data + 3 * np.sqrt(2 * n_data)
+
+
+def method_e029(K_ins=4, K_back=3, n_polish=3, amb=True, verify=False):
+    """E029: phase-aware network -> integer least squares over the insulation / back-drywall cycle
+    counts (candidates tau = P_n (N + phase) around the coarse value, chi2 evaluated without
+    optimisation on coarse data) -> exact LM polish of the best n_polish -> +-1 ambiguity check ->
+    chi2 alarm -> e027_s4 search."""
+    import search as SR
+    import init_net as N
+
+    def run(f, yc, s, d0):
+        dh, v, coarse, phn = N.predict_phase_raw(f, yc, s)
+        opts = SR.Opts(**dict(CURRENT, standoff_halfwidth=RES_CELL, law="jonscher", pinf_free=True, min_cells=True,
+                              lat_step=1.0, lat0_eps=(2.6,), lat1_eps=(1.15,), hops=(1, -1), amb_ks=(-1, 1)))
+        m = S.stud_wall_model(free=("t", "eps_r", "tan_d"), standoff_guess=dh + v[0], standoff_halfwidth=RES_CELL)
+        m.law, m.min_cells = "jonscher", True
+        m.layers[0].pinf = I.P(0.3, 0.0, 0.9, True)
+        m.layers[2].pinf = I.P(0.3, 0.0, 0.9, True, tie="drywall_front.pinf")
+        params = {nn: p for nn, _, p in m.items()}
+        for k, val in {"drywall_front.eps_r": v[2], "drywall_front.tan_d": v[3],
+                       "insulation.eps_r": v[5], "insulation.tan_d": v[6]}.items():
+            params[k].value = float(val)
+        m.sync_ties()
+        nre = lambda er, td: np.sqrt(er * (1 - 1j * td)).real
+        nd, ni = nre(v[2], v[3]), nre(v[5], v[6])
+        m.layers[0].t.value = v[1] / nd
+        lo, hi = m.bounds()
+        fs, ys = SR._subset(f, yc, 8)
+        cands = []
+        Pn = N.P_NARROW
+        for a in range(-K_ins, K_ins + 1):
+            for b in range(-K_back, K_back + 1):
+                ti = Pn * (np.round(coarse[4] / Pn - phn[4]) + a + phn[4]) / ni
+                tb = Pn * (np.round(coarse[7] / Pn - phn[7]) + b + phn[7]) / nd
+                if not (m.layers[1].t.lo < ti < m.layers[1].t.hi and m.layers[2].t.lo < tb < m.layers[2].t.hi):
+                    continue
+                c = m.copy(); c.layers[1].t.value = ti; c.layers[2].t.value = tb
+                cands.append((SR.cost_of(c, fs, ys, s), c))
+        cands.sort(key=lambda t: t[0])
+        best = None
+        for _, c in cands[:n_polish]:
+            mo, cost = SR.lm(c, f, yc, s, coords=opts.coords)
+            if best is None or cost < best[1]:
+                best = (mo, cost)
+        mo, cost = best
+        plaus = [(mo.summary(), cost)]
+        if verify and chi2_alarm(cost, 2 * f.size):          # E029b: the scan verifies, never rescues
+            r = METHODS["e027_s4"](f, yc, s, d0)
+            return r[0], r[1], r[2], dict(r[3], e029="fallback-prescan", n_cands=len(cands))
+        if amb:
+            mo, cost, plaus = SR.ambiguity_scan(mo, f, yc, s, opts)
+        if (chi2_alarm(cost, 2 * f.size) if verify else cost / (2 * f.size) > 1.2):
+            r = METHODS["e027_s4"](f, yc, s, d0)
+            return r[0], r[1], r[2], dict(r[3], e029="fallback", n_cands=len(cands))
+        return mo, cost, plaus, {"e029": "direct", "n_cands": len(cands)}
+    return run
+
+
 METHODS = {
     "e007": lambda f, yc, s, d0: method_e007(f, yc, s, d0, fit_tan=False),
     "e007_tanfree": lambda f, yc, s, d0: method_e007(f, yc, s, d0, fit_tan=True),
@@ -363,6 +425,9 @@ METHODS = {
 
 METHODS["e028"] = method_e028(hybrid=False)
 METHODS["e028h"] = method_e028(hybrid=True)
+METHODS["e029"] = method_e029()
+METHODS["e029_noamb"] = method_e029(amb=False)
+METHODS["e029b"] = method_e029(verify=True)
 
 
 # ----------------------------------------------------------------------------- runner
