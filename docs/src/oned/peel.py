@@ -389,7 +389,10 @@ def peel_invert(f, y, sigma, nmax=12, beam=3, keep=2, verbose=False):
         m = ST.build(L, d, back=back, water_T=Tw)
         ST.set_dispersion_free(m, True)
         for bk in (back, "metal" if back == "air" else "air"):
-            mm = ST.rebuild(m, back=bk) if bk != back else m
+          for p0 in (0.3, 0.95):                  # dispersion-shape starts: dielectric-like, conduction-like
+            mm = ST.rebuild(m, back=bk) if bk != back else m.copy()
+            for Lx in mm.layers:
+                Lx.pinf.value = p0
             ST.set_dispersion_free(mm, True)
             mo, c = ST._fit(mm, f, y, sigma)
             bic = c + 4 * len(lays) * np.log(n_all)

@@ -259,8 +259,13 @@ def rebuild(m, layers=None, back=None):
 
 
 def set_dispersion_free(m, on):
+    """Free the Jonscher shape p. A free p must start INSIDE its box: the LM works in logit
+    coordinates, so a start exactly on the bound p = 0 can never move (E041 bug: dispersive
+    materials such as brick were then imitated by fake extra layers)."""
     for L in m.layers:
         L.pinf.free = bool(on) and L.theta.value < 0.5
+        if L.pinf.free and L.pinf.value <= 1e-6:
+            L.pinf.value = 0.3
     return m
 
 
