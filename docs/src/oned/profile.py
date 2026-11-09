@@ -242,6 +242,8 @@ def invert(f, y, sigma, verbose=False):
         if best is None or c < best[1]:
             best = (mod, c)
     model, cost = best
+    ST.SBOX = None          # rebuilds must centre the standoff box on the CURRENT standoff (prune folds
+                            # leading air into it; a stale global box clamped it back: E042 bug)
     model, cost = prune(model, cost, f, y, sigma, n_all)
     model, cost = PL._release_dispersion(model, cost, f, y, sigma, n_all)
     model, cost = prune(model, cost, f, y, sigma, n_all)
