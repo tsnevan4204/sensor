@@ -36,9 +36,17 @@ def _segs(f):
     return I.band_segments(f)
 
 
+P_COND = 0.95      # E041: conduction-like Jonscher shape for per-depth fits (plywood, brick: eps'' ~ f^-0.8..-1)
+
+
 def n_of(er, td, f, water=False, T=20.0):
-    if water:
+    """water: False = constant-Q dielectric, "cond" = Jonscher shape p = P_COND, True = liquid water."""
+    if water is True:
         n = np.sqrt(W.eps_water_lhm(f, T) + 0j)
+    elif water == "cond":
+        a = 2 / np.pi * np.arctan(td / (1 - P_COND))
+        g = (f / F_REF) ** (-a)
+        n = np.sqrt(er * (P_COND + (1 - P_COND - 1j * td) * g) + 0j)
     else:
         a = 2 / np.pi * np.arctan(td)
         n = np.sqrt(er * (1 - 1j * td) * (f / F_REF) ** (-a) + 0j)
@@ -84,12 +92,12 @@ class Bands:
 
 def _model_half(p, f, n_prev, water):
     """Layer (er, td, t) over a half-space (erb, tdb): reflection at the layer's top face."""
-    if water:
+    if water is True:
         T, t, erb, tdb = p
         n = n_of(0, 0, f, True, T)
     else:
         er, td, t, erb, tdb = p
-        n = n_of(er, td, f)
+        n = n_of(er, td, f, water)
     nb = n_of(erb, tdb, f)
     r = (n_prev - n) / (n_prev + n)
     rb = (n - nb) / (n + nb)
@@ -154,7 +162,8 @@ def _starts(B, n_prev_low, r_echo):
             t = rr / np.sqrt(er)
             if T_LO < t < T_HI:
                 for erb in (1.0, 2.8, 6.0):
-                    st.append((False, [er, 0.02, t, erb, 0.02], [1.0, 0.0, T_LO, 1.0, 0.0], [12.0, 0.5, T_HI, 12.0, 0.5]))
+                    for kind in (False, "cond"):     # E041: dispersion shape is part of the per-depth model
+                        st.append((kind, [er, 0.02, t, erb, 0.02], [1.0, 0.0, T_LO, 1.0, 0.0], [12.0, 0.5, T_HI, 12.0, 0.5]))
     for rr in r_echo:
         t = rr / 8.5
         if T_LO < t < 0.08:
@@ -386,7 +395,7 @@ def peel_invert(f, y, sigma, nmax=12, beam=3, keep=2, verbose=False):
     ones = [np.ones(x.size, complex) for x in fs]
     res = _fit_layer(B0, ones, sigma, d_free=(0.0, -0.03, 0.01), keep=keep)
     for c, p, water, dd, ndof in res[:keep]:
-        lay = (0, 0, p[1], True, p[0]) if water else (p[0], p[1], p[2], False, 20.0)
+        lay = (0, 0, p[1], True, p[0]) if water is True else (p[0], p[1], p[2], water, 20.0)
         Bd = Bands(fs, [yy * np.exp(2j * k * (d0 + dd)) for yy, k in zip(ys, k0s)], B0.ss)
         Bn, nps = _peel(Bd, ones, lay)
         hyps.append((c / ndof, [lay], Bn, nps, d0 + dd, None))
@@ -406,7 +415,7 @@ def peel_invert(f, y, sigma, nmax=12, beam=3, keep=2, verbose=False):
             lo = Bc.low()
             res = _fit_layer(Bc, nps, np.median(Bc.ss[lo]), keep=keep)
             for c, p, water, _, ndof in res[:keep]:
-                lay = (0, 0, p[1], True, p[0]) if water else (p[0], p[1], p[2], False, 20.0)
+                lay = (0, 0, p[1], True, p[0]) if water is True else (p[0], p[1], p[2], water, 20.0)
                 Bn, npn = _peel(Bc, nps, lay)
                 new.append((score + c / ndof, lays + [lay], Bn, npn, d, None))
         if not new:
@@ -419,8 +428,9 @@ def peel_invert(f, y, sigma, nmax=12, beam=3, keep=2, verbose=False):
     best = None
     n_all = 2 * f.size
     for score, lays, d, back in done[:beam]:
-        L = [dict(t=l[2], er=l[0] if not l[3] else 1.0, td=l[1] if not l[3] else 0.0, water=l[3]) for l in lays]
-        Tw = next((l[4] for l in lays if l[3]), 20.0)
+        L = [dict(t=l[2], er=l[0] if l[3] is not True else 1.0, td=l[1] if l[3] is not True else 0.0,
+                  water=l[3] is True, pinf=P_COND if l[3] == "cond" else 0.0) for l in lays]
+        Tw = next((l[4] for l in lays if l[3] is True), 20.0)
         ST.SBOX = (d - 0.01, d + 0.01)
         m = ST.build(L, d, back=back, water_T=Tw)
         ST.set_dispersion_free(m, True)
