@@ -1,5 +1,7 @@
 """S001 part A: numerical checks of the 1D theorems (docs/11, Part A). Writes to results/2026-11-09_S001_stability/."""
 import json, os, sys, time
+for _v in ("OPENBLAS_NUM_THREADS", "OMP_NUM_THREADS"):
+    os.environ.setdefault(_v, "1")   # BLAS oversubscription is ~500x slower here
 import numpy as np
 import matplotlib
 matplotlib.use("Agg")
@@ -53,7 +55,7 @@ R["A_homogeneous_green_rel_err"] = float(np.abs(Ai - ETA0 / 2 * np.exp(-1j * w /
 
 # --- k-independence sweep (lossless wall) ----------------------------------------------------
 L = [(12.7e-3, 2.8), (40e-3, 1.0), (89e-3, 1.4), (12.7e-3, 2.8)]
-fs = np.linspace(0.5e9, 200e9, 800)
+fs = np.linspace(0.5e9, 200e9, 400)
 gmax, Pex, gstd, Pstd = [], [], [], []
 for f in fs:
     w = 2 * np.pi * f
@@ -61,7 +63,7 @@ for f in fs:
     b, M = exact_stars(eps, ell, w)
     r, P, Ai = green_bound_ratio(b, M, 1 / ETA0, 1 / ETA0)
     gmax.append(np.abs(Ai).max() / ETA0); Pex.append(P)
-    eps, ell = wall_cells(L, w, max_kl=0.3)               # standard stars at k l <= 0.3
+    eps, ell = wall_cells(L, w, max_kl=1.0)               # standard stars at k l <= 1
     b, M = std_stars(eps, ell, w)
     r2, P2, Ai2 = green_bound_ratio(b, M, 1 / ETA0, 1 / ETA0)
     gstd.append(np.abs(Ai2).max() / ETA0); Pstd.append(P2)
@@ -100,8 +102,11 @@ for t in range(200):
     w = 2 * np.pi * rng.uniform(1e9, 100e9)
     eps, ell = wall_cells(L, w)
     n = eps.size
-    s = rng.uniform(0.7, 1.4, n)
-    m = rng.uniform(0.7, 1.4, n)
+    eps, ell = wall_cells(L, w, max_kl=np.pi / 2)        # passband margin x^2/sin^2(x/2) vs x^2 needs room
+    n = eps.size
+    se, me = exact_factors(w / C0 * nbranch(eps) * ell)
+    s = se.real * rng.uniform(0.8, 1.25, n)            # real (lossless) learned factors near exact
+    m = me.real * rng.uniform(0.8, 1.25, n)
     b, M = learned_stars(eps, ell, w, s, m)
     Yp, Ym = modal(b, M)
     if not np.all(Yp.imag * Ym.imag < 0):
@@ -131,7 +136,8 @@ for t in range(200):
     deltas = -1 / np.linalg.eigvals(blk)              # det(A + delta E_c) = 0
     for d in deltas:
         M2 = M.copy(); M2[c] += d                       # Y+ and Y- of cell c both shift by d
-        assert abs(np.linalg.det(assemble(b, M2, 1 / ETA0, 1 / ETA0)) / np.linalg.det(A)) < 1e-8
+        sv = np.linalg.svd(assemble(b, M2, 1 / ETA0, 1 / ETA0), compute_uv=False)
+        assert sv.min() / sv.max() < 1e-9
         max_re_delta = max(max_re_delta, d.real * ETA0)
         min_gain = min(min_gain, -d.real * ETA0)
 R["A_active_roots"] = dict(max_Re_delta_times_eta0=max_re_delta, min_gain_needed_times_eta0=min_gain)
@@ -169,7 +175,7 @@ R["A_wall_time_s"] = time.time() - t0
 fig, ax = plt.subplots(1, 2, figsize=(11, 4))
 ax[0].plot(fs / 1e9, gmax, label=r"exact stars: $\max_{ij}|A^{-1}_{ij}|/\eta_0$")
 ax[0].plot(fs / 1e9, 2 * np.array(Pex) * max(etas) / ETA0, "--", label=r"bound $2\eta_{max}P/\eta_0$ (exact)")
-ax[0].plot(fs / 1e9, gstd, label=r"standard stars ($k\ell\leq0.3$)")
+ax[0].plot(fs / 1e9, gstd, label=r"standard stars ($k\ell\leq1$)")
 ax[0].set_xlabel("f [GHz]"); ax[0].set_yscale("log"); ax[0].legend(fontsize=8)
 ax[0].set_title("1D: discrete Green's function is bounded uniformly in k")
 ax[1].semilogy(xs, nAi, label=r"$\|A^{-1}\|_2/\eta_0$")

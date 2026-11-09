@@ -1,0 +1,79 @@
+# S001 run logs (2026-11-09). Machine: 4-core container, OPENBLAS_NUM_THREADS=1.
+
+## run_s001_1d.py
+{
+ "A_random_walls": {
+  "n": 400,
+  "n_lossless": 200,
+  "max_ratio_to_bound": 0.1852978260651104,
+  "median_ratio": 0.033050713637938225,
+  "P_over_interface_product_range": [
+   0.9236031377308013,
+   1.0000000000001428
+  ],
+  "mesh_independence_max_rel_err": 6.717336520191095e-13
+ },
+ "A_homogeneous_green_rel_err": 1.3468247403526246e-14,
+ "A_k_sweep": {
+  "f_GHz": [
+   0.5,
+   200.0
+  ],
+  "max_g_over_eta0_exact": 1.344426780634554,
+  "P_exact_range": [
+   2.783656803063019,
+   7.8400000000015675
+  ],
+  "interface_product": 7.840000000000001,
+  "max_g_over_eta0_std": 1.3592105603351323,
+  "P_std_range": [
+   3.0975307999732795,
+   7.957501749414414
+  ]
+ },
+ "A_learned_passive": {
+  "n": 233,
+  "max_ratio_to_bound": 0.13125955085522578,
+  "min_sigma_min_times_eta0": 0.12154212410802258
+ },
+ "A_passband_P_over_eta_eff_ratio_product_range": [
+  0.4606649753699662,
+  0.9999978682756279
+ ],
+ "A_passband_n": 200,
+ "A_active_roots": {
+  "max_Re_delta_times_eta0": -0.5884475524087891,
+  "min_gain_needed_times_eta0": 0.5884475524087891
+ },
+ "A_pole": {
+  "max_normAinv_over_eta0": 0.9999995883614438,
+  "max_normA_eta0": 4408.459419123114
+ },
+ "A_Re_b_negative_but_passive": {
+  "min_Re_b_rel": -0.999998269756602,
+  "min_Re_Yplus": 0.0007503126031503016,
+  "min_Re_Yminus": 0.0002500208349701815
+ },
+ "A_std_eta_eff_formula_maxrelerr": 5.551115123125783e-16,
+ "A_std_stopband_at_kl_2.1": true,
+ "A_wall_time_s": 25.212141752243042
+}
+
+## run_s001_2d.py
+[   30.8s] V1 {'DEC (0,0)': np.float64(2.0001438165377685), 'blended (1/2,1/2)': np.float64(2.0001434535083975), 'Q1 FEM (1,1)': np.float64(1.9996768422737143)}
+[   73.9s] V2 [np.float64(0.06480388758250481), np.float64(0.01587614502120485), np.float64(0.00394583567516585), np.float64(0.001034335165711477)] [np.float64(2.029219717061985), np.float64(2.0084578646545417), np.float64(1.9316271241354814)]
+[   74.0s] V3 6.406213199709565e-07
+[  124.7s] B1 done
+[  130.8s] B2 done
+[  213.3s] B3 done
+[  227.2s] B4 {'k': np.float64(3.140785260725489), 'passivity_eig': np.float64(0.0), 'residual_of_mode': 3.902493239967328e-16, 'sigma_min_l2': 3.1155212835481857e-16, 'pocket_s=0.01_sigma_min_l2': 0.01114316279514094, 'pocket_s=0.0001_sigma_min_l2': 0.00011235806852760262, 'pocket_s=1e-08_sigma_min_l2': 1.1236068178779585e-08, 'pocket_s=0_sigma_min_l2': 4.4656030406248915e-16, 'pocket_k': 24.721359549995793}
+[  231.4s] B5 done
+[  233.8s] B7 done
+[  234.3s] done
+
+## run_s001_cells.py
+[    0.1s] C1 [(4, 6), (4, 7), (4, 8), (4, 8), (4, 8), (4, 8), (4, 8)] [np.float64(2.6032443553116214e-05), np.float64(0.00010401909579364436), np.float64(0.0004143054798862009), np.float64(0.0025119461464119105), np.float64(0.00895039703550066), np.float64(0.02588148902439278), np.float64(0.631850296601042)]
+[    2.4s] C2 {'lossless': {'n_boundary': 64, 'fraction_nonzero': 0.8837890625, 'antiherm_min_eig': -8.601902277430012e-17, 'antiherm_scale': 1.6750535927354768, 'symmetric_err': 6.62798509516395e-17}, 'lossy': {'n_boundary': 64, 'fraction_nonzero': 0.8837890625, 'antiherm_min_eig': 0.008789062499999984, 'antiherm_scale': 1.6067545775698016, 'symmetric_err': 7.073112514332449e-17}, 'cell_first_dirichlet_k': 4.4357494143708855, 'continuum_first_dirichlet_k': 4.442882938158366, 'k_of_max_|S|_on_scan': 6.985, 'static_condensation_max_rel_err': 4.668818835082131e-15, 'Sinv_equals_Ainv_bb_rel_err': 6.160639725813696e-16, 'cellwise_schur_assembly_rel_err': 1.1326210482850911e-16}
+[    2.8s] C3 done
+[   74.6s] C4 done
+[   75.0s] done

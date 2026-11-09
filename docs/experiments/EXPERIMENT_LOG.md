@@ -67,3 +67,52 @@ All on B1-dry-v2 seeds 1–20 (tan δ free), each compared with the previous acc
 - **E010** (matrix-pencil seeding of the front-drywall stage: 9 starts on the measured τ ridge instead of 51 lattice starts; window ±2 periods set from held-out calibration seeds 1001–1050): work ≥ 1.5× lower than E009, outcomes within ±1 seed.
 - **E011** (LM in optical coordinates τ = Re(n)·t): median LM iterations per run ≥ 30% lower, outcomes not worse.
 - **E012** (integer least squares over joint period shifts of standoff and all thicknesses, candidates from a fitted quadratic, every candidate verified by a profiled LM): silent failures fewer than E011 (target 0); the reported P(best basin) is calibrated, i.e. its mean is within ±0.15 of the observed rate at which the best basin is the truth's; work ≤ 2× E011.
+
+## S001 — Stability of the indefinite discrete problem with learned stars  (2026-11-09)
+**Roadmap item:** Phase 2.7 (run in parallel with E008–E012 by a separate agent; reviewed by the main session: Thm A2 proof re-derived, headline numbers checked against results/2026-11-09_S001_stability/log.txt and figures).
+**Full write-up:** docs/11_indefinite_stability.md
+
+**Hypotheses** (set before running; threshold in brackets):
+- H1: the 1D Green's-function bound of Thm A3 holds for exact and for passive learned stars [ratio ≤ 1 on all random walls].
+- H2: the 2D DEC solver converges at $O(h^2)$ against an exact plane wave and against the Mie series [observed rate in [1.9, 2.1]].
+- H3: $\beta_N\sim1/k$ for standard and blended stars [$k\beta_N$ varies < 2× over $k=5\ldots160$].
+- H4: passivity alone does not imply invertibility in 2D [find a passive singular example with $\sigma_\min<10^{-12}$].
+- H5: singular uniform star perturbations are always active [Im τ > 0 for all computed τ].
+
+**Change.** New folder `src/stability/` (no existing file modified):
+- `oned_stability.py` (1D theory tools)
+- `dec2d.py` (2D Yee-grid DEC: TE $E_z$, impedance BC, PML stars, Whitney/Q1-consistent and blended stars, learned factors, real-form LU)
+- `mie.py`, `infsup.py`, `cells.py`
+- experiment scripts `run_s001_{1d,2d,cells}.py`
+
+New tests in `tests/test_stability.py` (19 tests) and `tests/conftest.py` (pins BLAS to one thread). New doc `docs/11_indefinite_stability.md`.
+
+**Results.**
+- **H1 passed:** max ratio 0.185 (400 walls, exact) and 0.131 (233 walls, learned).
+- **H2 passed:** plane-wave rates 2.04 → 2.0001 down to $h=1/640$; Mie rates 2.03, 2.01, 1.93.
+- **H3 passed:** $k\beta_N\in[1.12,1.33]$.
+- **H4 passed:** $\sigma_\min=3\cdot10^{-16}$ (absorber on a nodal line); $\sigma_\min\propto s_\min$ (pocket).
+- **H5 passed:** at $k=10$, 20, 40, all τ have Im τ > 0, with $\lvert\tau_\min\rvert\approx4.5/k$.
+- **Also:**
+  - Proved and verified the mass-blend bound (B7) and the lossy bound (B5).
+  - The PML is not passive ($\lambda_\min(\operatorname{Im}_HA)=-13.5$) but $\beta_N=0.14$.
+  - The (½,½) blended star is 4th-order isotropic (phase error 3.3e-4 vs 1.7e-2 for DEC at 10 ppw); the error at 10 ppw stays 0.018–0.034 up to $k=160$, vs 0.04–1.14 for DEC.
+  - 2D Trefftz certificate: rank 8 > 4; best-star defect ≈ 0.01(kH)².
+  - Schur complements: passivity inherited, exactness 4.7e-15.
+  - LOD-type localization: decay ≈ 0.2 per coarse cell; $m=3$–4 gives 1e-2 to 1e-3.
+- **Compute:** 1D 25 s, 2D 234 s, cells 75 s, tests 8 s (one core).
+
+**What failed or surprised.**
+1. SciPy's complex SuperLU is ~800× slower than the real one. Fixed with the real 2×2-block form (`ComplexLU`).
+2. OpenBLAS thread oversubscription made small dense SVDs 500× slower. Fixed by pinning threads (conftest).
+3. The modal passivity condition is the right one: per-star $\operatorname{Re}b\ge0$ would exclude exact lossy stars ($\operatorname{Re}b/\lvert b\rvert$ down to −0.99999).
+4. Learned 1D factors within ±25% of exact stay passband only if $\lvert k\ell\rvert\le\pi/2$.
+5. LOD truncation breaks passivity of the consistent coarse operator, by $O(\beta^m)$.
+6. Q1 with Ainsworth–Wajid mass blending is not 4th order in 2D; both stars must be blended.
+
+**Next.**
+- (a) Learned coarse cell stars in the R2–R4 form trained on Schur complements (roadmap Phase 2 item 3), starting from the (½,½) blend with a patch stencil $m=2$.
+- (b) Test the passivity-restoring shift of C4.
+- (c) Delaunay meshes: is unique continuation available (Q2)?
+- (d) Ask Kaibo Hu Q1–Q6.
+**Artifacts:** results/2026-11-09_S001_stability/
