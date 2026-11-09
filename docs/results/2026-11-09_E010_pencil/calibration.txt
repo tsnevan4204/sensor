@@ -1,0 +1,8 @@
+pencil calibration on seeds 1001-1050 (v2), 16.6 ms per wall
+model order M: [0, 0, 1, 38, 9, 2]  (counts of M=0,1,2,...)
+drywall_front.tau_err_periods  n=50  mean +0.21  std 0.68  max|.| 1.73  95% |.| 1.46
+insulation.tau_err_periods     n=49  mean +0.56  std 2.50  max|.| 5.91  95% |.| 4.47
+drywall_back.tau_err_periods   n= 9  mean +1.66  std 2.64  max|.| 5.29  95% |.| 5.00
+drywall_front.eps_err          n=50  mean -0.02  std 0.07  max|.| 0.21  95% |.| 0.15
+insulation.eps_err             n=50  mean +1.64  std 1.80  max|.| 6.17  95% |.| 5.45
+standoff_err_mm                n=50  mean -0.11  std 0.35  max|.| 1.04  95% |.| 0.77

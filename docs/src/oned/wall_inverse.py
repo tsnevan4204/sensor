@@ -529,15 +529,19 @@ def lattice_invert(model0, f, y, sigma, lattice, gate=None, regs=(), profile_sta
     return best, best_cost, np.array(costs)
 
 
-def ambiguity_scan(model, f, y, sigma, names=None, ks=(-3, -2, -1, 1, 2, 3), dchi2=4.0, regs=()):
+def ambiguity_scan(model, f, y, sigma, names=None, ks=(-3, -2, -1, 1, 2, 3), dchi2=4.0, regs=(),
+                   return_models=False):
     """Global uncertainty for thickness-like parameters: shift each by whole phase periods,
     re-optimize everything, and list every basin whose chi2 is within dchi2 of the best.
-    Returns {name: [(value, chi2), ...]} sorted by chi2, plus the (possibly improved) best model."""
+    Returns {name: [(value, chi2), ...]} sorted by chi2, plus the (possibly improved) best model.
+    With return_models=True, also returns every plausible basin as (summary dict, chi2), so a
+    benchmark can check whether one basin matches the truth in all parameters jointly."""
     r, _ = residuals(model, f, y, sigma, regs)
     best, best_cost = model, r @ r
     per = _phase_periods(model, f)
     names = names or [n for n in per if n != "standoff"]
     found = {n: [(model.summary()[n], best_cost)] for n in names}
+    basins = [(model.summary(), best_cost)]
     for n in names:
         for k in ks:
             m = model.copy()
@@ -550,7 +554,11 @@ def ambiguity_scan(model, f, y, sigma, names=None, ks=(-3, -2, -1, 1, 2, 3), dch
             m.set(v)
             mo, c = levenberg_marquardt(m, f, y, sigma, regs)
             found[n].append((mo.summary()[n], c))
+            basins.append((mo.summary(), c))
             if c < best_cost:
                 best, best_cost = mo, c
     out = {n: sorted([(v, c) for v, c in lst if c <= best_cost + dchi2], key=lambda t: t[1]) for n, lst in found.items()}
+    if return_models:
+        plaus = sorted([(sm, c) for sm, c in basins if c <= best_cost + dchi2], key=lambda t: t[1])
+        return out, best, best_cost, plaus
     return out, best, best_cost
