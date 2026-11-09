@@ -726,3 +726,7 @@ e029 + (i) the scaled alarm χ² > n + 3√(2n); (ii) an alarm before the scan t
 - (ii) The search therefore applies the operators on the full grid (search_step = 1).
 - (iii) `best_standoff` must apply the standoff ramp **before** the IF chain (L·(Γ₀·ramp)); it applied it after. Fixed.
 - Smoke (seeds 1–2): 1 success, 1 flagged (a search miss).
+
+### Pre-registered: E032 — Held-out confirmation with the UWB second band (before running)
+real:cq:dualuwb (77–81 + 3.1–10.6 GHz), seeds 21–120, dense (e025_base) and sparse (e027_s4) search.
+**Hypothesis:** dense ≥ 98 success and ≤ 1 silent (vs 95/0/5 with 57–64 GHz); sparse within 2 of dense.
