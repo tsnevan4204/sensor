@@ -497,3 +497,31 @@ Method `e024` = Jonscher + all three (plane wave). `e024beam` = the same + the b
 - e024 gives success ≥ 9/10 and silent 0 on paper, rough and offset.
 - On `all`: success ≥ 8/10, silent 0. The standoff error equals the plate error by construction (it is measured relative to the calibration plane), so it is excluded from z.
 - The 3 mm air gap is not modelled; expect it to cost some success.
+
+## E023 — Antenna beam model + multi-distance plate calibration  (2026-11-09)
+**Calibration fixes found during development:**
+- (i) Plates 25 mm apart (≈ 13 half-wavelengths) make the per-frequency (a, b′, c) solve singular wherever the spacing is a whole number of half-wavelengths: a and c came out at 0.7 and 1.2 instead of 0. Fix: staggered positions (3 per base distance, λc/6 apart, at 0.20 and 0.30 m). Worst condition number 2–17.
+- (ii) The calibrated data carry calibration noise (rms 1.4–1.6× the raw σ). Exact propagation: S_w = (y − a)/(b′ + cy), Var = σ²(|b|²/|D|⁴ + gᴴ(AᴴA)⁻¹g). The check gives |error|²/σ² = 1.9 vs an expected 2.
+
+**Results** (lambot:<preset>:dual60, seeds 1–10):
+
+| truth antenna | method | success / flagged / silent | best basin | notes |
+|---|---|---|---|---|
+| 2 cm beam | plane-wave model (e021b) | 0 / 10 / 0 | 1 | control: the beam must be modelled |
+| **2 cm beam** | **beam model (e023)** | **9 / 0 / 1** | 8 | err/CRB std 0.5–1.2; 76 s per wall |
+| no beam | e023 | 10 / 0 / 0 | 9 | the beam model does no harm (w₀ estimate → wide) |
+| 1 cm beam | e023 | 2 / 6 / 2 | 1 | 300 s per wall |
+| 1 cm beam + H_f 0.1, H_i 0.02 | e023 | 2 / 5 / 3 | 2 | |
+
+**Failures examined (1 cm):**
+- The truth fits the calibrated data at noise level with the calibrated w₀ (χ²/n 0.96–0.98 on all walls checked). So the beam model and the calibration are correct; the w₀-error hypothesis is rejected.
+- The failures are search failures (flagged; the truth fits better) and ambiguity (silent; a wrong basin fits as well).
+- Cause: a 1 cm waist at 30 cm diverges about 7–9°. The received echoes are about 11 dB (79 GHz) to 14 dB (60 GHz) weaker than for a plane wave (paraxial factor 1/√(1 + β²), β = 2d/(k₀w₀²) = 3.6–4.8), so the back-of-wall cycle information that the second band provided is lost again.
+
+**Hypothesis:** passed for a 2 cm beam and for no beam; failed for a 1 cm beam.
+**Conclusion:**
+- The beam model (rotated-contour quadrature over exact oblique stars) and the multi-distance calibration are accepted.
+- They do not make up for missing signal. Hardware requirement: an effective waist ≥ 2 cm at the operating distance (β ≲ 1), from an aperture/lens or a shorter standoff, or proportionally more SNR (averaging).
+- Speed (76–300 s per wall) is now the binding constraint → E025.
+
+**Artifacts:** results/2026-11-09_E023_beam/
