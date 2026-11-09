@@ -1,0 +1,21 @@
+benchmark real:cqsnr15:proto  method e035_none  seeds 1-20  wall 25s
+runs 20: success 20, flagged 0, silent 0
+best model in the truth's basin (all layers): 20/20
+chi2/n: 0.93, 0.95, 0.98, 1.01, 0.95, 1.02, 0.96, 1.00, 1.02, 1.02, 1.01, 0.96, 1.10, 0.99, 0.99, 0.98, 1.06, 1.05, 0.94, 1.02
+chi2(truth) - chi2(best): +10.4, +6.4, +8.9, +6.1, +8.8, +8.7, +17.5, +8.5, +11.9, +8.1, +4.3, +7.2, +5.6, +3.8, +9.4, +10.9, +6.6, +0.8, +9.2, +12.9
+outcome per seed: 1:s, 2:s, 3:s, 4:s, 5:s, 6:s, 7:s, 8:s, 9:s, 10:s, 11:s, 12:s, 13:s, 14:s, 15:s, 16:s, 17:s, 18:s, 19:s, 20:s
+wall time per inversion (1 core): median 2.0 s; forward solves (with J) median 984, (no J) median 13
+work (forward solves in units of one 256-frequency solve): median 964
+err/CRB over runs whose best model is in the truth basin (20):
+  drywall_front.t        mean|err| 1.35e-04  CRB 1.7e-04  err/CRB mean +0.16 std 1.02 max|.| 2.4
+  drywall_front.eps_r    mean|err| 4.51e-02  CRB 6.7e-02  err/CRB mean -0.22 std 0.86 max|.| 2.1
+  drywall_front.tan_d    mean|err| 3.01e-03  CRB 4.7e-03  err/CRB mean -0.13 std 0.81 max|.| 1.7
+  insulation.t           mean|err| 1.13e-03  CRB 1.7e-03  err/CRB mean -0.08 std 0.75 max|.| 1.9
+  insulation.eps_r       mean|err| 3.00e-02  CRB 4.6e-02  err/CRB mean +0.04 std 0.79 max|.| 2.1
+  insulation.tan_d       mean|err| 2.08e-03  CRB 2.5e-03  err/CRB mean -0.13 std 1.01 max|.| 1.8
+  drywall_back.t         mean|err| 1.33e-04  CRB 2.2e-04  err/CRB mean +0.21 std 0.80 max|.| 2.0
+  standoff               mean|err| 1.47e-05  CRB 1.7e-05  err/CRB mean +0.10 std 1.15 max|.| 2.6
+  tau[drywall_front]        mean|err| 5.95e-05  CRB 5.3e-05  err/CRB mean -0.24 std 1.29 max|.| 2.7
+  tau[insulation   ]        mean|err| 1.34e-04  CRB 1.7e-04  err/CRB mean -0.07 std 1.00 max|.| 3.0
+  tau[drywall_back ]        mean|err| 1.56e-04  CRB 2.2e-04  err/CRB mean +0.06 std 0.81 max|.| 1.7
+plausible basins per run: [5, 4, 4, 5, 4, 4, 5, 4, 5, 4, 2, 4, 5, 5, 5, 3, 4, 5, 4, 5]

@@ -953,8 +953,11 @@ def fisher(model, f, sigma):
     _, Jc = forward(model, f)
     J = np.vstack([Jc.real, Jc.imag]) / sigma
     F = J.T @ J
-    cov = np.linalg.inv(F)
-    std = np.sqrt(np.diag(cov))
+    try:
+        cov = np.linalg.inv(F)
+    except np.linalg.LinAlgError:          # a parameter at its bound / unidentifiable: pseudo-inverse
+        cov = np.linalg.pinv(F)
+    std = np.sqrt(np.abs(np.diag(cov)))
     corr = cov / np.outer(std, std)
     scale = np.abs(model.get()) + 1e-12            # relative sensitivities
     sv = np.linalg.svd(J * scale, compute_uv=False)

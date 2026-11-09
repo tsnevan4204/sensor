@@ -521,7 +521,8 @@ def _invert(f, yc, sigma, d0, opts: Opts):
     if opts.cal:
         nb = len(I.band_segments(f))
         ph = opts.cal == "full"
-        model.cal = [[I.P(0.0, -0.6, 0.6, True), I.P(0.0, -0.6, 0.6, True),
+        model.cal = [[I.P(0.0, -3.0, 3.0, True), I.P(0.0, -2.0, 2.0, True),   # E040: tilt can cost >10 dB at 60 GHz
+                      
                       I.P(0.0, -1.0, 1.0, ph), I.P(0.0, -2.0, 2.0, ph)] for _ in range(nb)]
     if opts.pinf_free:
         model.layers[0].pinf = I.P(0.3, 0.0, 0.9, True)

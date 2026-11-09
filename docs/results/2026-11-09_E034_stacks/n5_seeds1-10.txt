@@ -10,3 +10,9 @@ seed 3: truth [('brick', 78.0), ('wood', 30.2), ('glass', 5.6), ('plasterboard',
 seed 4: truth [('water', 2.8), ('tile', 10.5), ('plywood', 11.2), ('water', 3.2)] metal d 0.3016
    fit  [(2.8, 1.0, 'W'), (10.9, 5.79, ''), (10.4, 3.35, ''), (0.6, 1.0, 'W')] air d 0.3016 chi2 1077/1024 alarm False 101s
    class ['water', 'glass', 'plywood', 'water']
+seed 5: truth [('batt', 45.7), ('concrete', 42.7), ('tile', 7.1), ('chipboard', 17.6)] metal d 0.3010
+   fit  [(45.8, 1.11, ''), (49.1, 5.82, ''), (17.5, 2.83, '')] metal d 0.3010 chi2 1039/1024 alarm False 441s
+   class ['batt', 'concrete', 'plasterboard']
+seed 6: truth [('plywood', 18.7), ('marble', 10.8), ('glass', 3.2)] air d 0.3020
+   fit  [(45.2, 2.88, ''), (247.5, 12.0, '')] air d 0.3020 chi2 39799/1024 alarm True 188s
+   class ['plywood', 'marble']

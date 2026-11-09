@@ -851,3 +851,26 @@ Prototype pair (60–64 GHz + UWB), real:cq, 20 walls per level, e035_none (e027
 
 **Finding:** with the UWB band there is **no SNR cliff down to 20 dB**. The search finds the right basin on every wall, and the errors simply scale as 1/SNR (the CRB) with calibrated error bars. The cycle-ambiguity collapse that made single-band operation fragile does not appear, because UWB phase periods are ~6× longer than the noise-induced phase error. 15 and 10 dB are queued to find the break point. Averaging N chirps adds 10 log₁₀ N dB (100 chirps ≈ 2 ms ≈ +20 dB), so 20 dB per chirp is ample.
 **Artifacts:** results/2026-11-09_E037_snr/
+
+## E037 addendum — where SNR breaks
+15 dB: 20/0/0 (εr front CRB 0.067, insulation t CRB 1.7 mm). **10 dB: 17/1/2**, 4/20 outside the truth basin, **2 silent**. Break point is between 10 and 15 dB per sweep, i.e. ≥ 15 dB needed; averaging 100 chirps (+20 dB) keeps a 40 dB radar far from it.
+
+## E038 — Handheld motion (multi-frame joint fit)  (2026-11-09)
+K frames of the same wall, each moved up to ±4 mm in standoff, fitted jointly (one wall, one standoff per frame; frame offsets started from range-profile peaks). Prototype pair.
+| | outcome | εr front CRB | insulation t CRB | time |
+|---|---|---|---|---|
+| 1 frame, 25 dB | 20/0/0 | 0.021 | 0.54 mm | 2.0 s |
+| 4 moving frames, 25 dB | 20/0/0 | 0.010 | 0.27 mm | 7.9 s |
+| 4 moving frames, 40 dB | 10/0/0 | 0.0019 | 0.048 mm | 8.6 s |
+**Finding:** motion costs nothing; 4 moving frames give the full √4 = 2× error reduction (+6 dB), err/CRB std 0.8–1.4. Each frame's standoff is estimated, so the hand need not be still. Cost grows ~linearly with K (to optimise: fit per-frame standoffs in a profile step).
+
+## E039 — UWB-first fast path, held out  (2026-11-09)
+real:cq:proto, seeds 21–120: **100/0/0, best basin 100/100, err/CRB std 0.93–0.95, median 1.1 s (lat_step 1) / 0.7 s (lat_step 2)** on a loaded CPU, plus a fast model copy (deepcopy was 40 % of the time). On real:allpw:proto (paper, roughness, gap, band offset) e039 without those nuisance terms: 0/40/0 — all flagged, none silent; the all-effects version needs facing/rough/gap/band-offset options added to the fast path (next).
+
+## E040 — Stress tests of "hardware-only" assumptions (part 1)  (2026-11-09)
+- **Antenna tilt** (Gaussian-beam monostatic factor exp(−(k₀w₀ sin θ)²/2), w₀ = 2 cm): 2° (−3.6 dB at 62 GHz): ignoring it 0/10/0 (flagged), **self-calibration (E035 full) 10/0/0**, err/CRB std 1.0–1.1. 4° (−14 dB): 0/10/0 for both — the self-cal gain box (±0.6 Np) was too narrow; widened to ±3 Np and rerunning.
+- **Unknown noise level:** σ estimated from the far-range bins of a Hann-windowed range profile: σ̂/σ = 0.95–1.02 on 24 cases. Benchmark run crashed in the scorer (singular Fisher with a self-cal parameter at its bound); fixed with a pseudo-inverse fallback, rerunning.
+- A container restart killed E034 (5-layer, after 6 seeds) and E036 before they ran; relaunched.
+
+## E034 — 5-layer stacks, first 6 walls (partial)
+2/6 structure right in front layers only; seed 4 (water/tile/plywood/water on metal) and seed 5 (batt/concrete/tile/chipboard: concrete + tile merged into one 49 mm layer, χ² 1039/1024) are **silent**. The greedy growth does not scale past ~3 layers; seed 5 also needs a CRB check of whether 7 mm tile behind 43 mm concrete is identifiable at all. Next: 3-layer statistics (running), then a better search (layer-stripping with time gates per interface, and multi-hypothesis growth instead of greedy).
