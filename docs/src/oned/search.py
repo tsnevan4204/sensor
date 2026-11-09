@@ -228,6 +228,7 @@ class Opts:
     lat1_eps: tuple = (1.05, 1.15, 1.3) # E025: insulation eps start values
     hops: tuple = (1, -1, 2, -2)        # E025: cycle-hop sizes
     amb_ks: tuple = (-3, -2, -1, 1, 2, 3)   # E025: ambiguity-scan shifts
+    min_cells: bool = False             # E027: fewest pole-safe cells per layer (exact for any count)
 
 
 def _subset(f, y, k):
@@ -481,6 +482,7 @@ def _invert(f, yc, sigma, d0, opts: Opts):
     free = ("t", "eps_r", "tan_d") if opts.fit_tan else ("t", "eps_r")
     model = S.stud_wall_model(free=free, standoff_guess=d0, standoff_halfwidth=opts.standoff_halfwidth)
     model.law = opts.law
+    model.min_cells = opts.min_cells
     if opts.beam is not None:
         model.beam, model.beam_K, model.beam_dref = tuple(opts.beam), opts.beam_K, float(d0)
     if opts.facing:

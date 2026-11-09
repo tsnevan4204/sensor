@@ -555,3 +555,47 @@ Method `e024` = Jonscher + all three (plane wave). `e024beam` = the same + the b
 
 ### Pre-registered: E024b (before running)
 e024b on real:cqoffset:dual60 (seeds 1–10): success ≥ 9, silent 0. e024beam with the stage fix on lambot:all:dual60 (seeds 1–5): success ≥ 4/5, silent 0, standoff error ≈ plate error (excluded).
+
+## E025 — Speed: start-lattice density and hop sets  (2026-11-09)
+**Results** (seeds 1–20; success/flagged/silent; best basin; work in full 256-frequency solves; median wall time):
+
+| variant | real:cq:dual60 | work | time | real:itucausal:dualuwb | work | time |
+|---|---|---|---|---|---|---|
+| base (½-period lattice, 3 εr, hops ±1/±2) | 20/0/0, 19 | 695 | 8.9 s | 20/0/0, 20 | 1487 | 17.4 s |
+| s1 (1-period lattice) | 20/0/0, 19 | 562 | 7.0 s | 20/0/0, 20 | 1374 | 15.8 s |
+| s2 (+ one εr start) | 19/1/0, 18 | 515 | 6.6 s | 20/0/0, 20 | 1263 | 14.6 s |
+| s3 (2-period lattice, one εr) | 15/5/0, 14 | 809 | 9.8 s | 20/0/0, 20 | 1202 | 14.1 s |
+| **s4** (s2 + hops ±1, ambiguity ±1) | 19/1/0, 18 | **413** | **4.8 s** | 20/0/0, 20 | 729 | 9.1 s |
+| s5 (s3 + small hop sets) | 15/5/0, 14 | 653 | 8.2 s | **20/0/0, 20** | **693** | **8.3 s** |
+
+**Hypothesis failed:** the best variant cuts work by 1.7× (60 GHz) or 2.1× (UWB), against a target of ≥ 4×.
+- With UWB the lattice can be very sparse; wrong basins vanish, as E014 predicted.
+- With 57–64 GHz a 2-period lattice loses 5 walls (flagged, which then pay for fallback).
+
+**Conclusion:** partial. Adopt s4 as the default search (60 GHz) and s5 for UWB. Milliseconds need structural changes rather than tuning:
+- (i) a compiled solver kernel;
+- (ii) model evaluation on few frequencies with exact band-limited (DPSS) interpolation, justified by the Slepian count of E000/E006;
+- (iii) a direct initializer (table lookup or small learned regressor on compressed data) plus a few Gauss–Newton steps, with the current search as a χ²-triggered fallback.
+
+These are E026–E028.
+**Artifacts:** results/2026-11-09_E025_speed/
+
+## E026 + E027 — Compiled kernel and minimal pole-safe cells  (2026-11-09)
+**Change:**
+- **E026** (`fastkern.py`, numba): (i) a drop-in compiled Thomas solver; (ii) **per-sublayer stars**. All cells of a layer are identical, so b and M are computed once per (frequency, layer), and a compiled chain kernel returns the adjoint sums ΣQ₁ and ΣQ₂ per layer. Since Σ_cells ∂b·Q₁ = ∂b·ΣQ₁, the result is unchanged. Gate: compiled path equals the numpy path (Γ < 1e-13, J < 1e-12 relative).
+- **E027** (`WallModel.min_cells`): the exact stars are exact for any cell count (doc 02 §7, doc 11 A5), and cells exist only to stay away from the poles of b (sin kℓ = 0) and M (cos(kℓ/2) = 0). New rule: the smallest n with |sin(kℓ/n)| ≥ 0.25 and |cos(kℓ/2n)| ≥ 0.25 at every frequency. That is 1–11 cells per layer instead of 13/58/13. Lossy layers need 1; lossless layers need more because they come closer to the poles. Gate: equal to the dense mesh (< 1e-12).
+
+**Results:**
+- forward + Jacobian, 512 frequencies: numpy 26.4 ms → compiled 4.3 ms → minimal cells 1.1–2.1 ms.
+- Full inversion (E025 s4 settings, real:cq:dual60, seeds 1–20): **identical outcomes 19/1/0, best basin 18/20; median 4.8 s → 0.9 s.**
+
+**Conclusion:** accepted. The remaining cost is about 800 evaluations per inversion. Milliseconds need about 10, which requires a direct initializer (E028).
+**Artifacts:** results/2026-11-09_E026_speed_kernel/
+
+### Pre-registered: E028 — Learned direct initializer + Gauss–Newton (before running)
+**Change:**
+- A small MLP (128 → 48 → 48 → 8, about 9k parameters, under the 10k budget) maps standoff-derotated coarse two-band data (32 frequencies per band; derotation by the matrix-pencil front-echo standoff on the top band) to (δd, front τ, εr, tan δ, insulation τ, εr, tan δ, back τ).
+- It is trained on 20k simulated causal walls drawn from a **prior wider than the benchmark** (drywall t 9–17 mm, εr 2.0–3.6, tan δ 0.005–0.06; insulation t 80–100 mm, εr 1.0–1.4, tan δ 0.002–0.03), with rng seeds disjoint from the benchmark. Training takes minutes on a CPU.
+- Inversion: MLP start → Jonscher LM on all data (min cells) → if χ²/n > 1.2, fall back to the e027_s4 search. The final answer is always the exact-model LM optimum; the network only chooses the starting point.
+
+**Hypothesis:** on real:cq:dual60 seeds 1–20, outcomes within ±1 of e027_s4 (19/1/0), fallback on ≤ 3 walls, median time ≤ 50 ms.

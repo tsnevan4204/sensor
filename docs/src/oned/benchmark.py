@@ -303,6 +303,7 @@ METHODS = {
            "e025_s3": dict(lat_step=2.0, lat0_eps=(2.6,), lat1_eps=(1.15,)),
            "e025_s4": dict(lat_step=1.0, lat0_eps=(2.6,), lat1_eps=(1.15,), hops=(1, -1), amb_ks=(-1, 1)),
            "e025_s5": dict(lat_step=2.0, lat0_eps=(2.6,), lat1_eps=(1.15,), hops=(1, -1), amb_ks=(-1, 1)),
+           "e027_s4": dict(lat_step=1.0, lat0_eps=(2.6,), lat1_eps=(1.15,), hops=(1, -1), amb_ks=(-1, 1), min_cells=True),
        }.items()},
     "e024b": method_cascade(dict(CURRENT, standoff_halfwidth=RES_CELL, law="jonscher", pinf_free=True, band_offset=True),
                             dict(E009, standoff_halfwidth=RES_CELL, law="jonscher", pinf_free=True, band_offset=True)),

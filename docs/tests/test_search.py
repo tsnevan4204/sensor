@@ -312,3 +312,27 @@ def test_optical_coords_with_facing_and_extras():
         qa, qb = q.copy(), q.copy(); qa[j] += h; qb[j] -= h
         fd = (I.forward(C.apply(m, qa), f, False)[0] - I.forward(C.apply(m, qb), f, False)[0]) / (2 * h)
         assert np.abs(fd - Jq[:, j]).max() / np.abs(Jq[:, j]).max() < 1e-5
+
+
+def test_compiled_forward_matches_numpy_path():
+    f = np.concatenate([np.linspace(77e9, 81e9, 64), np.linspace(57e9, 64e9, 64)])
+    m = _facing_model(law="jonscher")
+    m.layers[0].pinf = I.P(0.3, 0, 0.9, True); m.layers[2].pinf = I.P(0.3, 0, 0.9, True, tie="drywall_front.pinf")
+    m.rough = I.P(5e-5, 1e-6, 4e-4, True); m.sync_ties()
+    old = I.USE_COMPILED
+    try:
+        I.USE_COMPILED = False; G0, J0 = I.forward(m, f)
+        I.USE_COMPILED = True; G1, J1 = I.forward(m, f)
+    finally:
+        I.USE_COMPILED = old
+    assert np.abs(G1 - G0).max() < 1e-13 and np.abs(J1 - J0).max() / np.abs(J0).max() < 1e-12
+
+
+def test_min_cells_is_exact():
+    f = np.concatenate([np.linspace(77e9, 81e9, 64), np.linspace(3.1e9, 10.6e9, 64)])
+    for td in (0.0, 0.03):
+        m = _facing_model(law="jonscher"); m.layers[0].tan_d.value = td; m.sync_ties()
+        mm = m.copy(); mm.min_cells = True
+        G0, J0 = I.forward(m, f); G1, J1 = I.forward(mm, f)
+        assert sum(sb[4] for sb in I._effective(mm, f)[0]) < sum(sb[4] for sb in I._effective(m, f)[0])
+        assert np.abs(G1 - G0).max() < 1e-12 and np.abs(J1 - J0).max() / np.abs(J0).max() < 1e-11

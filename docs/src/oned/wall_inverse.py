@@ -61,6 +61,7 @@ class WallModel:
     beam: tuple | None = None   # E023: Gaussian beam waist (m) per band segment; None = plane wave
     beam_K: int = 10            # E023: Gauss-Laguerre nodes of the k_rho integral
     beam_dref: float | None = 0.30   # E023: distance fixing the rotated contour (None = real nodes)
+    min_cells: bool = False     # E027: fewest cells per layer that keep the stars away from their poles
     facing: "LayerSpec | None" = None   # E024: thin facing (paper) on both faces of the layers in facing_on
     facing_on: tuple = ()
     rough: "P | None" = None            # E024: rms roughness of the front face (graded transition layer)
@@ -223,6 +224,17 @@ def _effective(model: WallModel, f):
     def ncell_for(length, eps_fmax):
         return max(1, int(np.ceil(kmax * abs(np.sqrt(eps_fmax)) * length / (0.9 * np.pi))))
 
+    def ncell_min(length, eps):
+        """E027: the stars are exact for ANY cell count; cells only keep b = -jk/(w mu sin kl) and
+        M ~ tan(kl/2) away from their poles. Smallest n with |sin(k l/n)| >= 0.25 and
+        |cos(k l/2n)| >= 0.25 at every frequency (k complex for lossy layers)."""
+        kk = 2 * np.pi * f / C0 * np.sqrt(eps.astype(complex))
+        for n in range(1, 400):
+            x = kk * length / n
+            if np.min(np.abs(np.sin(x))) >= 0.25 and np.min(np.abs(np.cos(x / 2))) >= 0.25:
+                return n
+        return ncell_for(length, eps[-1])
+
     for L in model.layers:
         e, d = layer_eps_and_derivs(L, f, T, model.law, model.f_ref)
         dm = dmap(L, d, L.name)
@@ -239,11 +251,14 @@ def _effective(model: WallModel, f):
             dl_face = {otp: 1.0} if otp is not None else {}
             ef = layer_eps_and_derivs(model.facing, np.array([f.max()]), T, model.law, model.f_ref)[0][0]
             ec = layer_eps_and_derivs(L, np.array([f.max()]), T, model.law, model.f_ref)[0][0]
-            subs += [(tp, fp[0], dl_face, fp[1], ncell_for(tp, ef)),
-                     (core, e, dl_core, dm, ncell_for(core, ec)),
-                     (tp, fp[0], dl_face, fp[1], ncell_for(tp, ef))]
+            nf = ncell_min(tp, fp[0]) if model.min_cells else ncell_for(tp, ef)
+            nc = ncell_min(core, e) if model.min_cells else ncell_for(core, ec)
+            subs += [(tp, fp[0], dl_face, fp[1], nf),
+                     (core, e, dl_core, dm, nc),
+                     (tp, fp[0], dl_face, fp[1], nf)]
         else:
-            subs.append((L.t.value, e, {ot: 1.0} if ot is not None else {}, dm, n_cells_for(L, f.max(), T)))
+            n_l = ncell_min(L.t.value, e) if model.min_cells else n_cells_for(L, f.max(), T)
+            subs.append((L.t.value, e, {ot: 1.0} if ot is not None else {}, dm, n_l))
     shift = (0.0, {})
     if model.rough is not None:
         # the taper straddles the MEAN surface (Kirchhoff's reference): h/2 comes out of the front
@@ -274,6 +289,12 @@ def forward(model: WallModel, f, jacobian=True):
         return _forward_band_offset(model, f, jacobian)
     if model.beam is not None:
         return forward_beam(model, f, jacobian)
+    if USE_COMPILED:
+        import fastkern as FK
+        if FK.HAVE_NUMBA:
+            out = _forward_fast(model, f, jacobian, FK)
+            if out is not None:
+                return out
     names = model.free_names()
     J = np.zeros((f.size, len(names)), complex) if jacobian else None
     subs, shift = _effective(model, f)
@@ -325,6 +346,58 @@ def forward(model: WallModel, f, jacobian=True):
         for o, coef in sb[2].items():
             J[:, col[o]] += coef * tl
         tk = -phase * Tk[:, sel].sum(1) * k0[:, 0] / (2 * n_l[:, li])
+        for o, de in sb[3].items():
+            J[:, col[o]] += tk * de
+    if model.owner("standoff") is not None:
+        J[:, col["standoff"]] += G * (-2j * k0[:, 0])
+    for o, coef in shift[1].items():
+        J[:, col[o]] += coef * G * (-2j * k0[:, 0])
+    return G, J
+
+
+def _forward_fast(model, f, jacobian, FK):
+    """E026: plane-wave forward + adjoint Jacobian with stars computed once per (frequency,
+    sublayer) and a compiled chain solve. Identical to the cell-wise path (gate); returns None
+    (caller falls back) if any row fails the residual check."""
+    names = model.free_names()
+    subs, shift = _effective(model, f)
+    ncell = np.array([sb[4] for sb in subs], np.int64)
+    w = 2 * np.pi * f[:, None]
+    k0 = w / C0
+    eps_s = np.stack([sb[1] for sb in subs], axis=1)                    # (F, S)
+    n_s = _sqrt_branch(eps_s)
+    k = k0 * n_s
+    lc = np.array([sb[0] for sb in subs]) / ncell                      # cell length per sublayer
+    x = k * lc[None, :]
+    sx, cx = np.sin(x), np.cos(x)
+    b = -1j * k / (w * MU0 * sx)
+    tx2 = np.tan(x / 2)
+    M = 1j * k * tx2 / (w * MU0)
+    n_back = _sqrt_branch(np.array([model.eps_back]))[0]
+    Fn = f.size
+    e0, SQ1, SQ2, res = FK.chain(np.ascontiguousarray(b), np.ascontiguousarray(M), ncell,
+                                 np.full(Fn, 1 / ETA0 + 0j), np.full(Fn, n_back / ETA0 + 0j),
+                                 np.full(Fn, 2 / ETA0 + 0j))
+    if not np.all(res < 1e-10):
+        return None
+    phase = np.exp(-2j * k0[:, 0] * (model.standoff.value + shift[0]))
+    G = (e0 - 1) * phase
+    if not jacobian:
+        return G, None
+    J = np.zeros((Fn, len(names)), complex)
+    col = {nm: j for j, nm in enumerate(names)}
+    db_dk = -1j / (w * MU0) * (sx - x * cx) / sx**2
+    db_dl = 1j * k**2 * cx / (w * MU0 * sx**2)
+    sec2 = 1 / np.cos(x / 2) ** 2
+    dM_dk = 1j / (w * MU0) * (tx2 + (x / 2) * sec2)
+    dM_dl = 1j * k**2 * sec2 / (2 * w * MU0)
+    Tk = db_dk * SQ1 + dM_dk * SQ2
+    Tl = db_dl * SQ1 + dM_dl * SQ2
+    for li, sb in enumerate(subs):
+        tl = -phase * Tl[:, li] / ncell[li]
+        for o, coef in sb[2].items():
+            J[:, col[o]] += coef * tl
+        tk = -phase * Tk[:, li] * k0[:, 0] / (2 * n_s[:, li])
         for o, de in sb[3].items():
             J[:, col[o]] += tk * de
     if model.owner("standoff") is not None:
@@ -495,10 +568,28 @@ def forward_beam(model: WallModel, f, jacobian=True):
     return S, J
 
 
+USE_COMPILED = True     # E026: compiled Thomas kernel (fastkern); False = numpy reference path
+
+
 def _tridiag_solve(diag, off, rhs, check=1e-10):
     """Solve symmetric tridiagonal systems, one per frequency (rows), vectorized Thomas.
     Every solution is verified by its residual; any frequency that fails the check is
     re-solved with LAPACK's pivoting tridiagonal solver, so accuracy is guaranteed."""
+    if USE_COMPILED:
+        import fastkern as FK
+        if FK.HAVE_NUMBA and rhs.shape[-1] == 2 and diag.shape[1] > 1:
+            x, res = FK.thomas_batch(np.ascontiguousarray(diag), np.ascontiguousarray(off), np.ascontiguousarray(rhs))
+            for m in np.where(~(res < check))[0]:
+                n = diag.shape[1]
+                ab = np.zeros((3, n), complex)
+                ab[0, 1:], ab[1], ab[2, :-1] = off[m], diag[m], off[m]
+                x[m] = solve_banded((1, 1), ab, rhs[m])
+            return x
+    return _tridiag_solve_numpy(diag, off, rhs, check)
+
+
+def _tridiag_solve_numpy(diag, off, rhs, check=1e-10):
+    """Reference (numpy) implementation of _tridiag_solve."""
     F, n = diag.shape
     cp = np.zeros((F, n - 1), complex)
     dp = np.zeros_like(rhs)
