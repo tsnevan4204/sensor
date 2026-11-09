@@ -685,3 +685,8 @@ e029 + (i) the scaled alarm χ² > n + 3√(2n); (ii) an alarm before the scan t
 - Held-out baselines for the dense (e025_base) and sparse (e027_s4) searches on dual60 (running).
 - A back-drywall verification with ±1…±3 cycles polished on all data.
 - The fast path trained and validated on the UWB second band.
+
+### Pre-registered: E030 — Air-gap layer with model selection (before running)
+**Change:** `WallModel.gap` splits the insulation into [batt t − g, air g], g ∈ [0.3, 10] mm. `insulation.t` stays the cavity depth. Gate: equals the realism air-gap truth to < 1e-12; Jacobian vs FD < 1e-6. Method `e030` fits with and without the gap (facing, roughness, band offset, Jonscher, min cells) and keeps the gap only if χ² drops by more than 6 (one extra parameter, about 3σ of a 1-dof χ²).
+**Benchmarks:** real:cqgap:dual60 (3 mm gap only) and real:allpw:dual60 (roughness + paper + 3 mm gap + band offset, plane wave), seeds 1–10.
+**Hypothesis:** on both, success ≥ 9, silent 0, err/CRB std ≤ 1.5 (E024b all-effects: std 2–3); the gap is selected on ≥ 8/10 walls.

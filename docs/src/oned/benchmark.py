@@ -61,6 +61,8 @@ def real_presets():
             "cqpaper": RL.Realism(dispersion="cq", paper=PAPER),
             "cqrough": RL.Realism(dispersion="cq", rough_sigma=1e-4),
             "cqoffset": RL.Realism(dispersion="cq", band_offset=0.3e-3),
+            "cqgap": RL.Realism(dispersion="cq", air_gap=3e-3),
+            "allpw": RL.Realism(dispersion="cq", rough_sigma=1e-4, paper=PAPER, air_gap=3e-3, band_offset=0.3e-3),
             "all": RL.Realism(dispersion="cq", beam_w0=0.02, Hf=0.1, plate_err=0.5e-3, rough_sigma=1e-4,
                               paper=PAPER, air_gap=3e-3, drift=(0.05, 0.01), band_offset=0.3e-3)}
 
@@ -415,6 +417,8 @@ METHODS = {
     "e024b": method_cascade(dict(CURRENT, standoff_halfwidth=RES_CELL, law="jonscher", pinf_free=True, band_offset=True),
                             dict(E009, standoff_halfwidth=RES_CELL, law="jonscher", pinf_free=True, band_offset=True)),
     "e028": None, "e028h": None,       # filled below (need METHODS for the fallback)
+    # E030: + air-gap layer (model selection: keep the gap only if it lowers chi2 by more than 6 = 3 sd of a 1-dof chi2)
+    "e030": None,
     "e016": method_cascade(dict(E013, ambiguity="posterior"),
                            dict(E015_FB1(DRYWALL_PRIOR), ambiguity="posterior"),
                            dict(E015_FB2(DRYWALL_PRIOR), ambiguity="posterior")),
@@ -428,6 +432,25 @@ METHODS["e028h"] = method_e028(hybrid=True)
 METHODS["e029"] = method_e029()
 METHODS["e029_noamb"] = method_e029(amb=False)
 METHODS["e029b"] = method_e029(verify=True)
+
+
+def method_e030():
+    """E030: e024b-style search (facing, roughness, band offset) with and without an air-gap layer;
+    the gap model is kept only if it lowers chi2 by more than 6 (one extra parameter, ~3 sd)."""
+    base = dict(CURRENT, standoff_halfwidth=RES_CELL, law="jonscher", pinf_free=True, min_cells=True,
+                facing=True, rough=True, band_offset=True)
+    no_gap = method_cascade(base, dict(E009, **{k: v for k, v in base.items() if k not in CURRENT}))
+    with_gap = method_cascade(dict(base, gap=True), dict(E009, gap=True, **{k: v for k, v in base.items() if k not in CURRENT}))
+
+    def run(f, yc, s, d0):
+        a = no_gap(f, yc, s, d0)
+        b = with_gap(f, yc, s, d0)
+        pick = b if b[1] < a[1] - 6.0 else a
+        return pick[0], pick[1], pick[2], dict(pick[3], gap_selected=pick is b, chi2_nogap=a[1], chi2_gap=b[1])
+    return run
+
+
+METHODS["e030"] = method_e030()
 
 
 # ----------------------------------------------------------------------------- runner

@@ -336,3 +336,19 @@ def test_min_cells_is_exact():
         G0, J0 = I.forward(m, f); G1, J1 = I.forward(mm, f)
         assert sum(sb[4] for sb in I._effective(mm, f)[0]) < sum(sb[4] for sb in I._effective(m, f)[0])
         assert np.abs(G1 - G0).max() < 1e-12 and np.abs(J1 - J0).max() / np.abs(J0).max() < 1e-11
+
+
+def test_gap_layer_matches_realism_and_jacobian():
+    import realism as RL
+    f = np.concatenate([np.linspace(77e9, 81e9, 32), np.linspace(57e9, 64e9, 32)])
+    m = S.stud_wall_model(free=("t", "eps_r", "tan_d"), standoff_guess=0.30); m.law = "cq"
+    m.layers[0].tan_d.value = 0.035; m.sync_ties()
+    m.gap = I.P(3e-3, 3e-4, 1e-2, True)
+    G, J = I.forward(m, f)
+    L = RL.layers_from_truth(m.summary(), RL.Realism(dispersion="cq", air_gap=3e-3))
+    ref = RL.gamma_layers(f, np.zeros((f.size, 1)), L)[0][:, 0] * np.exp(-2j * 2 * np.pi * f / W.C0 * 0.30)
+    assert np.abs(G - ref).max() < 1e-12
+    j = m.free_names().index("gap"); h = 1e-8
+    a = m.copy(); a.gap.value += h; b = m.copy(); b.gap.value -= h
+    fd = (I.forward(a, f, False)[0] - I.forward(b, f, False)[0]) / (2 * h)
+    assert np.abs(fd - J[:, j]).max() / np.abs(J[:, j]).max() < 1e-6

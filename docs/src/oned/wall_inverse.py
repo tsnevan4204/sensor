@@ -66,6 +66,8 @@ class WallModel:
     facing_on: tuple = ()
     rough: "P | None" = None            # E024: rms roughness of the front face (graded transition layer)
     band_offset: "P | None" = None      # E024: phase-centre/standoff offset of the 2nd and later bands
+    gap: "P | None" = None              # E030: air gap behind the layer gap_after (cavity depth kept as its t)
+    gap_after: str = "insulation"
 
     # ---- flat views over parameters -------------------------------------------------
     def items(self):
@@ -79,6 +81,8 @@ class WallModel:
             yield "rough", (None, "rough"), self.rough
         if self.band_offset is not None:
             yield "band_offset", (None, "band_offset"), self.band_offset
+        if self.gap is not None:
+            yield "gap", (None, "gap"), self.gap
         yield "standoff", (None, "standoff"), self.standoff
 
     def free_names(self):
@@ -256,6 +260,18 @@ def _effective(model: WallModel, f):
             subs += [(tp, fp[0], dl_face, fp[1], nf),
                      (core, e, dl_core, dm, nc),
                      (tp, fp[0], dl_face, fp[1], nf)]
+        elif model.gap is not None and L.name == model.gap_after:
+            # E030: [layer material over t - g, air gap g]; t stays the cavity depth
+            g = model.gap.value
+            og = own("gap")
+            dl_core = {ot: 1.0} if ot is not None else {}
+            if og is not None:
+                dl_core[og] = dl_core.get(og, 0) - 1.0
+            core = L.t.value - g
+            n_c = ncell_min(core, e) if model.min_cells else max(1, n_cells_for(L, f.max(), T))
+            air = np.ones(f.size, complex)
+            n_g = ncell_min(g, air) if model.min_cells else ncell_for(g, 1.0 + 0j)
+            subs += [(core, e, dl_core, dm, n_c), (g, air, {og: 1.0} if og is not None else {}, {}, n_g)]
         else:
             n_l = ncell_min(L.t.value, e) if model.min_cells else n_cells_for(L, f.max(), T)
             subs.append((L.t.value, e, {ot: 1.0} if ot is not None else {}, dm, n_l))
