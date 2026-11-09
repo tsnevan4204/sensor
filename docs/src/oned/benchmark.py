@@ -45,7 +45,8 @@ RES_CELL = W.C0 / (2 * 4e9)   # E018: range-resolution cell of the 4 GHz band (3
 DUAL_BAND = (22e9, 26e9)     # E017 second band (E014: removes the back-of-wall cycle ambiguity)
 
 
-BANDS2 = {"dual24": (22e9, 26e9), "dual60": (57e9, 64e9), "dualuwb": (3.1e9, 10.6e9)}
+BANDS2 = {"dual24": (22e9, 26e9), "dual60": (57e9, 64e9), "dualuwb": (3.1e9, 10.6e9), "proto": (3.1e9, 10.6e9)}
+BANDS1 = {"proto": (60e9, 64e9)}   # E035+: the prototype pair (TI IWR6843 60-64 GHz + UWB), doc 13
 
 
 def real_presets():
@@ -65,6 +66,9 @@ def real_presets():
             "fm100": RL.Realism(dispersion="cq", fmcw={"S": 100e12, "hpf": (175e3, 350e3), "nonlin": 0.0}),
             "fm250": RL.Realism(dispersion="cq", fmcw={"S": 250e12, "hpf": (175e3, 350e3), "nonlin": 0.0}),
             "fm100nl": RL.Realism(dispersion="cq", fmcw={"S": 100e12, "hpf": (175e3, 350e3), "nonlin": 1e6}),
+            "cqdrift": RL.Realism(dispersion="cq", field_drift=(0.5, 0.3, 0.3, 3.0)),
+            "cqdriftref": RL.Realism(dispersion="cq", field_drift=(0.5, 0.3, 0.3, 3.0), leak_ref=True,
+                                     untracked=(0.1, 0.02)),
             "allpw": RL.Realism(dispersion="cq", rough_sigma=1e-4, paper=PAPER, air_gap=3e-3, band_offset=0.3e-3),
             "all": RL.Realism(dispersion="cq", beam_w0=0.02, Hf=0.1, plate_err=0.5e-3, rough_sigma=1e-4,
                               paper=PAPER, air_gap=3e-3, drift=(0.05, 0.01), band_offset=0.3e-3)}
@@ -90,7 +94,7 @@ def make_case(benchmark, seed, plate_d=0.25):
         import realism as RL
         _, preset, band = benchmark.split(":")
         return RL.make_case_real(seed, real_presets()[preset], dual=band != "single",
-                                 plate_d=plate_d, band2=BANDS2.get(band))
+                                 plate_d=plate_d, band2=BANDS2.get(band), band1=BANDS1.get(band))
     dual = benchmark.endswith("dual")
     benchmark = benchmark[:-4] if dual else benchmark
     rng = np.random.default_rng(seed)
@@ -460,7 +464,12 @@ def method_e030():
 
 
 METHODS["e030"] = method_e030()
-METHODS["e033"] = method_e030()        # same method; the gap is now in the lattice, hops and ambiguity scan
+METHODS["e033"] = method_e030()
+# E035: field self-calibration (per-band smooth complex gain fitted with the wall), on the e027_s4 method
+_B35 = dict(standoff_halfwidth=RES_CELL, law="jonscher", pinf_free=True, lat_step=1.0, lat0_eps=(2.6,),
+            lat1_eps=(1.15,), hops=(1, -1), amb_ks=(-1, 1), min_cells=True)
+for _nm, _cal in (("e035_none", ""), ("e035_gain", "gain"), ("e035_full", "full")):
+    METHODS[_nm] = method_cascade(dict(CURRENT, cal=_cal, **_B35), dict(E009, cal=_cal, **_B35))
 
 
 def method_e031():

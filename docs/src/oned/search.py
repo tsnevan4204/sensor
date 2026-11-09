@@ -230,6 +230,9 @@ class Opts:
     lat1_eps: tuple = (1.05, 1.15, 1.3) # E025: insulation eps start values
     hops: tuple = (1, -1, 2, -2)        # E025: cycle-hop sizes
     amb_ks: tuple = (-3, -2, -1, 1, 2, 3)   # E025: ambiguity-scan shifts
+    frames: tuple = ()                  # E038: initial standoff offsets of frames 1..K-1 (from the range profiles)
+    frame_nb: int = 2                   # E038: bands per frame
+    cal: str = ""                       # E035: field self-calibration per band: "" none, "gain" (a0, a1), "full" (a0, a1, p0, p1)
     min_cells: bool = False             # E027: fewest pole-safe cells per layer (exact for any count)
 
 
@@ -266,15 +269,21 @@ def stud_stages(d0, fit_tan=True, opts=None):
         s0 = s0 + ("facing.t", "facing.eps_r")   # E024b: facings shape the front echo too
     if opts is not None and getattr(opts, "rough", False):
         s0 = s0 + ("rough",)
-    gap_lat = {}
-    if opts is not None and getattr(opts, "gap", False):
-        s1 = s1 + ("gap",)                        # E033: gap starts every half period (from 2 mm init)
-        gap_lat = {"gap": np.arange(-1.0, 4.01, 0.5)}
+    if opts is not None and getattr(opts, "frames", ()):
+        s0 = s0 + tuple(f"frame{k + 1}" for k in range(len(opts.frames)))   # E038: the front echo pins each frame
+    if opts is not None and getattr(opts, "cal", ""):
+        pass
     s1 = ("insulation.t", "insulation.eps_r", "drywall_back.t") + (("insulation.tan_d",) if fit_tan else ())
-    return [I.Stage(s0, I.Gate(d0 - 0.03, d0 + 0.06),
-                    lattice={"drywall_front.t": off(4), "drywall_front.eps_r": list(e0)}),
-            I.Stage(s1, I.Gate(d0 + 0.06, d0 + 0.25),
-                    lattice={"insulation.t": off(6), "insulation.eps_r": list(e1), **gap_lat})]
+    stages = [I.Stage(s0, I.Gate(d0 - 0.03, d0 + 0.06),
+                      lattice={"drywall_front.t": off(4), "drywall_front.eps_r": list(e0)}),
+              I.Stage(s1, I.Gate(d0 + 0.06, d0 + 0.25),
+                      lattice={"insulation.t": off(6), "insulation.eps_r": list(e1)})]
+    if opts is not None and getattr(opts, "gap", False):
+        # E033: conditional gap stage. Given the back-wall basin, start the gap every half phase period
+        # (the weak insulation/air echo repeats every lambda/2 in g) instead of multiplying the stage-1 lattice.
+        stages.append(I.Stage(s1 + ("gap",), I.Gate(d0 + 0.06, d0 + 0.25),
+                              lattice={"gap": np.arange(-0.5, 3.01, 0.5)}))
+    return stages
 
 
 def _stage_model(model, st):
@@ -506,6 +515,14 @@ def _invert(f, yc, sigma, d0, opts: Opts):
         model.gap = I.P(2e-3, 3e-4, 1e-2, True)
     if opts.chain is not None:
         model.chain = opts.chain
+    if opts.frames:
+        model.frame_offsets = [I.P(float(v), float(v) - 0.006, float(v) + 0.006, True) for v in opts.frames]
+        model.frame_nb = opts.frame_nb
+    if opts.cal:
+        nb = len(I.band_segments(f))
+        ph = opts.cal == "full"
+        model.cal = [[I.P(0.0, -0.6, 0.6, True), I.P(0.0, -0.6, 0.6, True),
+                      I.P(0.0, -1.0, 1.0, ph), I.P(0.0, -2.0, 2.0, ph)] for _ in range(nb)]
     if opts.pinf_free:
         model.layers[0].pinf = I.P(0.3, 0.0, 0.9, True)
         model.layers[2].pinf = I.P(0.3, 0.0, 0.9, True, tie="drywall_front.pinf")

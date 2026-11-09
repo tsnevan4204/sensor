@@ -25,7 +25,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 import numpy as np
 from scipy.linalg import solve_banded
-from wall_toy import C0, ETA0, eps_water_debye, _sqrt_branch
+from wall_toy import C0, ETA0, eps_water_debye, eps_water_lhm, _sqrt_branch
 
 MU0 = ETA0 / C0   # 2019 SI: mu0 = eta0 / c0 (4*pi*1e-7 is off by ~1e-10)
 
@@ -56,6 +56,8 @@ class WallModel:
     standoff: P
     eps_back: complex = 1.0 + 0j
     water_T: float = 20.0
+    water_law: str = "debye1"   # E034: "debye1" (single Debye, E000-E033) or "lhm" (double Debye, LHM 1991)
+    water_Tp: "P | None" = None  # E034: fitted water temperature (C); overrides water_T when set
     law: str = "const"          # host material law: "const" (E007) or "cq" causal constant-Q (E021)
     f_ref: float = 79e9         # reference frequency of the "cq" law (eps_r, tan_d are the values there)
     beam: tuple | None = None   # E023: Gaussian beam waist (m) per band segment; None = plane wave
@@ -68,6 +70,9 @@ class WallModel:
     band_offset: "P | None" = None      # E024: phase-centre/standoff offset of the 2nd and later bands
     gap: "P | None" = None              # E030: air gap behind the layer gap_after (cavity depth kept as its t)
     gap_after: str = "insulation"
+    frame_offsets: "list | None" = None   # E038: standoff change of frames 1..K-1 (handheld motion); frame k = segments k*nb..
+    frame_nb: int = 1                       # E038: bands per frame
+    cal: "list | None" = None   # E035: field self-calibration, per band [P a0, a1, p0, p1]: data = Gamma * exp(a0 + a1 x + j(p0 + p1 x)), x in [-1/2, 1/2] across the band
     chain: list | None = None   # E031: per-band linear measurement operators L_b (n_b x n_b): data = L_b Gamma
 
     # ---- flat views over parameters -------------------------------------------------
@@ -84,6 +89,15 @@ class WallModel:
             yield "band_offset", (None, "band_offset"), self.band_offset
         if self.gap is not None:
             yield "gap", (None, "gap"), self.gap
+        if self.water_Tp is not None:
+            yield "water_T", (None, "water_T"), self.water_Tp
+        if self.frame_offsets is not None:
+            for k, p in enumerate(self.frame_offsets):
+                yield f"frame{k + 1}", (None, f"frame{k + 1}"), p
+        if self.cal is not None:
+            for k, ps in enumerate(self.cal):
+                for nm, p in zip(("a0", "a1", "p0", "p1"), ps):
+                    yield f"cal{k}.{nm}", (None, f"cal{k}.{nm}"), p
         yield "standoff", (None, "standoff"), self.standoff
 
     def free_names(self):
@@ -123,7 +137,7 @@ class WallModel:
 
 
 # ============================================================================ materials
-def layer_eps_and_derivs(L: LayerSpec, f, T, law="const", f_ref=79e9):
+def layer_eps_and_derivs(L: LayerSpec, f, T, law="const", f_ref=79e9, water="debye1"):
     """eps(f) and d eps / d(eps_r, tan_d, theta), all exact (analytic).
     Host law "const": h = eps_r (1 - j tan_d) at every f (not causal over wide bands).
     Host law "cq" (E021, Kjartansson constant-Q, exactly causal and passive):
@@ -146,7 +160,7 @@ def layer_eps_and_derivs(L: LayerSpec, f, T, law="const", f_ref=79e9):
         dh_der = h / er
         dh_dtd = er * (-1j * g + core * lg * da_dt)
         dh_dp = er * (1 - g + core * lg * da_dp)
-        eps, d = _crim(L, f, T, h, dh_der, dh_dtd)
+        eps, d = _crim(L, f, T, h, dh_der, dh_dtd, water)
         d["pinf"] = d["eps_r"] / dh_der * dh_dp
         return eps, d
     if law == "cq":
@@ -160,22 +174,33 @@ def layer_eps_and_derivs(L: LayerSpec, f, T, law="const", f_ref=79e9):
         h = L.eps_r.value * (1 - 1j * L.tan_d.value) * np.ones_like(f)
         dh_der = (1 - 1j * L.tan_d.value) * np.ones_like(f)
         dh_dtd = (-1j * L.eps_r.value) * np.ones_like(f)
-    return _crim(L, f, T, h, dh_der, dh_dtd)
+    return _crim(L, f, T, h, dh_der, dh_dtd, water)
 
 
-def _crim(L, f, T, h, dh_der, dh_dtd):
-    w = eps_water_debye(f, T)
+def _water(f, T, water):
+    return eps_water_lhm(f, T) if water == "lhm" else eps_water_debye(f, T)
+
+
+def _crim(L, f, T, h, dh_der, dh_dtd, water="debye1"):
+    w = _water(f, T, water)
     sh, sw = np.sqrt(h), np.sqrt(w)
     th = L.theta.value
     s = (1 - th) * sh + th * sw
     eps = s ** 2
     de_dh = s * (1 - th) / sh
-    return eps, {
+    out = {
         "eps_r": de_dh * dh_der,
         "tan_d": de_dh * dh_dtd,
         "theta": 2 * s * (sw - sh),
         "pinf": 0 * eps,
     }
+    if th != 0:
+        hT = 1e-3                                    # d eps_water / dT: central difference (smooth in T)
+        dw = (_water(f, T + hT, water) - _water(f, T - hT, water)) / (2 * hT)
+        out["water_T"] = 2 * s * th * dw / (2 * sw)
+    else:
+        out["water_T"] = 0 * eps
+    return eps, out
 
 
 def n_cells_for(L: LayerSpec, fmax, T):
@@ -204,7 +229,8 @@ def _effective(model: WallModel, f):
                  eps_i = 1 + w_i (eps_front - 1), w_i = (i + 1/2)/ROUGH_SUB. A linear taper reduces
                  the reflection by 1 - (k h)^2/6 + ..., the Kirchhoff coherent factor exp(-2 (k sigma)^2)
                  by 1 - 2 (k sigma)^2 + ...: equal at second order for h = 2 sqrt(3) sigma."""
-    T = model.water_T
+    T = model.water_Tp.value if model.water_Tp is not None else model.water_T
+    WL = model.water_law
     own = model.owner
     subs = []
 
@@ -218,11 +244,15 @@ def _effective(model: WallModel, f):
             o = own(f"{prefix}.{key}")
             if o is not None:
                 out[o] = out.get(o, 0) + d[key]
+        if "water_T" in known and "water_T" in d:
+            o = own("water_T")
+            if o is not None:
+                out[o] = out.get(o, 0) + d["water_T"]
         return out
 
     fp = None
     if model.facing is not None:
-        ep, dp = layer_eps_and_derivs(model.facing, f, T, model.law, model.f_ref)
+        ep, dp = layer_eps_and_derivs(model.facing, f, T, model.law, model.f_ref, WL)
         fp = (ep, dmap(model.facing, dp, "facing"))
     kmax = 2 * np.pi * f.max() / C0
 
@@ -241,7 +271,7 @@ def _effective(model: WallModel, f):
         return ncell_for(length, eps[-1])
 
     for L in model.layers:
-        e, d = layer_eps_and_derivs(L, f, T, model.law, model.f_ref)
+        e, d = layer_eps_and_derivs(L, f, T, model.law, model.f_ref, WL)
         dm = dmap(L, d, L.name)
         ot = own(f"{L.name}.t")
         if fp is not None and L.name in model.facing_on:
@@ -254,8 +284,8 @@ def _effective(model: WallModel, f):
             if otp is not None:
                 dl_core[otp] = dl_core.get(otp, 0) - 2.0
             dl_face = {otp: 1.0} if otp is not None else {}
-            ef = layer_eps_and_derivs(model.facing, np.array([f.max()]), T, model.law, model.f_ref)[0][0]
-            ec = layer_eps_and_derivs(L, np.array([f.max()]), T, model.law, model.f_ref)[0][0]
+            ef = layer_eps_and_derivs(model.facing, np.array([f.max()]), T, model.law, model.f_ref, WL)[0][0]
+            ec = layer_eps_and_derivs(L, np.array([f.max()]), T, model.law, model.f_ref, WL)[0][0]
             nf = ncell_min(tp, fp[0]) if model.min_cells else ncell_for(tp, ef)
             nc = ncell_min(core, e) if model.min_cells else ncell_for(core, ec)
             subs += [(tp, fp[0], dl_face, fp[1], nf),
@@ -302,6 +332,10 @@ def forward(model: WallModel, f, jacobian=True):
     With model.beam set (E023) the result is the beam-received signal S(f) of forward_beam()."""
     f = np.asarray(f, float)
     model.sync_ties()
+    if model.frame_offsets is not None:
+        return _forward_frames(model, f, jacobian)
+    if model.cal is not None:
+        return _forward_cal(model, f, jacobian)
     if model.chain is not None:
         return _forward_chain(model, f, jacobian)
     if model.band_offset is not None and len(band_segments(f)) > 1:
@@ -443,6 +477,64 @@ def _forward_chain(model, f, jacobian):
         G[a:b] = L @ G[a:b]
         if J is not None:
             J[a:b] = L @ J[a:b]
+    return G, J
+
+
+def _forward_frames(model, f, jacobian):
+    """E038: K frames of nb bands each (data concatenated frame after frame). Frame k sees standoff
+    d + delta_k (delta_0 = 0): the wall is the same, the hand moved. d/d delta_k = d/d standoff on
+    frame k's segments."""
+    names = model.free_names()
+    inner = model.copy()
+    inner.frame_offsets = None
+    inner.standoff.free = True
+    inner_names = inner.free_names()
+    G = np.zeros(f.size, complex)
+    J = np.zeros((f.size, len(names)), complex) if jacobian else None
+    segs = band_segments(f)
+    nb = model.frame_nb
+    for k in range(len(segs) // nb):
+        a, b = segs[k * nb][0], segs[k * nb + nb - 1][1]
+        inner.standoff.value = model.standoff.value + (model.frame_offsets[k - 1].value if k > 0 else 0.0)
+        Gk, Jk = forward(inner, f[a:b], jacobian)
+        G[a:b] = Gk
+        if jacobian:
+            for j, nm in enumerate(inner_names):
+                if nm in names:
+                    J[a:b, names.index(nm)] += Jk[:, j]
+            if k > 0:
+                o = model.owner(f"frame{k}")
+                if o is not None:
+                    J[a:b, names.index(o)] += Jk[:, inner_names.index("standoff")]
+    return G, J
+
+
+def _forward_cal(model, f, jacobian):
+    """E035: per-band smooth complex gain D_b(f) = exp(a0 + a1 x + j (p0 + p1 x)) multiplying the
+    calibrated response (residual drift of the factory calibration: gain, gain slope, phase,
+    group delay). Exact derivatives: dG/da0 = G, dG/da1 = x G, dG/dp0 = jG, dG/dp1 = j x G."""
+    names = model.free_names()
+    inner = model.copy()
+    inner.cal = None
+    inner_names = inner.free_names()
+    G0, J0 = forward(inner, f, jacobian)
+    G = np.array(G0, complex)
+    J = np.zeros((f.size, len(names)), complex) if jacobian else None
+    segs = band_segments(f)
+    for k, (a, b) in enumerate(segs):
+        a0, a1, p0, p1 = model.cal[min(k, len(model.cal) - 1)]
+        fb = f[a:b]
+        x = (fb - fb.mean()) / max(fb.max() - fb.min(), 1.0)
+        D = np.exp(a0.value + a1.value * x + 1j * (p0.value + p1.value * x))
+        G[a:b] = G0[a:b] * D
+        if jacobian:
+            for j, nm in enumerate(inner_names):
+                J[a:b, names.index(nm)] = J0[a:b, j] * D
+            kk = min(k, len(model.cal) - 1)
+            for nm, fac in (("a0", 1.0), ("a1", x), ("p0", 1j), ("p1", 1j * x)):
+                o = model.owner(f"cal{kk}.{nm}")
+                if o is not None:
+                    J[a:b, names.index(o)] += fac * G[a:b]
     return G, J
 
 
@@ -883,6 +975,10 @@ def _phase_periods(model, f):
             out[f"{L.name}.t"] = lam_c / (2 * np.sqrt(eps[0]).real)
     if model.gap is not None and model.gap.free:          # E033: an air gap is a thickness with cycles too
         out["gap"] = lam_c / 2
+    if model.frame_offsets is not None:
+        for k, p in enumerate(model.frame_offsets):
+            if p.free:
+                out[f"frame{k + 1}"] = lam_c / 2
     if model.standoff.free:
         out["standoff"] = lam_c / 2
     return out

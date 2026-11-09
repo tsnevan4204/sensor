@@ -53,6 +53,10 @@ class Realism:
     drift: tuple = (0.0, 0.0)
     band_offset: float = 0.0            # second band's phase-centre offset (m), unknown to the model
     fmcw: dict | None = None            # E031: FMCW chain {"S": slope Hz/s, "hpf": (f1, f2) Hz, "nonlin": peak Hz}
+    field_drift: tuple | None = None    # E035: (sd gain dB, sd gain slope dB, sd phase rad, sd delay ps) of the
+                                        # radar CHAIN between factory calibration and the field scan (per band, random)
+    untracked: tuple = (0.0, 0.0)       # E035: (sd gain dB, sd phase rad) of the antenna/lens part (not seen by leakage)
+    leak_ref: bool = False              # E035: correct the chain drift with the internal Tx->Rx leakage reference
     n_quad: int = 160                    # 48 was 6e-5 off for w0 = 1 cm (E023 check); 160: 6e-15
 
 
@@ -168,6 +172,37 @@ def system(f, R: Realism, S, Sprop):
     return R.Hi + S / (1 - R.Hf * S)
 
 
+def field_drift(f, R: Realism, seed):
+    """E035: multiplicative drift of the wall scan relative to the factory calibration, and its
+    leakage-reference correction. Chain drift D_c = exp(g + s x + j(p + 2 pi f delay)) (x across the
+    band in [-1/2, 1/2]); antenna part D_a = exp(g_a + j p_a). With leak_ref the radar measures its
+    own Tx->Rx leakage L(f) D_c (L known from the factory, |L| = 0.18, i.e. -15 dB, 25 dB SNR per
+    sample), fits the same 4-parameter form by linear least squares on log(y_L / L) and divides it out."""
+    if R.field_drift is None:
+        return np.ones(f.size, complex)
+    rng = np.random.default_rng(seed + 77)
+    sg, ss, sp, sd = R.field_drift
+    x = (f - f.mean()) / (f.max() - f.min())
+    ln10 = np.log(10) / 20
+    g, sl, ph, dl = rng.normal(0, sg) * ln10, rng.normal(0, ss) * ln10, rng.normal(0, sp), rng.normal(0, sd) * 1e-12
+    logDc = g + sl * x + 1j * (ph + 2 * np.pi * (f - f.mean()) * dl)
+    Dc = np.exp(logDc)
+    Da = np.exp(rng.normal(0, R.untracked[0]) * ln10 + 1j * rng.normal(0, R.untracked[1]))
+    if not R.leak_ref:
+        return Dc * Da
+    tauL = 0.1e-9
+    L = 0.18 * np.exp(-2j * np.pi * f * tauL)
+    sig = np.sqrt(1.0 / 1e4 / 2)
+    yL = L * Dc + sig * (rng.standard_normal(f.size) + 1j * rng.standard_normal(f.size))
+    lr = np.log(yL / L)
+    lr = lr.real + 1j * np.unwrap(lr.imag)
+    A = np.column_stack([np.ones_like(x), x])
+    cr = np.linalg.lstsq(A, lr.real, rcond=None)[0]
+    ci = np.linalg.lstsq(A, lr.imag, rcond=None)[0]
+    Dhat = np.exp(A @ cr + 1j * (A @ ci))
+    return Dc * Da / Dhat
+
+
 def measure_band(tv, radar: W.Radar, R: Realism, plate_d=0.25, d=None):
     """Calibrated data for one band: wall scan and plate scan through the same physics, then the
     inversion's own calibration (plate at the NOMINAL distance plate_d, Gamma = -1 plane wave)."""
@@ -182,6 +217,7 @@ def measure_band(tv, radar: W.Radar, R: Realism, plate_d=0.25, d=None):
     drift = 10 ** (R.drift[0] / 20 * np.cos(2 * np.pi * x)) * np.exp(1j * R.drift[1] * np.sin(np.pi * x))
     rng = np.random.default_rng(radar.seed)
     sig = np.sqrt(1.0 / 10 ** (radar.snr_db / 10) / 2)
+    drift = drift * field_drift(f, R, radar.seed)
     yw = A * drift * yw_clean + sig * (rng.standard_normal(f.size) + 1j * rng.standard_normal(f.size))
     rng_p = np.random.default_rng(radar.seed + 500)
     yp = A * yp_clean + sig * (rng_p.standard_normal(f.size) + 1j * rng_p.standard_normal(f.size))
@@ -191,14 +227,14 @@ def measure_band(tv, radar: W.Radar, R: Realism, plate_d=0.25, d=None):
     return f, yc, sigma
 
 
-def make_case_real(seed, R: Realism, dual=True, plate_d=0.25, band2=None):
+def make_case_real(seed, R: Realism, dual=True, plate_d=0.25, band2=None, band1=None):
     """Same truths as benchmark v2/v2dual (same rng sequence), data through the realistic world."""
     rng = np.random.default_rng(seed)
     d_true = 0.30 + 0.002 * rng.random()
     _, tv = S.truth_random_v2(rng, d_true)
     tv["drywall_back.eps_r"] = tv["drywall_front.eps_r"]
     tv["drywall_back.tan_d"] = tv["drywall_front.tan_d"]
-    bands = [W.Radar(seed=seed)]
+    bands = [W.Radar(seed=seed) if band1 is None else W.Radar(f0=band1[0], f1=band1[1], seed=seed)]
     if dual:
         import benchmark as B
         b2 = B.DUAL_BAND if band2 is None else band2
@@ -243,6 +279,7 @@ def measure_band_lambot(tv, radar: W.Radar, R: Realism, d_plates=None, d=None):
         rng = np.random.default_rng(seed)
         return clean + sig * (rng.standard_normal(f.size) + 1j * rng.standard_normal(f.size))
     S_w, _, _ = received(f, layers, tv["standoff"] if d is None else d, R)
+    drift = drift * field_drift(f, R, radar.seed)
     yw = noisy(A * drift * system(f, R, S_w, None), radar.seed)
     yps = []
     for k, dp in enumerate(d_plates):

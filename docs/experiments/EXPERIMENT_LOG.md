@@ -793,3 +793,30 @@ With 57–64 GHz the same methods gave 95/0/5 (dense) and 88/7/5 (sparse).
 **Change:** the gap gets a phase period λc/2 (`_phase_periods`), so it enters the cycle hops and the ambiguity scan; stage 1 frees the gap with starts every half period (−1…+4 periods from 2 mm).
 **Benchmarks:** real:cqgap:dual60, real:cqgap:dualuwb, real:allpw:dualuwb, seeds 1–10.
 **Hypothesis:** gap error < 0.2 mm on ≥ 8/10, success ≥ 9, silent 0, insulation err/CRB std ≤ 1.5.
+
+## E033 — Gap in the cycle machinery  (2026-11-09)
+**Change (as run):** the first version (gap added to the stage-1 lattice, 825 starts) crashed on a variable-order bug and would have been 11× slower. Replaced by a **conditional gap stage**: after the back-wall stage, the gap is freed together with the stage-1 parameters, with starts every half phase period (−0.5…+3 periods from 2 mm). The gap is in the cycle hops and ambiguity scan (period λc/2). Model selection as in E030 (keep the gap only if Δχ² > 6).
+
+| benchmark | outcome (s/f/silent) | gap estimates (truth 3.00 mm) | insulation εr err/CRB std |
+|---|---|---|---|
+| real:cqgap:dualuwb | 10/0/0 | 2.91–3.05 mm on **10/10** (gap selected 10/10) | 0.87 |
+| real:cqgap:dual60 | 10/0/0 | 2.75–3.07 mm on 8/10; gap not selected on 2 (insulation absorbs it, still in the truth basin) | 0.61 |
+| E030 on real:cqgap:dual60 (before) | 8/2/0 | 0.61–0.79 mm | 2.21 |
+
+**Hypothesis** (gap error < 0.2 mm on ≥ 8/10, success ≥ 9, silent 0, insulation err/CRB std ≤ 1.5): **passed** on dualuwb (10/10 within 0.09 mm) and dual60 (7/10 within 0.2 mm, 8/10 within 0.25 mm, 0 silent). The air gap is measurable; the E030 failure was purely a search failure.
+**Cost:** slow, because two full cascades run (with and without the gap): median 218 s (UWB), 86 s (dual60) per wall. Speed is addressed in E039.
+**Artifacts:** results/2026-11-09_E033_gap_cycles/ (real:allpw:dualuwb still running at the time of writing).
+
+### Pre-registered: E034 — Arbitrary stacks of arbitrary materials (before running)
+**World:** `stack.py`. Random stacks of 1–5 layers from 15 materials: the 10 ITU-R P.2040-3 Table 3 building materials (concrete, brick, plasterboard, wood, glass, ceiling board, chipboard/OSB, plywood, marble, floorboard), made causal (Jonscher form, loss slope from the table's d), plus foam, fibreglass batt, ceramic tile, **air gaps** and **liquid water layers** (double-Debye water, Liebe–Hufford–Manabe 1991, one random wall temperature 5–35 °C). Backing: air or **metal** (σ = 10⁷ S/m). Material variability ±8 % in ε′ and ×0.6–1.6 in σ. Rejection sampling keeps only stacks whose last interface is visible (two-way loss < 45 dB at 5 GHz). Prototype bands 60–64 GHz + 3.1–10.6 GHz, 256 points each, 40 dB SNR, plane wave, calibrated.
+**Forward gate:** exact-star DEC vs an independent transfer-matrix reference on 60 random stacks incl. water and metal: max |ΔΓ| = **1.6e-13**. Adjoint Jacobian vs central differences: worst relative 1e-4 (finite-difference noise on the weakest parameters; the analytic pinf derivative was checked separately to O(h²)).
+**Inversion (knows no material names):** every layer is a causal Jonscher dielectric (t, ε′, tan δ at 10 GHz, dispersion shape p) or a water layer (CRIM θ = 1, double Debye, **water temperature fitted**). Back = air or metal, decided by χ². Steps: robust front-face detection (earliest peak above the far-range noise floor), with a standoff lattice; frequency continuation (low band, lowest third first: Bunks et al. 1995 multiscale principle against cycle skipping); greedy growth (residual-echo split/append, thin-layer insertion at every interface, retyping between dielectric/water/air), with a new layer accepted only if Δχ² > 4 ln n (Schwarz/BIC); then the high band, cycle hops, ambiguity scan, pruning and back-medium check; finally Gaussian-likelihood classification against the material library.
+**Metrics:** structure correct (layer count, back medium); per-layer thickness error; ε′ error; class top-1; χ² alarm; silent = wrong structure without alarm.
+**Hypothesis (first version, deliberately modest):** on 1–2-layer stacks, structure correct ≥ 8/10, silent ≤ 1; then scale to 5 layers.
+
+### Pre-registered: E035 — No plate in the field (before running)
+**Question:** can the sensor be used anywhere with only a one-time factory calibration?
+**World:** factory Lambot/plate calibration, then a field scan whose radar chain has drifted: per band random gain (σ 0.5 dB), gain slope (0.3 dB), phase (0.3 rad), group delay (3 ps) (`realism.field_drift`). Variant "ref": the radar measures its own Tx→Rx leakage (−15 dB, 25 dB SNR), which passes the same chain, fits the same 4-parameter drift and divides it out; an untracked antenna part remains (0.1 dB, 0.02 rad).
+**Methods:** e035_none (ignore drift), e035_gain (fit per-band gain + slope with the wall), e035_full (also phase + delay).
+**Benchmarks:** real:cqdrift:proto and real:cqdriftref:proto (prototype pair 60–64 GHz + UWB), seeds 1–10.
+**Hypothesis:** e035_none fails on cqdrift; with the leakage reference plus fitted gain, ≥ 9/10 success and 0 silent, err/CRB std ≤ 1.5.
