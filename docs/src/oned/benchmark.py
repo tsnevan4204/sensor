@@ -231,6 +231,10 @@ METHODS = {
     "e019dual": method_cascade(dict(CURRENT, standoff_halfwidth=RES_CELL),
                                dict(E009, standoff_halfwidth=RES_CELL),
                                dict(standoff_halfwidth=RES_CELL)),
+    # E020 study variants: same cascades without the expensive dense third stage
+    "e019dual_lite": method_cascade(dict(CURRENT, standoff_halfwidth=RES_CELL), dict(E009, standoff_halfwidth=RES_CELL)),
+    "e018b_lite": method_cascade(dict(E013B, standoff_halfwidth=RES_CELL),
+                                 dict(E015_FB1(DRYWALL_PRIOR + STUD_PRIOR), standoff_halfwidth=RES_CELL)),
     "e016": method_cascade(dict(E013, ambiguity="posterior"),
                            dict(E015_FB1(DRYWALL_PRIOR), ambiguity="posterior"),
                            dict(E015_FB2(DRYWALL_PRIOR), ambiguity="posterior")),

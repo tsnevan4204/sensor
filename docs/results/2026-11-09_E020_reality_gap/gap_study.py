@@ -21,10 +21,12 @@ EFFECTS = {
     "drywall face paper 0.4 mm": RL.Realism(paper=PAPER),
     "insulation air gap 5 mm": RL.Realism(air_gap=5e-3),
     "cal-to-scan drift 0.05 dB / 0.01 rad": RL.Realism(drift=(0.05, 0.01)),
+    "band phase-centre offset 0.3 mm": RL.Realism(band_offset=0.3e-3),
     "ALL of the above (moderate)": RL.Realism(dispersion="cq", beam_w0=0.02, Hf=0.1, plate_err=0.5e-3,
                                               rough_sigma=1e-4, paper=PAPER, air_gap=3e-3, drift=(0.05, 0.01)),
 }
-METHODS = {"two-band (e019dual)": ("e019dual", True), "one-band + priors (e018b)": ("e018b", False)}
+METHODS = {"two-band (e019dual, 2-stage cascade)": ("e019dual_lite", True),
+           "one-band + priors (e018b, 2-stage cascade)": ("e018b_lite", False)}
 Q = ["standoff", "drywall_front.t", "drywall_front.eps_r", "insulation.t", "drywall_back.t"]
 
 
@@ -43,11 +45,15 @@ def one(args):
 
 if __name__ == "__main__":
     from multiprocessing import Pool
-    seeds = list(range(1, 11))
+    seeds = list(range(1, 9))
     jobs = [(e, m, s) for e in EFFECTS for m in METHODS for s in seeds]
     t0 = time.time()
+    res = []
+    prog = open(sys.argv[1].replace(".json", "_progress.jsonl"), "w")
     with Pool(3) as p:
-        res = p.map(one, jobs, chunksize=1)
+        for r in p.imap_unordered(one, jobs, chunksize=1):
+            res.append(r)
+            prog.write(json.dumps(r, default=float) + "\n"); prog.flush()
     json.dump(res, open(sys.argv[1], "w"), indent=1, default=float)
     lines = [f"E020 reality gap: seeds {seeds}; z = |err|/CRB (median over walls); 'silent bias' = chi2/n <= 1.2 and some z > 3"]
     for m in METHODS:
