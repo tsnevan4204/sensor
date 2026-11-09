@@ -1,0 +1,21 @@
+benchmark real:cqtilt2:proto  method e035_none  seeds 1-10  wall 23s
+runs 10: success 0, flagged 10, silent 0
+best model in the truth's basin (all layers): 10/10
+chi2/n: 12.87, 16.00, 12.32, 16.80, 12.65, 16.36, 13.20, 15.21, 14.46, 12.55
+chi2(truth) - chi2(best): +19602.1, +36163.1, +8261.1, +26372.6, +29030.2, +25973.4, +31716.5, +15341.3, +30596.7, +23946.8
+outcome per seed: 1:f, 2:f, 3:f, 4:f, 5:f, 6:f, 7:f, 8:f, 9:f, 10:f
+wall time per inversion (1 core): median 3.4 s; forward solves (with J) median 2406, (no J) median 26
+work (forward solves in units of one 256-frequency solve): median 1695
+err/CRB over runs whose best model is in the truth basin (0):
+  drywall_front.t        mean|err| 8.65e-04  CRB 1.0e-05  err/CRB mean +nan std nan max|.| nan
+  drywall_front.eps_r    mean|err| 3.34e-01  CRB 3.2e-03  err/CRB mean +nan std nan max|.| nan
+  drywall_front.tan_d    mean|err| 1.27e-02  CRB 3.7e-04  err/CRB mean +nan std nan max|.| nan
+  insulation.t           mean|err| 4.46e-03  CRB 1.0e-04  err/CRB mean +nan std nan max|.| nan
+  insulation.eps_r       mean|err| 1.07e-01  CRB 2.3e-03  err/CRB mean +nan std nan max|.| nan
+  insulation.tan_d       mean|err| 3.51e-03  CRB 1.3e-04  err/CRB mean +nan std nan max|.| nan
+  drywall_back.t         mean|err| 8.24e-04  CRB 1.3e-05  err/CRB mean +nan std nan max|.| nan
+  standoff               mean|err| 1.47e-05  CRB 1.0e-06  err/CRB mean +nan std nan max|.| nan
+  tau[drywall_front]        mean|err| 1.91e-04  CRB 3.7e-06  err/CRB mean +nan std nan max|.| nan
+  tau[insulation   ]        mean|err| 1.75e-04  CRB 8.9e-06  err/CRB mean +nan std nan max|.| nan
+  tau[drywall_back ]        mean|err| 1.26e-04  CRB 1.3e-05  err/CRB mean +nan std nan max|.| nan
+plausible basins per run: [2, 4, 5, 4, 4, 6, 4, 5, 6, 5]

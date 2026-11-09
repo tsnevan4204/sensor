@@ -1,0 +1,4 @@
+/home/user/sensor/docs/src/oned/wall_inverse.py:957: RuntimeWarning: invalid value encountered in sqrt
+  std = np.sqrt(np.diag(cov))
+/home/user/sensor/docs/src/oned/wall_inverse.py:957: RuntimeWarning: invalid value encountered in sqrt
+  std = np.sqrt(np.diag(cov))
