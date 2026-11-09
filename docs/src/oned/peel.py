@@ -82,13 +82,19 @@ class Bands:
         return int(np.argmin([f[0] for f in self.fs]))
 
 
+def _cols(p):
+    p = np.asarray(p, float)
+    return [p[..., k, None] for k in range(p.shape[-1])]
+
+
 def _model_half(p, f, n_prev, water):
-    """Layer (er, td, t) over a half-space (erb, tdb): reflection at the layer's top face."""
+    """Layer (er, td, t) over a half-space (erb, tdb): reflection at the layer's top face.
+    p: (P,) or (B, P) -> (F,) or (B, F) (batched for the small Gauss-Newton fits)."""
     if water:
-        T, t, erb, tdb = p
+        T, t, erb, tdb = _cols(p)
         n = n_of(0, 0, f, True, T)
     else:
-        er, td, t, erb, tdb = p
+        er, td, t, erb, tdb = _cols(p)
         n = n_of(er, td, f)
     nb = n_of(erb, tdb, f)
     r = (n_prev - n) / (n_prev + n)
@@ -97,42 +103,69 @@ def _model_half(p, f, n_prev, water):
     return (r + rb * e) / (1 + r * rb * e)
 
 
-def _fit_step(B, n_prevs, starts, r_win, d_free=None, top=4):
+class _Sol:
+    def __init__(self, x, c):
+        self.x, self.cost = x, c / 2
+
+
+def _lsq(res_b, q0, lo, hi, max_nfev=60):
+    """scipy trust-region least squares (its path finds the right basin from rough starts more
+    often than plain LM: E041 check) with a BATCHED forward-difference Jacobian: res_b maps
+    (B, P) -> (B, M), so one Jacobian is one vectorised evaluation of P+1 parameter vectors."""
+    lo, hi = np.asarray(lo, float), np.asarray(hi, float)
+    q0 = np.clip(np.asarray(q0, float), lo + 1e-9 * (hi - lo), hi - 1e-9 * (hi - lo))
+
+    def fun(q):
+        return res_b(q[None])[0]
+
+    def jac(q):
+        h = 1e-7 * np.maximum(np.abs(q), 1e-3)
+        h = np.where(q + h > hi, -h, h)
+        R = res_b(np.vstack([q[None], q[None] + np.diag(h)]))
+        return ((R[1:] - R[0][None]) / h[:, None]).T
+    return least_squares(fun, q0, jac=jac, bounds=(lo, hi), method="trf", x_scale="jac", max_nfev=max_nfev)
+
+
+def _fit_step(B, n_prevs, starts, r_win, d_free=None, top=2):
     """Least squares of the gated half-space model; all starts are scored without optimisation and
     only the `top` best are optimised. Returns sorted (cost, p, water, d, ndof)."""
     ops = [_gate(f, r_win) for f in B.fs]
     out = []
 
-    def cost0(st):
-        water, p0, lo, hi = st
-        c = 0.0
-        for f, G, s, Op, npv in zip(B.fs, B.Gs, B.ss, ops, n_prevs):
-            M = _model_half(np.array(p0, float), f, npv, water)
+    def make_res(water):
+        def res(Q):                                   # Q: (B, P) -> (B, M)
+            Q = np.atleast_2d(Q)
             if d_free is not None:
-                M = M * np.exp(-2j * 2 * np.pi * f / C0 * d_free[0])
-            c += np.sum(np.abs(Op @ ((M - G) / s)) ** 2)
-        return c if np.isfinite(c) else np.inf
-    starts = sorted(starts, key=cost0)[:top]
-    for water, p0, lo, hi in starts:
-        def res(q):
-            if d_free is not None:
-                d, p = q[0], q[1:]
+                d, p = Q[:, :1], Q[:, 1:]
             else:
-                d, p = None, q
+                d, p = None, Q
             rs = []
             for f, G, s, Op, npv in zip(B.fs, B.Gs, B.ss, ops, n_prevs):
                 M = _model_half(p, f, npv, water)
                 if d is not None:
                     M = M * np.exp(-2j * 2 * np.pi * f / C0 * d)
-                rr = Op @ ((M - G) / s)
+                rr = ((M - G) / s) @ Op.T
                 rs += [rr.real, rr.imag]
-            return np.concatenate(rs)
+            return np.concatenate(rs, axis=1)
+        return res
+    scored = []
+    for water in (False, True):                       # score all starts of a kind in one batch
+        grp = [st for st in starts if st[0] == water]
+        if not grp:
+            continue
+        Q = np.array([([d_free[0]] if d_free is not None else []) + list(st[1]) for st in grp], float)
+        R = make_res(water)(Q)
+        cs = np.sum(R ** 2, axis=1)
+        scored += [(c if np.isfinite(c) else np.inf, st) for c, st in zip(cs, grp)]
+    starts = [st for _, st in sorted(scored, key=lambda t: t[0])[:top]]
+    for water, p0, lo, hi in starts:
+        res = make_res(water)
         q0 = np.array(([d_free[0]] if d_free is not None else []) + list(p0), float)
         ql = np.array(([d_free[1]] if d_free is not None else []) + list(lo), float)
         qh = np.array(([d_free[2]] if d_free is not None else []) + list(hi), float)
         q0 = np.clip(q0, ql + 1e-9, qh - 1e-9)
         try:
-            sol = least_squares(res, q0, bounds=(ql, qh), method="trf", x_scale="jac", max_nfev=60)
+            sol = _lsq(res, q0, ql, qh)
         except Exception:
             continue
         c = 2 * sol.cost
@@ -167,13 +200,11 @@ def _starts(B, n_prev_low, r_echo):
 
 
 def _model_block(p, f, n_prev):
-    """Two dielectric layers (er1, td1, t1, er2, td2, t2) over a half-space (erb, tdb)."""
-    er1, td1, t1, er2, td2, t2, erb, tdb = p
+    """Two dielectric layers (er1, td1, t1, er2, td2, t2) over a half-space (erb, tdb); batched."""
+    er1, td1, t1, er2, td2, t2, erb, tdb = _cols(p)
     n1, n2, nb = n_of(er1, td1, f), n_of(er2, td2, f), n_of(erb, tdb, f)
     k0 = 2 * np.pi * f / C0
     G = (n2 - nb) / (n2 + nb)
-    for (na, nbelow, t) in ((n1, n2, None),):
-        pass
     r2 = (n1 - n2) / (n1 + n2)
     e2 = np.exp(-2j * k0 * n2 * t2)
     G = (r2 + G * e2) / (1 + r2 * G * e2)
@@ -182,7 +213,7 @@ def _model_block(p, f, n_prev):
     return (r1 + G * e1) / (1 + r1 * G * e1)
 
 
-def _fit_block(B, n_prevs, echoes, d_free=None, top=4, keep=2):
+def _fit_block(B, n_prevs, echoes, d_free=None, top=2, keep=2):
     """Cascade: low band only (few phase cycles), then all bands from the best low-band blocks with
     +-2 high-band cycles on each thickness (GNSS-style wide-lane -> narrow-lane)."""
     lo = B.low()
@@ -209,7 +240,7 @@ def _fit_block1(B, n_prevs, echoes, d_free=None, top=4, keep=2, full=False, seed
     widest window whose best fit is consistent with noise, else the best per-dof fit."""
     best_ok, best_any = None, None
     echo_wins = {round(e + 0.012, 6) for e in echoes[:3]}
-    for win in sorted(set([0.03, 0.05, 0.08]) | echo_wins):
+    for win in sorted(echo_wins | ({0.03, 0.05} if len(echo_wins) < 2 else set())):
         ech = [e for e in echoes if e < win] or [win - 0.012]
         r = _fit_block_win(B, n_prevs, ech, win, d_free, top, keep, full, seeds)
         if not r:
@@ -240,34 +271,31 @@ def _fit_block_win(B, n_prevs, echoes, win, d_free=None, top=4, keep=2, full=Fal
                         continue
                     starts.append([e1, .02, tot * frac / np.sqrt(e1), e2, .02, tot * (1 - frac) / np.sqrt(e2), 2.8, .02])
 
-    def res_fn(q):
-        d, p = (q[0], q[1:]) if d_free is not None else (None, q)
+    def res_fn(Q):
+        Q = np.atleast_2d(Q)
+        d, p = (Q[:, :1], Q[:, 1:]) if d_free is not None else (None, Q)
         rs = []
         for f, G, s, Op, npv in zip(B.fs, B.Gs, B.ss, ops, n_prevs):
             M = _model_block(p, f, npv)
             if d is not None:
                 M = M * np.exp(-2j * 2 * np.pi * f / C0 * d)
-            rr = Op @ ((M - G) / s)
+            rr = ((M - G) / s) @ Op.T
             rs += [rr.real, rr.imag]
-        return np.concatenate(rs)
+        return np.concatenate(rs, axis=1)
     pre = lambda p0, dd=None: ([d_free[0] if dd is None else dd] if d_free is not None else []) + list(p0)
-    sc = []
     cand = [(p0, None) for p0 in starts] if seeds is None else seeds
-    for p0, dd in cand:
-        q0 = np.clip(pre(p0, dd), ([d_free[1]] if d_free is not None else []) + lo_b,
-                     ([d_free[2]] if d_free is not None else []) + hi_b)
-        v = res_fn(np.array(q0, float))
-        c = float(v @ v)
-        if np.isfinite(c):
-            sc.append((c, q0))
-    sc.sort(key=lambda t: t[0])
+    lo_q = np.array(([d_free[1]] if d_free is not None else []) + lo_b, float)
+    hi_q = np.array(([d_free[2]] if d_free is not None else []) + hi_b, float)
+    Q0 = np.clip(np.array([pre(p0, dd) for p0, dd in cand], float), lo_q, hi_q)
+    cs = np.sum(res_fn(Q0) ** 2, axis=1) if len(Q0) else np.array([])
+    sc = sorted([(c, q) for c, q in zip(cs, Q0) if np.isfinite(c)], key=lambda t: t[0])
     out = []
     ql = np.array(([d_free[1]] if d_free is not None else []) + lo_b, float)
     qh = np.array(([d_free[2]] if d_free is not None else []) + hi_b, float)
     for _, q0 in sc[:top]:
         q0 = np.clip(np.array(q0, float), ql + 1e-9, qh - 1e-9)
         try:
-            sol = least_squares(res_fn, q0, bounds=(ql, qh), method="trf", x_scale="jac", max_nfev=80)
+            sol = _lsq(res_fn, q0, ql, qh)
         except Exception:
             continue
         d = sol.x[0] if d_free is not None else None
@@ -299,8 +327,12 @@ def _fit_layer(B, n_prevs, sig_low, d_free=None, keep=2):
         if round(win, 6) in echo_wins and (best_any is None or cd < best_any[0]):
             best_any = (cd, res)
         if cd < 2.5:
-            best_ok = (cd, res)                # widest consistent window wins (no early stop: a
-                                               # short window is "consistent" because it sees little)
+            best_ok = (cd, res)                # widest consistent window wins
+            n_bad = 0
+        elif best_ok is not None:
+            n_bad = locals().get("n_bad", 0) + 1
+            if n_bad >= 2:                     # two wider windows inconsistent: deeper echoes are in
+                break
     if best_ok is None:                        # no single-layer window is consistent: thin neighbours
         blk = _fit_block(B, n_prevs, echoes, d_free, keep=keep)
         if blk and (best_any is None or blk[0][0] / blk[0][4] < best_any[0]):
