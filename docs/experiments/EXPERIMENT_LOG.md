@@ -398,3 +398,27 @@ Methods: the best two-band method (e019dual) and the best single-band method (e0
 - **(b)** Beam spreading changes the relative amplitude of later echoes by roughly r_front/r_back ≈ 0.7. Expect large εr biases.
 - **(c)** Plate error of 0.5 mm: the standoff estimate shifts by about 0.5 mm (≫ CRB of 1 µm), with other parameters nearly unaffected.
 - **(d)** At least one effect produces silent bias (χ²/n ≤ 1.2 with z > 3). These are the dangerous ones and set the priorities.
+
+## E020 — Reality-gap study  (2026-11-09)
+**Run note:** the first run (10 seeds, full 3-stage cascades) was stopped after 48 min with no output: flagged walls triggered the dense fallback on many runs. It was rerun with 8 seeds, 2-stage cascades (`e019dual_lite`, `e018b_lite`), incremental progress output, and one added effect (band phase-centre offset 0.3 mm). 1839 s.
+**Results:** full table in `docs/12_reality_gap.md` §E and `results/2026-11-09_E020_reality_gap/gap_study.txt`. Summary:
+- **Largest effect:** a finite antenna beam (z 30–90; εr bias 7–14%; flagged).
+- **Silent** in the single band: roughness (εr 5%), face paper (εr 21%), plate error (standoff only), drift (mild).
+- **Flagged** with two bands: causal dispersion, paper, air gap, band offset, antenna feedback.
+- **All effects together:** flagged 8/8 in both methods.
+
+**Hypotheses:**
+- (a) passed: dispersion flags the two-band fit, z 8–18; single band little affected.
+- (b) passed: beam bias is large.
+- (c) passed: plate error equals the standoff error exactly.
+- (d) passed: silent biases exist. They are mostly in the single band; two bands expose most model errors.
+
+**Conclusion:** before real data, the forward model needs:
+1. the antenna-beam angular-spectrum integral plus antenna functions;
+2. causal dispersion;
+3. thin facings and roughness;
+4. a per-band phase-centre treatment;
+5. a legal second band.
+
+All keep the exact 1D Hodge stars. Priority list in doc 12 §F.
+**Artifacts:** results/2026-11-09_E020_reality_gap/

@@ -1,0 +1,35 @@
+E020 reality gap: seeds [1, 2, 3, 4, 5, 6, 7, 8]; z = |err|/CRB (median over walls); 'silent bias' = chi2/n <= 1.2 and some z > 3
+
+=== two-band (e019dual, 2-stage cascade)
+effect                                    flag silentB   standoff.stand      drywall_f.t  drywall_f.eps_r      insulatio.t      drywall_b.t
+none (today's toy)                         0/8   0/8   0.000mm z  0.6   0.006mm z  0.7    0.093% z  0.7   0.097mm z  0.6   0.006mm z  0.5
+causal dispersion (constant-Q)             8/8   0/8   0.008mm z 10.8   0.131mm z 12.9    2.834% z 16.2   1.352mm z  7.7   0.206mm z 17.9
+ITU-style power-law loss                   0/8   4/8   0.001mm z  1.7   0.011mm z  1.1    0.192% z  1.3   0.364mm z  2.2   0.021mm z  2.0
+Gaussian beam w0 = 2 cm                    8/8   0/8   0.032mm z 44.3   0.771mm z 75.7   11.185% z 88.5   0.509mm z  3.0   0.805mm z 59.7
+Gaussian beam w0 = 1 cm                    8/8   0/8   0.046mm z 61.7   0.839mm z 76.4   12.461% z 93.6   6.403mm z 45.4   0.571mm z 51.7
+antenna feedback Hf = 0.1 (-20 dB)         8/8   0/8   0.001mm z  1.5   0.009mm z  0.9    0.111% z  0.7   0.166mm z  1.0   0.032mm z  2.7
+plate distance error +0.5 mm               0/8   8/8   0.500mm z796.0   0.007mm z  0.7    0.102% z  0.7   0.109mm z  0.6   0.007mm z  0.6
+surface roughness 0.1 mm rms               5/8   3/8   0.002mm z  2.3   0.182mm z 18.8    2.609% z 19.0   0.752mm z  4.6   0.183mm z 16.2
+drywall face paper 0.4 mm                  8/8   0/8   0.110mm z162.7   0.442mm z 41.7   10.203% z 76.6   3.482mm z 18.3   0.338mm z 30.5
+insulation air gap 5 mm                    7/8   1/8   0.001mm z  1.7   0.023mm z  2.3    0.432% z  2.7   1.229mm z  6.5   0.081mm z  7.9
+cal-to-scan drift 0.05 dB / 0.01 rad       0/8   1/8   0.000mm z  0.6   0.006mm z  0.6    0.080% z  0.6   0.205mm z  1.3   0.009mm z  0.7
+band phase-centre offset 0.3 mm            8/8   0/8   0.035mm z 61.2   0.631mm z 58.1    7.266% z 43.7   6.634mm z 35.2   0.502mm z 36.3
+ALL of the above (moderate)                8/8   0/8   0.423mm z560.7   1.120mm z106.8   18.130% z153.4   1.926mm z  9.6   1.415mm z 97.7
+
+=== one-band + priors (e018b, 2-stage cascade)
+effect                                    flag silentB   standoff.stand      drywall_f.t  drywall_f.eps_r      insulatio.t      drywall_b.t
+none (today's toy)                         0/8   0/8   0.001mm z  0.6   0.013mm z  0.8    0.213% z  0.9   0.633mm z  0.3   0.012mm z  0.6
+causal dispersion (constant-Q)             0/8   1/8   0.001mm z  0.6   0.027mm z  1.8    0.433% z  1.7   1.459mm z  0.5   0.019mm z  0.8
+ITU-style power-law loss                   0/8   0/8   0.001mm z  0.6   0.012mm z  0.8    0.196% z  0.8   0.640mm z  0.3   0.012mm z  0.5
+Gaussian beam w0 = 2 cm                    8/8   0/8   0.028mm z 29.4   0.488mm z 32.0    7.194% z 33.2   1.536mm z  0.7   0.592mm z 19.4
+Gaussian beam w0 = 1 cm                    8/8   0/8   0.016mm z 14.9   1.030mm z 63.3   13.885% z 70.6   1.841mm z  0.8   0.249mm z  8.3
+antenna feedback Hf = 0.1 (-20 dB)         8/8   0/8   0.005mm z  5.1   0.610mm z 39.9    0.780% z  3.5   3.059mm z  3.3   0.390mm z 13.5
+plate distance error +0.5 mm               0/8   8/8   0.500mm z578.4   0.008mm z  0.6    0.153% z  0.7   0.797mm z  0.5   0.005mm z  0.2
+surface roughness 0.1 mm rms               0/8   8/8   0.001mm z  0.8   0.355mm z 22.7    5.208% z 23.8   1.567mm z  0.8   0.602mm z 20.6
+drywall face paper 0.4 mm                  0/8   8/8   0.117mm z 84.6   0.377mm z 23.6   20.773% z104.7   1.521mm z  0.9   0.213mm z  7.7
+insulation air gap 5 mm                    0/8   1/8   0.001mm z  0.8   0.009mm z  0.6    0.158% z  0.7   1.735mm z  1.1   0.029mm z  1.5
+cal-to-scan drift 0.05 dB / 0.01 rad       0/8   3/8   0.000mm z  0.4   0.021mm z  1.4    0.347% z  1.6   1.122mm z  0.7   0.023mm z  1.0
+band phase-centre offset 0.3 mm            0/8   0/8   0.001mm z  0.6   0.013mm z  0.8    0.213% z  0.9   0.633mm z  0.3   0.012mm z  0.6
+ALL of the above (moderate)                8/8   0/8   0.423mm z306.6   0.375mm z 22.9   27.397% z151.4   0.837mm z  0.6   0.232mm z  5.4
+
+time 1839s

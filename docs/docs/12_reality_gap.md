@@ -192,9 +192,76 @@ Notation: the radar is at z = 0, normal incidence, time dependence e^{+jωt}. "B
 
 ## E. Measured effect on the current algorithm (E020)
 
-*(filled in from `results/2026-11-09_E020_reality_gap/`)*
+Seeds 1–8, each effect alone at a moderate, real-world magnitude, then all together. Cells show the median |error| and the median z = |error|/CRB. **flag** = χ²/n > 1.2 (the algorithm notices). **silentB** = not flagged but some z > 3 (the algorithm is wrong and does not know it).
 
----
+```
+E020 reality gap: seeds [1, 2, 3, 4, 5, 6, 7, 8]; z = |err|/CRB (median over walls); 'silent bias' = chi2/n <= 1.2 and some z > 3
+
+=== two-band (e019dual, 2-stage cascade)
+effect                                    flag silentB   standoff.stand      drywall_f.t  drywall_f.eps_r      insulatio.t      drywall_b.t
+none (today's toy)                         0/8   0/8   0.000mm z  0.6   0.006mm z  0.7    0.093% z  0.7   0.097mm z  0.6   0.006mm z  0.5
+causal dispersion (constant-Q)             8/8   0/8   0.008mm z 10.8   0.131mm z 12.9    2.834% z 16.2   1.352mm z  7.7   0.206mm z 17.9
+ITU-style power-law loss                   0/8   4/8   0.001mm z  1.7   0.011mm z  1.1    0.192% z  1.3   0.364mm z  2.2   0.021mm z  2.0
+Gaussian beam w0 = 2 cm                    8/8   0/8   0.032mm z 44.3   0.771mm z 75.7   11.185% z 88.5   0.509mm z  3.0   0.805mm z 59.7
+Gaussian beam w0 = 1 cm                    8/8   0/8   0.046mm z 61.7   0.839mm z 76.4   12.461% z 93.6   6.403mm z 45.4   0.571mm z 51.7
+antenna feedback Hf = 0.1 (-20 dB)         8/8   0/8   0.001mm z  1.5   0.009mm z  0.9    0.111% z  0.7   0.166mm z  1.0   0.032mm z  2.7
+plate distance error +0.5 mm               0/8   8/8   0.500mm z796.0   0.007mm z  0.7    0.102% z  0.7   0.109mm z  0.6   0.007mm z  0.6
+surface roughness 0.1 mm rms               5/8   3/8   0.002mm z  2.3   0.182mm z 18.8    2.609% z 19.0   0.752mm z  4.6   0.183mm z 16.2
+drywall face paper 0.4 mm                  8/8   0/8   0.110mm z162.7   0.442mm z 41.7   10.203% z 76.6   3.482mm z 18.3   0.338mm z 30.5
+insulation air gap 5 mm                    7/8   1/8   0.001mm z  1.7   0.023mm z  2.3    0.432% z  2.7   1.229mm z  6.5   0.081mm z  7.9
+cal-to-scan drift 0.05 dB / 0.01 rad       0/8   1/8   0.000mm z  0.6   0.006mm z  0.6    0.080% z  0.6   0.205mm z  1.3   0.009mm z  0.7
+band phase-centre offset 0.3 mm            8/8   0/8   0.035mm z 61.2   0.631mm z 58.1    7.266% z 43.7   6.634mm z 35.2   0.502mm z 36.3
+ALL of the above (moderate)                8/8   0/8   0.423mm z560.7   1.120mm z106.8   18.130% z153.4   1.926mm z  9.6   1.415mm z 97.7
+
+=== one-band + priors (e018b, 2-stage cascade)
+effect                                    flag silentB   standoff.stand      drywall_f.t  drywall_f.eps_r      insulatio.t      drywall_b.t
+none (today's toy)                         0/8   0/8   0.001mm z  0.6   0.013mm z  0.8    0.213% z  0.9   0.633mm z  0.3   0.012mm z  0.6
+causal dispersion (constant-Q)             0/8   1/8   0.001mm z  0.6   0.027mm z  1.8    0.433% z  1.7   1.459mm z  0.5   0.019mm z  0.8
+ITU-style power-law loss                   0/8   0/8   0.001mm z  0.6   0.012mm z  0.8    0.196% z  0.8   0.640mm z  0.3   0.012mm z  0.5
+Gaussian beam w0 = 2 cm                    8/8   0/8   0.028mm z 29.4   0.488mm z 32.0    7.194% z 33.2   1.536mm z  0.7   0.592mm z 19.4
+Gaussian beam w0 = 1 cm                    8/8   0/8   0.016mm z 14.9   1.030mm z 63.3   13.885% z 70.6   1.841mm z  0.8   0.249mm z  8.3
+antenna feedback Hf = 0.1 (-20 dB)         8/8   0/8   0.005mm z  5.1   0.610mm z 39.9    0.780% z  3.5   3.059mm z  3.3   0.390mm z 13.5
+plate distance error +0.5 mm               0/8   8/8   0.500mm z578.4   0.008mm z  0.6    0.153% z  0.7   0.797mm z  0.5   0.005mm z  0.2
+surface roughness 0.1 mm rms               0/8   8/8   0.001mm z  0.8   0.355mm z 22.7    5.208% z 23.8   1.567mm z  0.8   0.602mm z 20.6
+drywall face paper 0.4 mm                  0/8   8/8   0.117mm z 84.6   0.377mm z 23.6   20.773% z104.7   1.521mm z  0.9   0.213mm z  7.7
+insulation air gap 5 mm                    0/8   1/8   0.001mm z  0.8   0.009mm z  0.6    0.158% z  0.7   1.735mm z  1.1   0.029mm z  1.5
+cal-to-scan drift 0.05 dB / 0.01 rad       0/8   3/8   0.000mm z  0.4   0.021mm z  1.4    0.347% z  1.6   1.122mm z  0.7   0.023mm z  1.0
+band phase-centre offset 0.3 mm            0/8   0/8   0.001mm z  0.6   0.013mm z  0.8    0.213% z  0.9   0.633mm z  0.3   0.012mm z  0.6
+ALL of the above (moderate)                8/8   0/8   0.423mm z306.6   0.375mm z 22.9   27.397% z151.4   0.837mm z  0.6   0.232mm z  5.4
+
+time 1839s
+```
+
+**Reading the table.**
+
+1. **The antenna beam is the largest single effect.**
+   - Gaussian beam (w₀ = 1–2 cm): drywall εr is biased by 7–14% and thicknesses by 0.5–1 mm (z = 30–90) in both methods.
+   - It is always flagged, so χ² sees it.
+   - Cause: a plane-wave model cannot represent the faster decay of deeper echoes in a spreading beam, nor the different spreading of the plate scan. Amplitudes carry the εr information, so εr absorbs the error.
+2. **Two bands are more sensitive to model error, but also more self-aware.**
+   - Causal dispersion, face paper, an air gap, the band phase-centre offset and antenna feedback are all **flagged** with two bands. With one band they are absorbed into biased parameters.
+   - Single band: roughness, face paper and plate error are **8/8 silent**; drift 3/8.
+   - Richer data exposes model error instead of hiding it. That is a strong argument for two bands even beyond the cycle ambiguity.
+3. **Silent biases (the dangerous ones):**
+   - **Plate distance error:** silent in both methods, but it moves only the standoff, by exactly the plate error. Layer properties are unaffected (z < 1). The standoff should be reported as relative to the calibration plane; it is then harmless.
+   - **Surface roughness 0.1 mm rms:** single band silently biases drywall εr by 5% and the front thickness by 0.36 mm (z ≈ 23). Two bands flag 5/8, with 3 silent.
+   - **Drywall face paper 0.4 mm:** single band silently biases εr by **21%** (it fits an effective sheet). Two bands flag it.
+   - ITU-type loss law (two bands, z ≈ 2), drift (one band, z ≈ 1.5) and the air gap (one band) are small.
+4. **Prediction (a) confirmed:** causal dispersion breaks the two-band fit (8/8 flagged, z 8–18) and barely touches the single band.
+5. **Prediction (c) confirmed:** a 0.5 mm plate error is exactly a 0.5 mm standoff error.
+6. **All effects together:** both methods are flagged on every wall. Run on real data today, the algorithm would refuse to give an answer (good: not silent) but would be useless. The fixes below are needed before real data.
 
 ## F. Priority list
-*(after E020)*
+
+| priority | gap | evidence | fix (keeps exactness) | cost |
+|---|---|---|---|---|
+| 1 | antenna beam / near field (A1) + antenna functions (C3) | z 30–90 both methods; Hf flags | forward model = angular-spectrum integral of exact 1D stars over k_ρ (TE/TM), antenna parameters (beam waist or H_i, H_t, H_f per band) calibrated from plate scans at several distances | ~30–60 k_ρ solves per frequency: needs speed work |
+| 2 | causal material dispersion (B1) | two-band 8/8 flagged, z 8–18 | constant-Q (Kjartansson) law in the model: same 2 parameters; optional Jonscher exponent | free |
+| 3 | thin facings (paper, paint) + roughness (A4, A7) | single-band **silent** 21% / 5% εr bias | two bands (flags them) + thin-sheet model (impedance sheet, 1–2 params) or a facing layer chosen by model selection; roughness parameter on the front face | small |
+| 4 | band phase-centre offset (C6) | two-band 8/8 flagged, z 35–60 | common phase centre by design, plate calibration in both bands, or a fitted per-band offset | small |
+| 5 | legal second band (C7) | 22–26 GHz unlikely legal | redo E017/E019 with 57–64 GHz or 3.1–10.6 GHz | small |
+| 6 | material ranges (B2) | drywall εr 3.5 measured vs 2.4–2.8 benchmark | widen benchmark ranges; ITU material classes | free |
+| 7 | calibration plane (C1) | standoff silently = plate error | report the standoff relative to the calibration plane; multi-distance plate | free |
+| 8 | FMCW chip effects (C4), noise σ (C5) | not quantified | model the chosen radar's IF signal; estimate σ | needs hardware choice |
+| 9 | lateral structure (A2), back termination (A6), layer count (D2) | — | multi-position scans with χ² outlier rejection; model selection over a layer library incl. metal | generalization work |
+| 10 | independent validation (D4) | — | full-wave 3D (openEMS/FDTD) with a real antenna, then lab coupons | outside 1D |
