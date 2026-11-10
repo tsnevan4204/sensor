@@ -882,8 +882,13 @@ def residuals(model, f, y, sigma, regs=(), gate=None):
         r = np.concatenate([d.real, d.imag]) / noise
         J = np.vstack([Jc.real, Jc.imag]) / noise
     else:
-        r = np.concatenate([(G - y).real, (G - y).imag]) / sigma
-        J = np.vstack([Jc.real, Jc.imag]) / sigma
+        if np.ndim(sigma):                       # E046: per-frequency noise (bands with different SNR)
+            s2 = np.concatenate([sigma, sigma])
+            r = np.concatenate([(G - y).real, (G - y).imag]) / s2
+            J = np.vstack([Jc.real, Jc.imag]) / s2[:, None]
+        else:
+            r = np.concatenate([(G - y).real, (G - y).imag]) / sigma
+            J = np.vstack([Jc.real, Jc.imag]) / sigma
     for R in regs:
         rr, jj = R.rows(model)
         r = np.concatenate([r, rr])
