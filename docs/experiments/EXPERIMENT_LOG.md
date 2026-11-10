@@ -1042,3 +1042,12 @@ On the 46 seeds common to all runs, OK counts: 0° 38, 3 angles 40, +20 dB 36.
   - 420 has its geometry within 0.3 mm but χ²/n 2.98: the LS polish was not converged at high SNR.
     → E061e: 400-iteration final polish of the winning answer.
 - **E060 held-out**, seeds 600–649, 0°, +20 dB, σ-floor + long polish: started.
+- **E055 test B** (PT at a reduced budget: 1500 steps, 1 restart per backing; 50 dev walls): NN-seeded 33/50, unseeded 34/50, both at ~70 s.
+  NN-only wins: 405, 437, 440, 443, 449. Unseeded-only wins: 403, 413, 429, 430, 436, 444. No net benefit.
+  → E055 concluded: the tiny NN initialiser is dropped; the solver stays fully first-principles.
+- **E060 held-out, partial (26 walls):** 23 OK, 1 flagged, 2 silent.
+  - 618: geometry exact, plasterboard labelled chipboard (p = 0.96). Overlapping classes; label calibration still open.
+  - 624: wood|concrete|6 mm gap|foam on metal; the gap was merged into the foam (foam ≈ air).
+    → E060b: explicit low-contrast structural alternatives (merge an adjacent gap into the layer / split the layer
+    into layer + gap at 25/50/75 %), polished; a better one replaces the best.
+    624 rerun: exact (errors ≤ 0.15 mm, χ²/n 0.999 vs 1.059).

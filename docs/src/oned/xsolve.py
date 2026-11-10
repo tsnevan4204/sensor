@@ -340,6 +340,29 @@ def cycle_scan(pol, x, ks=(-3, -2, -1, 1, 2, 3), max_nfev=40):
     return best_x, best_c
 
 
+def low_contrast_variants(x, N, pol, er_max=1.3):
+    out = []
+    for i in range(N):
+        er = 1 + np.exp(x[2 + 5 * i])
+        if er > er_max:
+            continue
+        t = np.exp(x[1 + 5 * i]) / np.sqrt(er)
+        for gi in (i - 1, i):                      # gap in front of / behind layer i
+            if gi < 0 or gi >= pol.NG:
+                continue
+            j = 1 + 5 * N + gi
+            g = x[j]
+            if g > 0:                              # merge the gap into the layer
+                y = x.copy(); y[j] = -5e-3; y[1 + 5 * i] = np.log((t + g) * np.sqrt(er)); out.append(y)
+            else:                                  # split: part of the layer becomes a gap
+                for fr in (0.25, 0.5, 0.75):
+                    gn = fr * t
+                    if gn < 5e-3:
+                        continue
+                    y = x.copy(); y[j] = gn; y[1 + 5 * i] = np.log((t - gn) * np.sqrt(er)); out.append(y)
+    return [np.clip(y, pol.lo, pol.hi) for y in out]
+
+
 def signature(x, N, back):
     lay, slots = PT.x_to_lay(x, N, back)
     sol = tuple(round(L["t"] * 1e3) for (k, _), L in zip(slots, lay) if k == "solid")
@@ -384,6 +407,13 @@ def _finish(cands, views, N, d_guess, n_polish, t0):
     if cl < chi:
         x, chi = xl, cl
     n_all = sum(2 * v[0].size for v in views)
+    # E060b: explicit structural alternatives for low-contrast layers (foam/batt ~ air): merge an
+    # adjacent open gap into the layer, or split the layer into layer + gap; a better one replaces the best
+    for xa in low_contrast_variants(x, N, pol[back]):
+        xp, c, _ = pol[back].polish(xa, max_nfev=120)
+        done.append((c, xp, back))
+        if c < chi:
+            x, chi = xp, c
     alts, seen = [], {signature(x, N, back)}
     for c, xx, bk in done[1:]:
         sg = signature(xx, N, bk)
