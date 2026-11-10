@@ -1,0 +1,12 @@
+seed 2 flag 143s chi2/n 1.86 route echo (split worse) alt_dchi2 [3906.9]
+   truth [('batt', 58.0), ('wood', 23.3), ('brick', 88.1)] gaps [9.4 0. ] air
+   fit   [('batt', 56.5), ('wood', 22.4), ('brick', 85.9)] gaps [11.4  0. ] air
+seed 1 flag 170s chi2/n 17.98 route echo+split alt_dchi2 [849871.8]
+   truth [('chipbo', 11.4), ('plywoo', 6.2), ('foam', 16.3)] gaps [0. 0. 0.] metal
+   fit   [('chipbo', 15.0), ('plywoo', 2.6), ('marble', 7.7)] gaps [ 0.  16.7] air
+seed 3 OK 40s chi2/n 0.97 route echo alt_dchi2 [2747.6]
+   truth [('batt', 33.3), ('brick', 64.3), ('wood', 30.3)] gaps [0. 0.] air
+   fit   [('batt', 33.2), ('brick', 64.2), ('wood', 30.3)] gaps [0. 0.] air
+seed 4 UNOBS 113s chi2/n 1.01 route echo alt_dchi2 [1485.1, 70780.9, 19.7]
+   truth [('foam', 26.6), ('water', 4.4), ('batt', 50.7)] gaps [19.4  0. ] air
+   fit   [('foam', 26.5), ('water', 4.4), ('air', 236.1)] gaps [ 19.4 152.1] air

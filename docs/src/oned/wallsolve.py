@@ -518,6 +518,10 @@ def _x_to_layers(x, slots_meta, N):
     return out
 
 
+SWEEPS = False          # E049h-j material sweeps: off (each tweak traded one dev wall for another)
+ALT_BASINS = False      # E049i explicit alternative-basin refits: off (refits unreliable, see log)
+
+
 def _screen_batch(cands, f, y, sigma, N, chunk=2000, top_geo=400):
     """Score every candidate (both backings) with ONE exact batched forward per chunk."""
     out = []
@@ -532,6 +536,9 @@ def _screen_batch(cands, f, y, sigma, N, chunk=2000, top_geo=400):
             G = gamma_batch(X, f, N, back)
             c = np.sum(np.abs((G - y[None, :]) / sigma[None, :]) ** 2, axis=1)
             out += [(float(ci), *meta[a + j], back, X[j]) for j, ci in enumerate(c)]
+    if not SWEEPS:
+        out.sort(key=lambda t: t[0])
+        return [t[:5] for t in out]
     # E049h: geometry is judged after material sweeps; sweep the best `top_geo` geometries per backing
     final = []
     for back in ("air", "metal"):
@@ -585,7 +592,7 @@ def solve_echo(f, y, sigma, N, d_guess, n_refine=8, verbose=False, n_split=None)
         # E049c: two-stage screening - a short exact fit of the top 40 before ranking (raw starting
         # values rank the true structure poorly when a low-contrast gap or layer is present)
         short = []
-        for c0, d, lay, slots, back in scored[:80]:
+        for c0, d, lay, slots, back in scored[:40]:
             ST.SBOX = (d - 0.004, d + 0.004)
             mod = ST.build(lay, d, back=back, water_T=20.0)
             ST.SBOX = None
@@ -644,7 +651,7 @@ def solve_echo(f, y, sigma, N, d_guess, n_refine=8, verbose=False, n_split=None)
     SR._PRIORS = (pri,)
     alt_tested = []                                   # dchi2 of every explicit alternative basin
     try:
-        lay0 = ST.describe(mod)
+        lay0 = ST.describe(mod) if ALT_BASINS else []
         for j, ((kind, i), L) in enumerate(zip(slots, lay0)):
             trials = []
             if kind == "gap" and j > 0 and slots[j - 1][0] == "solid":
