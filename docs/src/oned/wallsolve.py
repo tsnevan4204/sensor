@@ -452,7 +452,22 @@ def solve_echo(f, y, sigma, N, d_guess, n_refine=8, verbose=False):
     SR._PRIORS = (pri,)
     best = None
     try:
-        for c0, d, lay, slots, back in scored[:n_refine]:
+        # E049c: two-stage screening - a short exact fit of the top 40 before ranking (raw starting
+        # values rank the true structure poorly when a low-contrast gap or layer is present)
+        short = []
+        for c0, d, lay, slots, back in scored[:40]:
+            ST.SBOX = (d - 0.004, d + 0.004)
+            mod = ST.build(lay, d, back=back, water_T=20.0)
+            ST.SBOX = None
+            for (kind, _), L in zip(slots, mod.layers):
+                if kind == "gap":
+                    L.eps_r.free = L.tan_d.free = False
+                    L.eps_r.value, L.tan_d.value = 1.0, 0.0
+            ST.set_dispersion_free(mod, True)
+            mod, c = ST._fit(mod, f, y, sigma, atol=1e-2, max_iter=15)
+            short.append((c, d, lay, slots, back))
+        short.sort(key=lambda t: t[0])
+        for c0, d, lay, slots, back in short[:n_refine]:
             ST.SBOX = (d - 0.004, d + 0.004)
             mod = ST.build(lay, d, back=back, water_T=20.0)
             ST.SBOX = None
@@ -475,6 +490,16 @@ def solve_echo(f, y, sigma, N, d_guess, n_refine=8, verbose=False):
     G, _ = I.forward(mod, f, jacobian=False)
     chi = float(np.sum(np.abs((G - y) / sigma) ** 2))
     n_all = 2 * f.size
+    # E049c: per-layer thickness error bars (CRB); a layer whose error bar exceeds 20 % of its
+    # thickness is reported as poorly constrained (e.g. a weak layer behind strongly absorbing water)
+    crb = {}
+    try:
+        F = I.fisher(mod, f, sigma)
+        crb = dict(zip(F["names"], F["crb_std"]))
+    except Exception:
+        pass
+    t_err = [crb.get(f"{L.name}.t", np.nan) for L in mod.layers]
+    weak = [bool(np.isfinite(e) and e > 0.2 * L.t.value) for e, L in zip(t_err, mod.layers)]
     return dict(model=mod, slots=slots, back=back, chi2=chi, chi2n=chi / n_all,
                 alarm=bool(chi > ST.chi2_alarm(n_all)), wall_s=time.time() - t0, labels=pri.labels(mod),
-                n_echoes=len(taus), n_cands=len(cands))
+                n_echoes=len(taus), n_cands=len(cands), t_err=t_err, weak=weak)
