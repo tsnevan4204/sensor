@@ -933,3 +933,13 @@ Failure pattern: water layers (2–7 mm) in 5 of 7 held-out failures, thin high-
 **Echo-based solver (E049, `echoes.py`, `wallsolve.solve_echo`):** multiband sparse deconvolution with shared delays (UWB + 60 GHz) → candidate interface subsets with the front pinned to the known standoff, every gap pattern → vectorised exact screening (11k candidates in 5 s) → short exact fits of the best 40 → full exact fits with cycle hops; unobserved-layer check (a solid layer fitting as air or at the thickness limit); thin-layer split retry only when the χ² alarm fires.
 **Stage diagnostics (`diagnose.py`)** located each failure: wall 4 = identifiability (low-density batt behind 4.4 mm water fits as air), wall 1 = merged echoes of a 6 mm plywood layer + poor amplitude-based starting materials for lossy/dispersive plywood.
 **Dev walls (seeds 1–4), best configuration E049g:** 2 exact (33–38 s), 1 honestly reported unobservable, 1 flagged, **0 silent**. Later variants (material sweeps, interleaving, explicit alternative-basin refits, E049h–j) each traded one dev wall for another; switched off. Next: a held-out benchmark (20 fresh 3-layer walls) with E049g to measure, instead of tuning on four walls.
+
+### E049 held-out benchmark (E049g configuration, 20 fresh 3-layer walls, seeds 201–220, 3 bands, N given)
+**3 exact, 15 flagged, 1 unobservable (honest), 1 weak (honest), 0 silent; median 91 s per wall.**
+Failure classes from the 15 flagged walls:
+1. Layers behind strong absorbers/reflectors (water ≥ 2 mm, thick concrete): the backing and the layers behind are effectively invisible (e.g. foam/tile/water exact but backing air→"metal behind 58 mm gap"); should be reported as unobservable, not fitted.
+2. Low-contrast materials (foam, batt, ceiling board εr 1.05–1.5) confused with air gaps.
+3. Small gaps (1–7 mm) missed or misplaced, neighbouring thicknesses off by 1–3 mm.
+4. Lossy/dispersive layers (plywood, tile) with poor starting materials.
+Often the front 1–2 layers are exact and the error starts at the first strong absorber or low-contrast layer.
+**Conclusion:** the echo pipeline is a good fast initialiser for the front of the wall but is not a reliable solver for the stated problem; the target accuracy is not reached.
