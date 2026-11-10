@@ -425,7 +425,7 @@ def _candidates(taus, amps, N, front):
 
 
 SPLIT = 5e-3            # optional extra interfaces around the strongest echoes (thin layers)
-N_SPLIT = 3             # only the N_SPLIT strongest echoes behind the front are split
+N_SPLIT = 0             # thin-layer splits OFF: they crowded the true candidate out (E049e regression)
 AMBIG_DCHI2 = 10.0      # structurally different answers within this data-chi2 of the best are reported
 
 
@@ -441,8 +441,8 @@ def _cand_to_x(d, lay, slots, N, back):
             if L["water"]:
                 x[1 + 5 * si: 6 + 5 * si] = [np.log(L["t"] * 8.6), 0.0, np.log(1e-3), 0.0, 6.0]
             else:
-                er = max(L["er"], 1.0001)
-                x[1 + 5 * si: 6 + 5 * si] = [np.log(L["t"] * np.sqrt(er)), np.log(er - 1), np.log(max(L["td"], 1e-4)), 0.0, -6.0]
+                er = float(np.clip(L["er"], 1.0001, 11.9))          # same cap as stack._layer
+                x[1 + 5 * si: 6 + 5 * si] = [np.log(L["t"] * np.sqrt(er)), np.log(er - 1), np.log(float(np.clip(L["td"], 1e-4, 0.49))), 0.0, -6.0]
             si += 1
         else:
             gi = si - 1
@@ -501,7 +501,7 @@ def solve_echo(f, y, sigma, N, d_guess, n_refine=8, verbose=False):
         # E049c: two-stage screening - a short exact fit of the top 40 before ranking (raw starting
         # values rank the true structure poorly when a low-contrast gap or layer is present)
         short = []
-        for c0, d, lay, slots, back in scored[:40]:
+        for c0, d, lay, slots, back in scored[:80]:
             ST.SBOX = (d - 0.004, d + 0.004)
             mod = ST.build(lay, d, back=back, water_T=20.0)
             ST.SBOX = None
@@ -524,7 +524,8 @@ def solve_echo(f, y, sigma, N, d_guess, n_refine=8, verbose=False):
                     L.eps_r.value, L.tan_d.value = 1.0, 0.0
             ST.set_dispersion_free(mod, True)
             mod, c = ST._fit(mod, f, y, sigma)
-            mod, c = SR.cycle_hop(mod, f, y, sigma, SR.Opts(search_step=1, search_atol=0.0))
+            if len(refined) < 2:                          # cycle hops only for the 2 best finalists
+                mod, c = SR.cycle_hop(mod, f, y, sigma, SR.Opts(search_step=1, search_atol=0.0))
             for L in mod.layers:                          # release the dispersion shape
                 if L.theta.value < 0.5 and L.eps_r.free:
                     L.pinf.value, L.pinf.free = max(L.pinf.value, 0.02), True
