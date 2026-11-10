@@ -154,17 +154,44 @@ def _subset(f, y, s, per_band=48, fmax=None):
     return f[idx], y[idx], s[idx]
 
 
-def global_search(f, y, s, N, back, d_guess, d_tol=0.01, seed=0, maxiter=1500, popsize=15):
+class _Envelope:
+    """E046b: envelope (|range profile|) misfit per band. Echo envelopes move smoothly with
+    thickness, so the global search sees no cycle skipping (seismic envelope inversion: Bozdag et
+    al. 2011; Wu, Luo & Wu 2014). Range window: 3 cm before the front guess to 1 m behind it;
+    noise level of the envelope from the data's far-range bins."""
+    def __init__(self, f, y, s, d_guess, pad=4):
+        self.segs, self.w, self.sel, self.Pd, self.sn = [], [], [], [], []
+        for a, b in I.band_segments(f):
+            F = b - a
+            w = np.hanning(F)
+            n = pad * F
+            r = np.arange(n) * C0 / (2 * (f[a + 1] - f[a]) * n)
+            sel = (r > d_guess - 0.03) & (r < d_guess + 1.0)
+            P = np.abs(np.fft.ifft(y[a:b] * w, n))
+            far = (r > d_guess + 1.5) & (r < r.max() - 0.5)
+            sn = np.std(P[far]) if np.any(far) else np.median(s[a:b]) * np.sqrt(np.sum(w ** 2)) / F
+            self.segs.append((a, b)); self.w.append(w); self.sel.append((n, sel)); self.Pd.append(P[sel])
+            self.sn.append(max(sn, 1e-12))
+
+    def misfit(self, G):
+        out = np.zeros(G.shape[0])
+        for (a, b), w, (n, sel), Pd, sn in zip(self.segs, self.w, self.sel, self.Pd, self.sn):
+            Pm = np.abs(np.fft.ifft(G[:, a:b] * w[None, :], n, axis=1))[:, sel]
+            out += np.sum((Pm - Pd[None, :]) ** 2, axis=1) / sn ** 2
+        return out
+
+
+def global_search(f, y, s, N, back, d_guess, d_tol=0.01, seed=0, maxiter=600, popsize=15):
     lo, hi, NG = layout(N, back)
     lo[0], hi[0] = d_guess - d_tol, d_guess + d_tol
     lib_arr = _lib_arrays()
 
+    env = _Envelope(f, y, s, d_guess)
+
     def obj(Xt):                                     # scipy vectorised: Xt (D, S)
         X = Xt.T
         G = gamma_batch(X, f, N, back)
-        r = (G - y[None, :]) / s[None, :]
-        chi = np.sum(r.real ** 2 + r.imag ** 2, axis=1)
-        out = chi + _prior_batch(X, N, lib_arr)
+        out = env.misfit(G) + _prior_batch(X, N, lib_arr)
         return np.where(np.isfinite(out), out, 1e30)
     res = differential_evolution(obj, list(zip(lo, hi)), vectorized=True, updating="deferred",
                                  maxiter=maxiter, popsize=popsize, tol=1e-8, seed=seed,
@@ -198,7 +225,7 @@ def _to_stack(x, N, back):
 
 def solve(f, y, sigma, N, d_guess, d_tol=0.01, seed=0, verbose=False):
     t0 = time.time()
-    fs, ys, ss = _subset(f, y, sigma, per_band=64, fmax=20e9)   # global search on the smooth (low) bands only
+    fs, ys, ss = f, y, sigma                       # envelope misfit is smooth on every band: use all data
     cands = []
     for back in ("air", "metal"):
         x, val = global_search(fs, ys, ss, N, back, d_guess, d_tol, seed=seed)
