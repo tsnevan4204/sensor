@@ -169,3 +169,107 @@ def reduce_to(model, cost, N, f, y, sigma):
         model = ST.rebuild(model, layers=lay[:i] + [a, dict(a)] + lay[i + 1:])
         model, cost = ST._fit(model, f, y, sigma)
     return model, cost
+
+
+# ============================================================================ E045: material-class search
+WATER_N = 8.5        # |n| of liquid water across the UWB band (thickness conversion only)
+
+
+def _class_options(p, lib, k=3):
+    """Top-k library classes for one profile segment, plus water when the segment looks wet or very
+    high-permittivity. Each option: (name, layer dict) with the optical thickness preserved."""
+    x = np.array([np.log(max(p["er"], 1.0001)), np.log10(max(p["td"], 1e-6))])
+    scores = []
+    for nm, (mu, C) in lib.items():
+        d = x - mu
+        scores.append((float(d @ np.linalg.solve(C, d)), nm, mu))
+    scores.sort(key=lambda t: t[0])
+    tau = np.sqrt(max(p["er"], 1.0)) * p["t"]                 # optical thickness of the segment
+    out = []
+    for _, nm, mu in scores[:k]:
+        er, td = float(np.exp(mu[0])), float(10 ** mu[1])
+        out.append((nm, dict(t=max(tau / np.sqrt(er), 5e-4), er=er, td=min(td, 0.49), water=False)))
+    if p["th"] > 0.3 or p["er"] > 8.0:
+        out.append(("water", dict(t=max(tau / WATER_N, 5e-4), er=1.0, td=0.0, water=True)))
+    if p["er"] < 1.3:
+        out.append(("air", dict(t=max(tau, 5e-4), er=1.0001, td=1e-4, water=False)))
+    return out
+
+
+def invert_cls(f, y, sigma, N, k=3, beam=6, n_full=3, verbose=False):
+    """E045: known N; search over library material sequences (exhaustive for k^N <= 300, else beam
+    left to right), short exact fit per sequence, full exact fit + cycle hops for the best n_full."""
+    import itertools
+    t0 = time.time()
+    m, z0, dz, info = PF.invert_profile(f, y, sigma)
+    K = m.shape[1]
+    cuts = segment_n(m, min(N + 2, K))
+    pieces = layers_from_cuts(m, z0, dz, cuts)
+    front, mids = pieces[0], pieces[1:-1][:N]
+    while len(mids) < N:
+        i = int(np.argmax([q["t"] for q in mids]))
+        a = dict(mids[i], t=mids[i]["t"] / 2)
+        mids = mids[:i] + [a, dict(a)] + mids[i + 1:]
+    d = front["z"] + front["t"]
+    lib = ST.library_stats()
+    opts = [_class_options(q, lib, k) for q in mids]
+    pri = ML.LibPrior()
+    old = SR._PRIORS
+    SR._PRIORS = (pri,)
+
+    def quick(lay, back):
+        ST.SBOX = (d - 0.008, d + 0.008)
+        mod = ST.build(lay, d, back=back, water_T=20.0)
+        ST.SBOX = None
+        ST.set_dispersion_free(mod, True)
+        return ST._fit(mod, f, y, sigma, atol=1e-2, max_iter=30)
+    try:
+        scored = []
+        n_comb = int(np.prod([len(o) for o in opts]))
+        if n_comb <= 300:
+            for combo in itertools.product(*opts):
+                lay = [c[1] for c in combo]
+                for back in ("air", "metal"):
+                    mod, c = quick(lay, back)
+                    scored.append((c, mod, [c_[0] for c_ in combo], back))
+        else:                                          # beam: fix layers left to right
+            seqs = [([], [])]
+            for i in range(N):
+                rest = [opts[j][0][1] for j in range(i + 1, N)]          # best guess for the rest
+                cand = []
+                for names, lays in seqs:
+                    for nm, L in opts[i]:
+                        for back in ("air", "metal"):
+                            mod, c = quick(lays + [L] + rest, back)
+                            cand.append((c, names + [nm], lays + [L], back, mod))
+                cand.sort(key=lambda t: t[0])
+                seqs = [(c_[1], c_[2]) for c_ in cand[:beam]]
+                if i == N - 1:
+                    scored = [(c_[0], c_[4], c_[1], c_[3]) for c_ in cand]
+        scored.sort(key=lambda t: t[0])
+        best = None
+        for c, mod, names, back in scored[:n_full]:
+            mod, c = ST._fit(mod, f, y, sigma)
+            mod, c = SR.cycle_hop(mod, f, y, sigma, SR.Opts(search_step=1, search_atol=0.0))
+            if best is None or c < best[1]:
+                best = (mod, c, names)
+        mod, c, names = best
+        rel = []
+        for p0 in (0.02, 0.95):
+            mm = mod.copy()
+            for L in mm.layers:
+                if L.theta.value < 0.5:
+                    L.pinf.value, L.pinf.free = p0, True
+            mm, cm = ST._fit(mm, f, y, sigma)
+            rel.append((cm, mm))
+        cm, mm = min(rel, key=lambda t: t[0])
+        if cm < c:
+            mod, c = mm, cm
+    finally:
+        SR._PRIORS = old
+    G, _ = I.forward(mod, f, jacobian=False)
+    chi = float(np.sum(np.abs((G - y) / sigma) ** 2))
+    n_all = 2 * f.size
+    info.update(wall_s=time.time() - t0, chi2=chi, map_cost=c, alarm=bool(chi > ST.chi2_alarm(n_all)),
+                labels=pri.labels(mod), classes=[{l: 1.0} for l in pri.labels(mod)], n_seq=len(scored))
+    return mod, chi, info
