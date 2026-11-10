@@ -140,11 +140,16 @@ def propose(pb, X, beta, rng):
     return Y
 
 
-def run(pb, n_temp=20, n_rep=8, steps=3000, beta_min=1e-4, seed=0, verbose=False, patience=None):
+def run(pb, n_temp=20, n_rep=8, steps=3000, beta_min=1e-4, seed=0, verbose=False, patience=None, init=None):
     rng = np.random.default_rng(seed)
     betas = np.geomspace(1.0, beta_min, n_temp)
     beta = np.repeat(betas, n_rep)                     # chain c: temperature c // n_rep
     X = pb.sample_prior(beta.size, rng)
+    if init is not None:                               # E055 test B: seed chains (cold half of each
+        k = min(len(init), n_rep)                      # temperature's replicas) with given states
+        for t in range(n_temp // 2):
+            for r in range(k):
+                X[t * n_rep + r] = np.clip(init[r] + rng.standard_normal(X.shape[1]) * 0.0, pb.lo, pb.hi)
     E, chi = pb.energy(X)
     best = (np.inf, None, None)
     last = 0

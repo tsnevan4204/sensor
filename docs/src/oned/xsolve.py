@@ -341,7 +341,7 @@ def signature(x, N, back):
     return (sol, gp, back)
 
 
-def solve(views, N, d_guess, steps=4000, restarts=2, n_polish=10, seed=0, verbose=False, fast=None):
+def solve(views, N, d_guess, steps=4000, restarts=2, n_polish=10, seed=0, verbose=False, fast=None, init=None):
     fast = FAST if fast is None else fast
     if fast:                                           # E058 fast config: early stop, adaptive restart
         return _solve_fast(views, N, d_guess, n_polish, seed, verbose)
@@ -350,7 +350,8 @@ def solve(views, N, d_guess, steps=4000, restarts=2, n_polish=10, seed=0, verbos
     for back in ("air", "metal"):
         mp = MultiProblem(views, N, back, d_guess)
         for rs in range(restarts):
-            best, cand = PT.run(mp, steps=steps, seed=seed + 101 * rs)
+            best, cand = PT.run(mp, steps=steps, seed=seed + 101 * rs,
+                                init=None if init is None else init.get(back))
             cands += [(mp.energy(c[None, :])[0][0], c, back) for c in cand]
             if verbose:
                 print(f"  PT {back} r{rs}: chi2n {best[2] / sum(2 * v[0].size for v in mp.views):.2f} {time.time() - t0:.0f}s", flush=True)
