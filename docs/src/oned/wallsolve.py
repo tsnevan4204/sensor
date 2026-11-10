@@ -429,6 +429,47 @@ N_SPLIT = 3             # only the N_SPLIT strongest echoes behind the front are
 AMBIG_DCHI2 = 10.0      # structurally different answers within this data-chi2 of the best are reported
 
 
+def _cand_to_x(d, lay, slots, N, back):
+    """Candidate (layer list with gap layers) -> gamma_batch parameter vector, or None if the
+    candidate does not fit the layout (e.g. a gap behind the last layer with an air backing)."""
+    lo, hi, NG = layout(N, back)
+    x = np.zeros(lo.size)
+    x[0], x[-1] = d, 20.0
+    si = 0
+    for (kind, i), L in zip(slots, lay):
+        if kind == "solid":
+            if L["water"]:
+                x[1 + 5 * si: 6 + 5 * si] = [np.log(L["t"] * 8.6), 0.0, np.log(1e-3), 0.0, 6.0]
+            else:
+                er = max(L["er"], 1.0001)
+                x[1 + 5 * si: 6 + 5 * si] = [np.log(L["t"] * np.sqrt(er)), np.log(er - 1), np.log(max(L["td"], 1e-4)), 0.0, -6.0]
+            si += 1
+        else:
+            gi = si - 1
+            if gi >= NG:
+                return None
+            x[1 + 5 * N + gi] = L["t"]
+    return x if si == N else None
+
+
+def _screen_batch(cands, f, y, sigma, N, chunk=2000):
+    """Score every candidate (both backings) with ONE exact batched forward per chunk."""
+    out = []
+    for back in ("air", "metal"):
+        xs, meta = [], []
+        for d, lay, slots in cands:
+            x = _cand_to_x(d, lay, slots, N, back)
+            if x is not None:
+                xs.append(x); meta.append((d, lay, slots))
+        for a in range(0, len(xs), chunk):
+            X = np.array(xs[a:a + chunk])
+            G = gamma_batch(X, f, N, back)
+            c = np.sum(np.abs((G - y[None, :]) / sigma[None, :]) ** 2, axis=1)
+            out += [(float(ci), *meta[a + j], back) for j, ci in enumerate(c)]
+    out.sort(key=lambda t: t[0])
+    return out
+
+
 def solve_echo(f, y, sigma, N, d_guess, n_refine=8, verbose=False):
     import echoes as EC
     t0 = time.time()
@@ -449,15 +490,7 @@ def solve_echo(f, y, sigma, N, d_guess, n_refine=8, verbose=False):
     taus, amps, _ = EC._refine(EC._bands(f, y, sigma), taus, iters=0)
     k = int(np.argmin(np.abs(taus - d_guess)))
     cands = _candidates(taus, amps, N, k)
-    scored = []
-    for d, lay, slots in cands:
-        for back in ("air", "metal"):
-            ST.SBOX = None
-            mod = ST.build(lay, d, back=back)
-            G, _ = I.forward(mod, f, jacobian=False)
-            c = float(np.sum(np.abs((G - y) / sigma) ** 2))
-            scored.append((c, d, lay, slots, back))
-    scored.sort(key=lambda t: t[0])
+    scored = _screen_batch(cands, f, y, sigma, N)          # E049e: vectorised screening
     if verbose:
         print(f"  echoes {len(taus)}, candidates {len(cands)}, screen {time.time() - t0:.1f}s", flush=True)
     pri = ML.LibPrior()
