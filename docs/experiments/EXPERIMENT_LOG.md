@@ -993,3 +993,17 @@ thickness-range prior; moves: random walk, library class swap (optical thickness
 interface shift, gap open/close; all chains = one batched exact forward call. Tempered on f < 11 GHz
 (mmWave phase too rugged), then exact LM on all bands from the best 6 states, both backings.
 First tests: 404 (echo failure) OK, χ²/n 1.02; 401 (echo failure) OK, χ²/n 0.89; ~120 s each.
+
+### E054 results on the E052 dev set (50 walls)
+- PT run 1 (1500 steps, 512 freqs) on the 35 echo-cascade failures: 14 rescued.
+- PT run 2 (4000 steps, 96 freqs/band, 2 restarts per backing, 10 polished; median 256 s) on the 21 still failing: 7 more.
+- Cumulative: 36/50 exact (15 echo + 14 PT1 + 7 PT2).
+- Remaining 14:
+  - search still unconverged, flagged (χ²/n 1.2–28): 408, 421, 426, 430, 437, 442, 440;
+  - low contrast foam/batt: 431 (flagged), 438 (χ²/n 1.08, foam −8 mm traded against gap: silent);
+  - behind concrete, unobservable/ambiguous at χ²/n ≈ 1: 406, 446 (silent until CRB reporting is ported);
+  - structural near-misses at χ²/n ≈ 1.0–1.05:
+    - 407: thicknesses ≤ 0.8 mm off, floorboard labelled wrongly;
+    - 425: 18 mm gap missing, compensated;
+    - 432: a spurious gap.
+  These are equal-fit alternatives; they must be reported via the Δχ² ambiguity scan (not yet in the PT path).
