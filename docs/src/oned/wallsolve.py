@@ -86,8 +86,8 @@ def _visible(layers, back, vis_db):
 #   brick/plywood need p ~ 0.996); theta = sigmoid(c); g_eff = max(g, 0); T = water temperature (C)
 def layout(N, back):
     NG = N - 1 + (1 if back == "metal" else 0)
-    lo = [0.0] + [np.log(3e-4), np.log(0.02), np.log(1e-4), 0.0, -6.0] * N + [-10e-3] * NG + [0.0]
-    hi = [0.0] + [np.log(0.25), np.log(11.0), np.log(0.5), 7.0, 6.0] * N + [40e-3] * NG + [40.0]
+    lo = [0.0] + [np.log(5e-4), np.log(0.02), np.log(1e-4), 0.0, -6.0] * N + [-10e-3] * NG + [0.0]
+    hi = [0.0] + [np.log(0.6), np.log(11.0), np.log(0.5), 7.0, 6.0] * N + [40e-3] * NG + [40.0]
     return np.array(lo), np.array(hi), NG
 
 
@@ -95,6 +95,11 @@ def _theta(c):
     """Water fraction from its search coordinate, EXACTLY 0 below c ~ -4.6 (a floor of 0.25 %
     liquid water shifts eps' by ~0.05 - far above the noise: E046 bug)."""
     return np.clip((1 / (1 + np.exp(-c)) - 0.01) / 0.98, 0.0, 1.0)
+
+
+def _nopt(er, th):
+    """Index converting optical thickness to thickness: CRIM mix of sqrt(eps') and water (~8.6)."""
+    return (1 - th) * np.sqrt(er) + th * 8.6
 
 
 def gamma_batch(X, f, N, back):
@@ -113,7 +118,7 @@ def gamma_batch(X, f, N, back):
         h = er * (p + (1 - p - 1j * td) * np.exp(a * lg))
         s = (1 - th) * np.sqrt(h) + th * sw
         n = np.where(s.imag > 0, -s, s)
-        ns.append(n); ts.append(np.exp(lt))
+        ns.append(n); ts.append(np.exp(lt) / _nopt(er, th))       # lt = log optical thickness
         if i < NG:
             g = np.maximum(X[:, 1 + 5 * N + i], 0.0)[:, None]
             ns.append(np.ones((P, f.size), complex)); ts.append(g)
@@ -188,7 +193,7 @@ class _Envelope:
         return out
 
 
-def global_search(f, y, s, N, back, d_guess, d_tol=0.01, seed=0, maxiter=600, popsize=15):
+def global_search(f, y, s, N, back, d_guess, d_tol=0.01, seed=0, maxiter=1500, popsize=20):
     lo, hi, NG = layout(N, back)
     lo[0], hi[0] = d_guess - d_tol, d_guess + d_tol
     lib_arr = _lib_arrays()
@@ -213,6 +218,7 @@ def _to_stack(x, N, back):
     for i in range(N):
         lt, la, lb, u, c = x[1 + 5 * i: 6 + 5 * i]
         th, p = float(_theta(c)), 1 - np.exp(-u)
+        lt = np.log(np.exp(lt) / _nopt(1 + np.exp(la), th))          # back to physical thickness
         if th > 0.6:
             lay.append(dict(t=float(np.exp(lt)), er=1.0, td=0.0, water=True))
         elif th > 0.005:
