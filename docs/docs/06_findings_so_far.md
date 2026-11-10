@@ -62,3 +62,46 @@ Source: `results/2026-11-06_E007_validation/` (validation_log.txt, validation.pn
 - Forward + Jacobian: about 17 ms for 256 frequencies and ~100 cells (vectorized Thomas solve).
 - One L1 inversion: **about 80–90 s**. That is about 66 gated LM runs from lattice starts, plus a joint LM, cycle hops and the ambiguity scan.
 - **This is the main thing to cut** (see `08_low_compute_toolbox.md`).
+
+## Update 2026-11-09 (E008–E012b, S001)
+
+- **The benchmark was flattering.** In B1-dry-v1 the loss tangents equal the model's fixed values. With tan δ randomized and estimated (B1-dry-v2), the E007 method succeeds on 2/20 walls with 12/20 **silent** failures. With tan δ held at a wrong nominal value it succeeds on 0/20. Within the right basin the E007 error bars are well calibrated (err/CRB std 0.8–1.7). The old large err/CRB values were wrong-basin answers.
+- **Search speed.** Coarse-frequency early-stopped search with optical-thickness coordinates, kept inside the prior box (E009 + E011b), reaches the same or better outcomes with 11× less work (about 12 s instead of 153 s per inversion). Search failures fall from 7 to 1 per 20 walls.
+- **Information limit.** With tan δ unknown, one 77–81 GHz band and 40 dB, the front drywall is identified. The **cycle counts of the insulation and back drywall are not**: wrong basins 1–5 periods away fit as well as or better than the truth (Δχ² 0.2–6). Integer least squares cannot resolve this because the profiled χ² over the integers is nearly flat. A fixed Δχ² < 4 set under-covers when there are many basins (look-elsewhere effect).
+- **Matrix pencil.** It super-resolves the front drywall's faces (within 1.73 periods on all 50 held-out walls). The insulation echo merges with the back-drywall echo at this SNR, so it does not help there.
+- **Stability (S001, doc 11).**
+  - 1D learned stars that are symmetric and cell-passive in their *modal* admittances give a uniquely solvable system, with a k- and mesh-independent bound.
+  - In 2D, passivity alone is not sufficient. A full-side absorber or strict loss is needed, and β ≈ 1.2/k.
+  - 2D needs learned stars because the local Trefftz space is infinite-dimensional. Exact fine-relative stars are dense Schur complements, and coarse learned stars need patch stencils (m ≈ log k).
+
+## Update 2026-11-09, later (E013–E019): current best 1D method
+
+**Best method: two bands (77–81 + 22–26 GHz) + E019** (`benchmark.py` method `e019dual`):
+- coarse early-stopped search;
+- optical-thickness coordinates kept inside the prior box;
+- standoff box = one range-resolution cell;
+- fallback cascade for χ²-flagged walls;
+- no priors.
+
+On 100 held-out honest-benchmark walls (loss unknown): **100/100 correct, 0 silent, 0 flagged.** Median errors:
+- front drywall 7 µm, back drywall 6 µm, insulation 0.07 mm;
+- εr 0.1–0.2 %;
+- tan δ 1–2e-4;
+- error bars exactly CRB-calibrated (err/CRB std ≈ 1);
+- about 10 s per wall on 1 core.
+
+**Single-band hardware (77–81 GHz only):** the best is E018b (E015b + range-cell box), which uses the drywall prior (ASTM C36) and an assumed stud-depth prior. It reaches 18/20 correct, 0 flagged, 2 silent; median errors are front 13 µm, back drywall 40 µm, insulation 1.1 mm. Without priors, one band cannot determine the cycle counts of the back layers (E009–E014).
+
+**Lessons:**
+- The second band is worth more than any amount of search or computation (E014: wrong-cycle basins vanish).
+- Search bounds must come from physics (the range-resolution cell), not from convenience: seed 7's truth was outside a ±10 mm box.
+
+## Update 2026-11-09, latest (E021–E032): realism fixes, prototype chain, band choice
+
+- **Material law:** causal Jonscher (constant-Q at p = 0) with the same parameters plus one; required for multi-band data (E021/E021b). A material *table* such as ITU-R P.2040 Table 3 is not a causal *law*.
+- **Antenna:** beam model (rotated-contour Gauss–Laguerre quadrature over exact oblique stars, K = 2–4) plus multi-distance staggered-plate calibration with exact noise propagation (E023). A beam waist ≥ 2 cm at the working distance is required (1 cm loses 11–14 dB, ambiguity returns).
+- **Wall micro-structure:** drywall face paper (facing layer) and roughness (graded taper centred on the mean surface, h = 2√3σ/1.33) solved (E024). The band phase-centre offset is solved once fitted in the front stage. A thin low-contrast air gap behind insulation is **not identifiable**; treat it as a nuisance (E030).
+- **Prototype chip chain:** the IF high-pass filters must be modelled as a measurement operator (ignoring them fails 10/10). Use the maximum chirp slope (250 MHz/µs → 10/10). A 1 MHz chirp nonlinearity is negligible (E031).
+- **Second band:** UWB 3.1–10.6 GHz gives **100/100 held-out, 0 silent**, even with the sparse 1.3 s search. 57–64 GHz leaves ~5% silent back-of-wall ambiguity (E032 vs held-out baselines).
+- **Speed:** compiled per-layer chain kernel plus minimal pole-safe cells: forward + Jacobian 26 → 1.1 ms, exact (E026/E027). The full robust inversion takes ~1 s. A learned initializer + integer least squares gives 16–54 ms exact inversions when its start is right, but must be held-out-validated (E029b failed on 57–64 GHz).
+- **Protocol additions:** every speed shortcut must pass the 100 held-out walls; the χ² alarm is χ² > n + 3√(2n); a verification step must never rescue an alarmed fast path.

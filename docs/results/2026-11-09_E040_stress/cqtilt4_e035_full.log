@@ -1,0 +1,25 @@
+/home/user/sensor/docs/src/oned/wall_inverse.py:957: RuntimeWarning: invalid value encountered in sqrt
+  std = np.sqrt(np.diag(cov))
+/home/user/sensor/docs/src/oned/wall_inverse.py:957: RuntimeWarning: invalid value encountered in sqrt
+  std = np.sqrt(np.diag(cov))
+benchmark real:cqtilt4:proto  method e035_full  seeds 1-10  wall 70s
+runs 10: success 0, flagged 10, silent 0
+best model in the truth's basin (all layers): 9/10
+chi2/n: 5.13, 6.19, 4.82, 6.11, 4.06, 7.56, 4.08, 6.98, 279.58, 4.48
+chi2(truth) - chi2(best): +514938.4, +333774.1, +423339.2, +1127220.5, +341270.9, +623292.8, +959014.5, +447105.0, +965976.8, +445708.3
+outcome per seed: 1:f, 2:f, 3:f, 4:f, 5:f, 6:f, 7:f, 8:f, 9:f, 10:f
+wall time per inversion (1 core): median 12.3 s; forward solves (with J) median 11266, (no J) median 73
+work (forward solves in units of one 256-frequency solve): median 10325
+err/CRB over runs whose best model is in the truth basin (0):
+  drywall_front.t        mean|err| 3.30e-03  CRB 9.7e-05  err/CRB mean +nan std nan max|.| nan
+  drywall_front.eps_r    mean|err| 1.02e+00  CRB 2.1e-02  err/CRB mean +nan std nan max|.| nan
+  drywall_front.tan_d    mean|err| 2.21e-02  CRB 1.9e-03  err/CRB mean +nan std nan max|.| nan
+  insulation.t           mean|err| 4.41e-03  CRB 1.2e-04  err/CRB mean +nan std nan max|.| nan
+  insulation.eps_r       mean|err| 1.14e-01  CRB 2.6e-03  err/CRB mean +nan std nan max|.| nan
+  insulation.tan_d       mean|err| 4.05e-03  CRB 2.8e-04  err/CRB mean +nan std nan max|.| nan
+  drywall_back.t         mean|err| 3.45e-03  CRB 1.0e-04  err/CRB mean +nan std nan max|.| nan
+  standoff               mean|err| 2.36e-03  CRB nan  err/CRB mean +nan std nan max|.| nan
+  tau[drywall_front]        mean|err| 1.16e-03  CRB 1.9e-05  err/CRB mean +nan std nan max|.| nan
+  tau[insulation   ]        mean|err| 5.27e-04  CRB 2.5e-05  err/CRB mean +nan std nan max|.| nan
+  tau[drywall_back ]        mean|err| 4.15e-04  CRB 3.1e-05  err/CRB mean +nan std nan max|.| nan
+plausible basins per run: [1, 1, 4, 1, 1, 2, 1, 4, 4, 5]

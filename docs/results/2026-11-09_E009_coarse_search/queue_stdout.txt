@@ -1,0 +1,101 @@
+benchmark v2  method e009  seeds 1-20  wall 403s
+runs 20: success 6, flagged 2, silent 12
+best model in the truth's basin (all layers): 1/20
+chi2/n: 0.84, 0.98, 1.00, 0.97, 0.96, 1.01, 1.72, 1.04, 1.03, 1.11, 1.02, 0.90, 1.09, 0.97, 0.97, 0.93, 1.03, 1.49, 0.91, 1.09
+chi2(truth) - chi2(best): +4.6, +5.6, +8.8, +5.1, +9.4, +7.2, -426.0, +10.5, +17.8, -71.0, -35.1, +16.0, +4.6, +13.6, +20.1, +20.5, +12.1, -209.1, +12.6, +13.4
+outcome per seed: 1:s, 2:s, 3:s, 4:s, 5:s, 6:s, 7:f, 8:s, 9:s, 10:s, 11:s, 12:s, 13:s, 14:s, 15:s, 16:s, 17:s, 18:f, 19:s, 20:s
+wall time per inversion (1 core): median 48.0 s; forward solves (with J) median 8994, (no J) median 62
+work (forward solves in units of one 256-frequency solve): median 4387
+err/CRB over runs whose best model is in the truth basin (1):
+  drywall_front.t        mean|err| 5.47e-04  CRB 2.4e-05  err/CRB mean +0.15 std 0.00 max|.| 0.1
+  drywall_front.eps_r    mean|err| 6.69e-02  CRB 6.8e-03  err/CRB mean -0.11 std 0.00 max|.| 0.1
+  drywall_front.tan_d    mean|err| 4.61e-03  CRB 4.4e-03  err/CRB mean +0.46 std 0.00 max|.| 0.5
+  insulation.t           mean|err| 5.99e-03  CRB 5.0e+06  err/CRB mean +0.73 std 0.00 max|.| 0.7
+  insulation.eps_r       mean|err| 1.11e-01  CRB 1.5e-01  err/CRB mean -0.74 std 0.00 max|.| 0.7
+  insulation.tan_d       mean|err| 8.12e-03  CRB 1.3e-02  err/CRB mean +0.20 std 0.00 max|.| 0.2
+  drywall_back.t         mean|err| 2.46e-03  CRB 4.3e+06  err/CRB mean -0.26 std 0.00 max|.| 0.3
+  standoff               mean|err| 3.79e-04  CRB 1.7e-06  err/CRB mean -1.62 std 0.00 max|.| 1.6
+  tau[drywall_front]        mean|err| 1.05e-03  CRB 1.4e-05  err/CRB mean +0.24 std 0.00 max|.| 0.2
+  tau[insulation   ]        mean|err| 5.08e-03  CRB 6.5e+06  err/CRB mean -0.17 std 0.00 max|.| 0.2
+  tau[drywall_back ]        mean|err| 3.85e-03  CRB 6.6e+06  err/CRB mean -0.50 std 0.00 max|.| 0.5
+plausible basins per run: [10, 2, 5, 8, 4, 8, 7, 7, 11, 6, 3, 6, 6, 10, 6, 8, 8, 3, 5, 7]
+benchmark v2  method e010  seeds 1-20  wall 453s
+runs 20: success 7, flagged 2, silent 11
+best model in the truth's basin (all layers): 1/20
+chi2/n: 0.84, 0.98, 1.00, 0.97, 0.96, 1.01, 1.47, 1.04, 1.03, 0.96, 1.02, 0.90, 1.09, 0.97, 0.97, 1.22, 1.03, 1.07, 0.91, 1.09
+chi2(truth) - chi2(best): +4.6, +5.6, +8.8, +5.1, +9.4, +8.1, -299.8, +10.5, +17.8, +3.7, -35.1, +16.0, +4.6, +13.6, +17.4, -126.4, +12.1, +7.5, +12.9, +13.2
+outcome per seed: 1:s, 2:s, 3:s, 4:s, 5:s, 6:s, 7:f, 8:s, 9:s, 10:s, 11:s, 12:s, 13:s, 14:s, 15:s, 16:f, 17:s, 18:s, 19:s, 20:s
+wall time per inversion (1 core): median 51.4 s; forward solves (with J) median 9128, (no J) median 28
+work (forward solves in units of one 256-frequency solve): median 4674
+err/CRB over runs whose best model is in the truth basin (1):
+  drywall_front.t        mean|err| 3.20e-04  CRB 2.9e-05  err/CRB mean +0.15 std 0.00 max|.| 0.1
+  drywall_front.eps_r    mean|err| 3.65e-02  CRB 7.1e-03  err/CRB mean -0.11 std 0.00 max|.| 0.1
+  drywall_front.tan_d    mean|err| 4.77e-03  CRB 5.6e-03  err/CRB mean +0.46 std 0.00 max|.| 0.5
+  insulation.t           mean|err| 4.72e-03  CRB 1.9e+08  err/CRB mean +0.73 std 0.00 max|.| 0.7
+  insulation.eps_r       mean|err| 2.61e-01  CRB 1.6e-01  err/CRB mean -0.74 std 0.00 max|.| 0.7
+  insulation.tan_d       mean|err| 7.97e-03  CRB 1.9e-02  err/CRB mean +0.20 std 0.00 max|.| 0.2
+  drywall_back.t         mean|err| 2.46e-03  CRB 2.6e+08  err/CRB mean -0.26 std 0.00 max|.| 0.3
+  standoff               mean|err| 1.91e-04  CRB 2.0e-06  err/CRB mean -1.62 std 0.00 max|.| 1.6
+  tau[drywall_front]        mean|err| 5.13e-04  CRB 2.3e-05  err/CRB mean +0.24 std 0.00 max|.| 0.2
+  tau[insulation   ]        mean|err| 8.06e-03  CRB 2.9e+08  err/CRB mean -0.17 std 0.00 max|.| 0.2
+  tau[drywall_back ]        mean|err| 3.96e-03  CRB 4.3e+08  err/CRB mean -0.50 std 0.00 max|.| 0.5
+plausible basins per run: [10, 2, 5, 8, 4, 6, 6, 6, 11, 10, 3, 6, 6, 10, 5, 7, 8, 6, 7, 6]
+benchmark v2  method e011  seeds 1-20  wall 81s
+runs 20: success 2, flagged 2, silent 16
+best model in the truth's basin (all layers): 0/20
+chi2/n: 0.84, 0.98, 1.00, 0.97, 0.96, 1.01, 1.51, 1.04, 1.03, 0.96, 1.02, 0.90, 1.18, 1.02, 8.53, 0.93, 1.03, 1.07, 0.91, 1.09
+chi2(truth) - chi2(best): +4.6, +5.6, +8.8, +5.1, +9.7, +6.4, -320.6, +10.5, +16.8, +3.7, -35.0, +14.0, -38.8, -14.0, -3855.3, +22.0, +12.6, +7.3, +10.5, +13.2
+outcome per seed: 1:s, 2:s, 3:s, 4:s, 5:s, 6:s, 7:f, 8:s, 9:s, 10:s, 11:s, 12:s, 13:s, 14:s, 15:f, 16:s, 17:s, 18:s, 19:s, 20:s
+wall time per inversion (1 core): median 9.5 s; forward solves (with J) median 2583, (no J) median 22
+work (forward solves in units of one 256-frequency solve): median 793
+err/CRB over runs whose best model is in the truth basin (0):
+  drywall_front.t        mean|err| 4.88e-04  CRB 1.6e-05  err/CRB mean +nan std nan max|.| nan
+  drywall_front.eps_r    mean|err| 7.22e-02  CRB 6.8e-03  err/CRB mean +nan std nan max|.| nan
+  drywall_front.tan_d    mean|err| 1.09e-02  CRB 4.9e-03  err/CRB mean +nan std nan max|.| nan
+  insulation.t           mean|err| 1.68e-02  CRB 4.3e-03  err/CRB mean +nan std nan max|.| nan
+  insulation.eps_r       mean|err| 3.74e-01  CRB 1.5e-01  err/CRB mean +nan std nan max|.| nan
+  insulation.tan_d       mean|err| 2.71e-03  CRB 1.1e-03  err/CRB mean +nan std nan max|.| nan
+  drywall_back.t         mean|err| 3.76e-03  CRB 1.0e-04  err/CRB mean +nan std nan max|.| nan
+  standoff               mean|err| 4.71e-04  CRB 1.9e-06  err/CRB mean +nan std nan max|.| nan
+  tau[drywall_front]        mean|err| 8.92e-04  CRB 7.3e-06  err/CRB mean +nan std nan max|.| nan
+  tau[insulation   ]        mean|err| 2.01e-02  CRB 1.2e-04  err/CRB mean +nan std nan max|.| nan
+  tau[drywall_back ]        mean|err| 5.64e-03  CRB 1.5e-04  err/CRB mean +nan std nan max|.| nan
+plausible basins per run: [11, 2, 5, 9, 5, 2, 4, 6, 4, 10, 3, 1, 3, 1, 1, 4, 4, 9, 5, 6]
+/home/user/sensor/docs/src/oned/ambiguity.py:79: RuntimeWarning: invalid value encountered in scalar divide
+  mu = int(np.round(Qz[i, j] / Qz[j, j]))
+multiprocessing.pool.RemoteTraceback: 
+"""
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.13/multiprocessing/pool.py", line 125, in worker
+    result = (True, func(*args, **kwds))
+                    ~~~~^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/multiprocessing/pool.py", line 48, in mapstar
+    return list(map(*args))
+  File "/home/user/sensor/docs/src/oned/benchmark.py", line 190, in run_one
+    res = METHODS[method](f, yc, sigma, d0)
+  File "/home/user/sensor/docs/src/oned/benchmark.py", line 155, in run
+    return SR.invert(f, yc, s, d0, SR.Opts(**kw))
+           ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/sensor/docs/src/oned/search.py", line 355, in invert
+    model, cost, plaus, ainfo = AM.resolve(model, f, yc, sigma, opts)
+                                ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/sensor/docs/src/oned/ambiguity.py", line 169, in resolve
+    p_boot = bootstrap_success(Q)
+  File "/home/user/sensor/docs/src/oned/ambiguity.py", line 93, in bootstrap_success
+    Z = decorrelate(Q)
+  File "/home/user/sensor/docs/src/oned/ambiguity.py", line 79, in decorrelate
+    mu = int(np.round(Qz[i, j] / Qz[j, j]))
+ValueError: cannot convert float NaN to integer
+"""
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/user/sensor/docs/src/oned/benchmark.py", line 241, in <module>
+    runs = pool.map(run_one, [(bench, meth, s) for s in range(s0, s1 + 1)])
+  File "/usr/local/lib/python3.13/multiprocessing/pool.py", line 367, in map
+    return self._map_async(func, iterable, mapstar, chunksize).get()
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/usr/local/lib/python3.13/multiprocessing/pool.py", line 774, in get
+    raise self._value
+ValueError: cannot convert float NaN to integer

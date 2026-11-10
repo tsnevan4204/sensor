@@ -59,3 +59,23 @@ def truth_random(rng, standoff):
                      W.Layer("insulation", v["insulation.t"], ins),
                      W.Layer("drywall", v["drywall_back.t"], dw)], standoff=standoff)
     return scene, v
+
+
+# Literature-plausible loss ranges at mmWave (assumed; check before relying on them):
+# gypsum board tan_d ~ 0.015-0.045, fiberglass batt ~ 0.005-0.02. The model starts at the
+# nominal values 0.03 / 0.01 and must estimate them; truths are drawn independently.
+TAN_RANGES = dict(drywall=(0.015, 0.045), fiberglass=(0.005, 0.02))
+
+
+def truth_random_v2(rng, standoff):
+    """B1-dry-v2 (E008): like truth_random, but the loss tangents are random too, so no
+    parameter of the truth is guaranteed to equal the model's nominal starting value."""
+    _, v = truth_random(rng, standoff)               # same geometry/eps draws as v1 for a given rng state
+    v["drywall_front.tan_d"] = rng.uniform(*TAN_RANGES["drywall"])
+    v["insulation.tan_d"] = rng.uniform(*TAN_RANGES["fiberglass"])
+    dw = lambda f: W.eps_dielectric(v["drywall_front.eps_r"], v["drywall_front.tan_d"], f)
+    ins = lambda f: W.eps_dielectric(v["insulation.eps_r"], v["insulation.tan_d"], f)
+    scene = W.Scene([W.Layer("drywall", v["drywall_front.t"], dw),
+                     W.Layer("insulation", v["insulation.t"], ins),
+                     W.Layer("drywall", v["drywall_back.t"], dw)], standoff=standoff)
+    return scene, v

@@ -36,6 +36,19 @@ def eps_water_debye(f, T_C=20.0):
 # note: 1/(1 + j w tau) = (1 - j w tau)/(1 + (w tau)^2), so Im < 0: matches eps' - j eps''.
 
 
+def eps_water_lhm(f, T_C=20.0):
+    """Liquid water, double Debye of Liebe, Hufford & Manabe (1991, Int. J. IR mm Waves 12, 659),
+    valid to ~1 THz, -10..40 C; converted to e^{+jwt} (eps' - j eps''). theta = 300/T_K."""
+    th = 300.0 / (273.15 + T_C)
+    e0 = 77.66 + 103.3 * (th - 1)
+    e1 = 0.0671 * e0
+    e2 = 3.52
+    g1 = 20.20 - 146.0 * (th - 1) + 316.0 * (th - 1) ** 2      # GHz
+    g2 = 39.8 * g1
+    fg = np.asarray(f, float) / 1e9
+    return (e0 - e1) / (1 + 1j * fg / g1) + (e1 - e2) / (1 + 1j * fg / g2) + e2
+
+
 def eps_dielectric(eps_r, tan_d, f):
     """Low-loss dry building material with constant loss tangent."""
     return np.full(np.shape(f), eps_r * (1 - 1j * tan_d), dtype=complex)

@@ -1,0 +1,5 @@
+data 19970/1996 dim 142->20 in 64s
+parameters 9680
+tau_front  within half cycle: coarse-only 0.514 -> cascade 0.924 | phase err median wide 0.16 rad narrow 0.08 rad
+tau_ins    within half cycle: coarse-only 0.127 -> cascade 0.127 | phase err median wide 1.67 rad narrow 0.25 rad
+tau_back   within half cycle: coarse-only 0.162 -> cascade 0.160 | phase err median wide 1.21 rad narrow 0.58 rad

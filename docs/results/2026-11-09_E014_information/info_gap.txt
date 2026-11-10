@@ -1,0 +1,9 @@
+E014 information gap, B1-dry-v2 truths seeds [1, 2, 3, 4, 5, 6, 7, 8], sigma 0.0073; gate: oblique TMM == reference at 0 deg (< 1e-12)
+A 77-81 GHz, normal (today)                   min-gap Delta over hops: median      0.2  worst      0.0   P(flip to nearest wrong basin) median 0.41  worst 0.46
+B + 57-64 GHz                                 min-gap Delta over hops: median    240.9  worst     61.7   P(flip to nearest wrong basin) median 7.9e-14  worst 4.3e-05
+C + 22-26 GHz                                 min-gap Delta over hops: median   1237.6  worst    343.7   P(flip to nearest wrong basin) median 0  worst 0
+D + 3.1-10.6 GHz UWB                          min-gap Delta over hops: median      nan  worst      nan   P(flip to nearest wrong basin) median nan  worst nan
+E + 30 deg TE                                 min-gap Delta over hops: median      4.6  worst      0.4   P(flip to nearest wrong basin) median 0.15  worst 0.37
+F + 30 deg TM                                 min-gap Delta over hops: median      3.6  worst      0.3   P(flip to nearest wrong basin) median 0.18  worst 0.39
+G 77-81 GHz twice (same data budget as B-F)   min-gap Delta over hops: median      0.4  worst      0.1   P(flip to nearest wrong basin) median 0.38  worst 0.45
+time 21s

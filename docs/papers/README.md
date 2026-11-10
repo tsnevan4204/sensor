@@ -16,3 +16,14 @@ These are copies of papers the project owner provided. Keep this folder **out of
 | Kaibo_Hu_research_page.txt | Kaibo Hu research interests (FEEC, DEC, Regge, MHD) |
 
 Not copied, because of size: Cartesian-related RFID papers (handheld RFID, RL2), MiFly, MiNav, AR-NLOS (NSDI 2023). See `docs/04_literature_and_competitors.md`.
+
+Added 2026-11-09 (provided by the owner):
+
+| File | Why it matters |
+|---|---|
+| Teunissen_1999_AmbiguitySuccessRate.pdf | Integer least squares (LAMBDA) and ambiguity success rates; basis of E012 |
+| LeBastard_et_al_2007_ThinPavement_GPR_superresolution_TGRS.pdf | ESPRIT/MUSIC super-resolution of thin layers; forward-backward smoothing for coherent echoes; basis of E010 |
+| Bruckstein_Levy_Kailath_1985_DifferentialMethodsInverseScattering_SIAM.pdf | Layer peeling as a continuous Schur recursion; (travel time, reflectivity) coordinates (E011) |
+| Transtrum_Machta_Sethna_2011_GeometryNonlinearLeastSquares_arXiv1010.1449.pdf | Sloppy models, geodesic-acceleration Levenberg–Marquardt |
+| Ohlberger_Verfurth_2017_LOD_TwoScaleHelmholtz_arXiv1605.03410.pdf | Localized orthogonal decomposition for Helmholtz: pollution-free coarse spaces, oversampling ~ log k |
+| Verfurth_2019_NumHomog_indefinite_Hcurl_arXiv1710.03123.pdf | Numerical homogenization for indefinite H(curl) (time-harmonic Maxwell) |

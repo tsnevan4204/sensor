@@ -1,0 +1,25 @@
+/home/user/sensor/docs/src/oned/wall_inverse.py:942: RuntimeWarning: invalid value encountered in sqrt
+  std = np.sqrt(np.diag(cov))
+/home/user/sensor/docs/src/oned/wall_inverse.py:942: RuntimeWarning: invalid value encountered in sqrt
+  std = np.sqrt(np.diag(cov))
+benchmark real:cqdriftref:proto  method e035_full  seeds 1-10  wall 24s
+runs 10: success 10, flagged 0, silent 0
+best model in the truth's basin (all layers): 10/10
+chi2/n: 0.92, 0.94, 0.99, 1.00, 0.97, 1.00, 0.92, 1.01, 1.01, 1.00
+chi2(truth) - chi2(best): +106.9, +181.3, +175.6, +112.2, +42.5, +189.3, +143.4, +19.9, +114.6, +110.1
+outcome per seed: 1:s, 2:s, 3:s, 4:s, 5:s, 6:s, 7:s, 8:s, 9:s, 10:s
+wall time per inversion (1 core): median 4.6 s; forward solves (with J) median 1882, (no J) median 26
+work (forward solves in units of one 256-frequency solve): median 1564
+err/CRB over runs whose best model is in the truth basin (10):
+  drywall_front.t        mean|err| 4.19e-05  CRB 4.3e-05  err/CRB mean -0.28 std 1.10 max|.| 2.1
+  drywall_front.eps_r    mean|err| 1.60e-02  CRB 1.8e-02  err/CRB mean +0.23 std 1.05 max|.| 2.0
+  drywall_front.tan_d    mean|err| 4.07e-04  CRB 6.3e-04  err/CRB mean -0.05 std 0.75 max|.| 1.4
+  insulation.t           mean|err| 1.11e-04  CRB 1.2e-04  err/CRB mean -0.28 std 1.01 max|.| 2.0
+  insulation.eps_r       mean|err| 2.96e-03  CRB 3.3e-03  err/CRB mean +0.29 std 1.02 max|.| 2.1
+  insulation.tan_d       mean|err| 9.48e-05  CRB 1.6e-04  err/CRB mean -0.10 std 0.72 max|.| 1.3
+  drywall_back.t         mean|err| 3.84e-05  CRB 4.3e-05  err/CRB mean -0.28 std 1.04 max|.| 2.1
+  standoff               mean|err| 4.28e-06  CRB nan  err/CRB mean +nan std nan max|.| nan
+  tau[drywall_front]        mean|err| 7.70e-06  CRB 7.1e-06  err/CRB mean -0.24 std 1.20 max|.| 2.4
+  tau[insulation   ]        mean|err| 5.98e-06  CRB 1.1e-05  err/CRB mean +0.22 std 0.65 max|.| 1.3
+  tau[drywall_back ]        mean|err| 8.43e-06  CRB 1.3e-05  err/CRB mean -0.39 std 0.67 max|.| 1.3
+plausible basins per run: [6, 3, 4, 5, 4, 5, 5, 3, 6, 5]

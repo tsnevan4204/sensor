@@ -14,5 +14,8 @@ Read in this order the first time:
 | 08 | `08_low_compute_toolbox.md` | Math and physics tricks for keeping data and compute overhead low |
 | 09 | `09_experiment_loop_protocol.md` | How to run the iterative experiment loops; log template; gates |
 | 10 | `10_owner_preferences_and_decisions.md` | Decisions already made and the owner's preferences |
+| 11 | `11_indefinite_stability.md` | Stability of the indefinite (Helmholtz/Maxwell) discrete problem with learned stars: 1D theorems, 2D uniqueness/inf-sup/PML, why 2D needs learned stars (Trefftz dimension, Schur complements, LOD localization), constraints for learned stars, questions for Kaibo Hu |
+| 12 | `12_reality_gap.md` | Every assumption of the 1D toy vs real measurements (wave physics, materials, sensor chain, statistics), with literature, measured effect on the algorithm (E020) and a priority list of fixes |
+| 13 | `13_prototype_chip.md` | First prototype radar: TI IWR6843 (60–64 GHz FMCW) + DCA1000 raw capture + lens; requirements, alternatives, FMCW-chain modelling consequences |
 
 `physics_explainer.html` is the illustrated version of 02 (open it in a browser). Its diagrams cover the setup, the de Rham complex, cochains on a triangle, the 1D strips, and the LC-ladder equivalent.

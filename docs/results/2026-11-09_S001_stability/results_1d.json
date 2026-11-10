@@ -1,0 +1,57 @@
+{
+ "A_random_walls": {
+  "n": 400,
+  "n_lossless": 200,
+  "max_ratio_to_bound": 0.1852978260651104,
+  "median_ratio": 0.033050713637938225,
+  "P_over_interface_product_range": [
+   0.9236031377308013,
+   1.0000000000001428
+  ],
+  "mesh_independence_max_rel_err": 6.717336520191095e-13
+ },
+ "A_homogeneous_green_rel_err": 1.3468247403526246e-14,
+ "A_k_sweep": {
+  "f_GHz": [
+   0.5,
+   200.0
+  ],
+  "max_g_over_eta0_exact": 1.344426780634554,
+  "P_exact_range": [
+   2.783656803063019,
+   7.8400000000015675
+  ],
+  "interface_product": 7.840000000000001,
+  "max_g_over_eta0_std": 1.3592105603351323,
+  "P_std_range": [
+   3.0975307999732795,
+   7.957501749414414
+  ]
+ },
+ "A_learned_passive": {
+  "n": 233,
+  "max_ratio_to_bound": 0.13125955085522578,
+  "min_sigma_min_times_eta0": 0.12154212410802258
+ },
+ "A_passband_P_over_eta_eff_ratio_product_range": [
+  0.4606649753699662,
+  0.9999978682756279
+ ],
+ "A_passband_n": 200,
+ "A_active_roots": {
+  "max_Re_delta_times_eta0": -0.5884475524087891,
+  "min_gain_needed_times_eta0": 0.5884475524087891
+ },
+ "A_pole": {
+  "max_normAinv_over_eta0": 0.9999995883614438,
+  "max_normA_eta0": 4408.459419123114
+ },
+ "A_Re_b_negative_but_passive": {
+  "min_Re_b_rel": -0.999998269756602,
+  "min_Re_Yplus": 0.0007503126031503016,
+  "min_Re_Yminus": 0.0002500208349701815
+ },
+ "A_std_eta_eff_formula_maxrelerr": 5.551115123125783e-16,
+ "A_std_stopband_at_kl_2.1": true,
+ "A_wall_time_s": 25.212141752243042
+}

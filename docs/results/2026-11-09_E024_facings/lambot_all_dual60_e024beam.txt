@@ -1,0 +1,21 @@
+benchmark lambot:all:dual60  method e024beam  seeds 1-10  wall 1923s
+runs 10: success 0, flagged 9, silent 1
+best model in the truth's basin (all layers): 0/10
+chi2/n: 1.09, 8.45, 2.31, 5.81, 12.00, 1.79, 8.99, 3.70, 10.73, 8.53
+chi2(truth) - chi2(best): +64556.4, +587326.2, +162344.3, +170205.8, +137661.5, +150625.4, +154786.2, +195048.1, +146606.6, +98864.4
+outcome per seed: 1:s, 2:f, 3:f, 4:f, 5:f, 6:f, 7:f, 8:f, 9:f, 10:f
+wall time per inversion (1 core): median 511.5 s; forward solves (with J) median 39716, (no J) median 262
+work (forward solves in units of one 256-frequency solve): median 18364
+err/CRB over runs whose best model is in the truth basin (0):
+  drywall_front.t        mean|err| 2.64e-03  CRB 9.4e-04  err/CRB mean +nan std nan max|.| nan
+  drywall_front.eps_r    mean|err| 8.65e-01  CRB 3.3e-01  err/CRB mean +nan std nan max|.| nan
+  drywall_front.tan_d    mean|err| 2.42e-02  CRB 1.7e-02  err/CRB mean +nan std nan max|.| nan
+  insulation.t           mean|err| 7.30e-03  CRB 4.0e+00  err/CRB mean +nan std nan max|.| nan
+  insulation.eps_r       mean|err| 7.05e-01  CRB 5.9e-01  err/CRB mean +nan std nan max|.| nan
+  insulation.tan_d       mean|err| 9.48e-03  CRB 4.8e-02  err/CRB mean +nan std nan max|.| nan
+  drywall_back.t         mean|err| 2.54e-03  CRB 2.7e+01  err/CRB mean +nan std nan max|.| nan
+  standoff               mean|err| 4.73e-03  CRB 1.1e-04  err/CRB mean +nan std nan max|.| nan
+  tau[drywall_front]        mean|err| 5.74e-03  CRB 1.5e-04  err/CRB mean +nan std nan max|.| nan
+  tau[insulation   ]        mean|err| 2.33e-02  CRB 6.8e+00  err/CRB mean +nan std nan max|.| nan
+  tau[drywall_back ]        mean|err| 5.93e-03  CRB 3.9e+01  err/CRB mean +nan std nan max|.| nan
+plausible basins per run: [2, 1, 1, 1, 1, 1, 1, 1, 1, 7]

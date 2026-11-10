@@ -1,0 +1,9 @@
+101 flag 82.2s
+102 flag 83.0s
+102 OK 526.9s
+103 flag 2153.2s
+104 flag 1370.6s
+105 flag 947.3s
+106 flag 583.6s
+107 OK 1275.8s
+108 flag 297.0s
