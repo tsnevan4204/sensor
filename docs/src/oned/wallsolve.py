@@ -236,7 +236,7 @@ def _to_stack(x, N, back):
     return lay, float(x[0]), slots, float(x[-1])
 
 
-def solve(f, y, sigma, N, d_guess, d_tol=0.01, seed=0, verbose=False):
+def solve_de(f, y, sigma, N, d_guess, d_tol=0.01, seed=0, verbose=False):
     t0 = time.time()
     fs, ys, ss = f, y, sigma                       # envelope misfit is smooth on every band: use all data
     cands = []
@@ -470,7 +470,7 @@ def _screen_batch(cands, f, y, sigma, N, chunk=2000):
     return out
 
 
-def solve_echo(f, y, sigma, N, d_guess, n_refine=8, verbose=False):
+def solve_echo(f, y, sigma, N, d_guess, n_refine=8, verbose=False, n_split=None):
     import echoes as EC
     t0 = time.time()
     taus, amps, _ = EC.find_echoes(f, y, sigma, d_guess)
@@ -484,7 +484,7 @@ def solve_echo(f, y, sigma, N, d_guess, n_refine=8, verbose=False):
     # E049d: thin layers merge two interfaces into one echo (6 mm plywood: 18.1/28.5 mm -> 24.3 mm);
     # every echo behind the front also spawns optional interfaces at +-SPLIT, so a merged echo can split
     later = [(abs(amps[0][j]), t) for j, t in enumerate(taus) if t > taus[k] + 2e-3]
-    strong = [t for _, t in sorted(later, reverse=True)[:N_SPLIT]]          # bounded: combinatorics
+    strong = [t for _, t in sorted(later, reverse=True)[:(N_SPLIT if n_split is None else n_split)]]
     extra = [t + dd for t in strong for dd in (-SPLIT, SPLIT) if t + dd > taus[k] + 2e-3]
     taus = np.sort(np.concatenate([taus, extra]))
     taus, amps, _ = EC._refine(EC._bands(f, y, sigma), taus, iters=0)
@@ -562,7 +562,29 @@ def solve_echo(f, y, sigma, N, d_guess, n_refine=8, verbose=False):
             seen.add(sg)
             alts.append(dict(chi2=cm, solids=[(t, lab) for t, lab in sg[0]], gaps=list(sg[1]), back=bk))
     weak = [bool(np.isfinite(e) and e > 0.2 * L.t.value) for e, L in zip(t_err, mod.layers)]
+    # E049g: a layer declared SOLID that fits as air (eps' ~ 1) or runs to the thickness limit is not
+    # observed by the data (e.g. low-density batt behind absorbing water): report it, never silently
+    unobserved = []
+    for (kind, i), L in zip(slots, mod.layers):
+        if kind == "solid" and ((L.theta.value < 0.5 and L.eps_r.value < 1.03) or L.t.value > 0.9 * L.t.hi):
+            unobserved.append(i)
     return dict(model=mod, slots=slots, back=back, chi2=chi, chi2n=chi / n_all,
                 alarm=bool(chi > ST.chi2_alarm(n_all)), wall_s=time.time() - t0, labels=pri.labels(mod),
                 n_echoes=len(taus), n_cands=len(cands), t_err=t_err, weak=weak,
-                ambiguous=bool(alts), alternatives=alts)
+                ambiguous=bool(alts), alternatives=alts, unobserved=unobserved)
+
+
+
+def solve(f, y, sigma, N, d_guess):
+    """E049g cascade: echo solver without thin-layer splits; only if the chi2 alarm fires, rerun
+    with splits around the 3 strongest echoes (thin layers whose two faces merge into one echo) and
+    keep the better fit. Walls that are already explained never pay for, or are hurt by, the extras."""
+    a = solve_echo(f, y, sigma, N, d_guess, n_split=0)
+    if not a["alarm"]:
+        a["route"] = "echo"
+        return a
+    b = solve_echo(f, y, sigma, N, d_guess, n_split=3)
+    pick = a if a["chi2"] <= b["chi2"] else b
+    pick["route"] = "echo+split" if pick is b else "echo (split worse)"
+    pick["wall_s"] = a["wall_s"] + b["wall_s"]
+    return pick
