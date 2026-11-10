@@ -791,3 +791,55 @@ def solve(f, y, sigma, N, d_guess):
 
 
 MAT_RESCUE = 0          # E052: if still alarmed, rerun with material restarts on this many geometries
+
+
+def honest_report(mod, slots, back, refined, f, y, sigma, pri):
+    """E054d: the reporting of solve_echo for any solver: CRB per layer, weak/unobserved flags and
+    every structurally different refined answer within AMBIG_DCHI2 of the best (alternatives)."""
+    G, _ = I.forward(mod, f, jacobian=False)
+    chi = float(np.sum(np.abs((G - y) / sigma) ** 2))
+    n_all = 2 * f.size
+    crb = {}
+    try:
+        F = I.fisher(mod, f, sigma)
+        crb = dict(zip(F["names"], F["crb_std"]))
+    except Exception:
+        pass
+    t_err = [crb.get(f"{L.name}.t", np.nan) for L in mod.layers]
+
+    def _sig(m, sl, bk):
+        sol = [(round(L.t.value * 1e3), lab) for (kind, _), L, lab in zip(sl, m.layers, pri.labels(m)) if kind == "solid"]
+        gp = [round(L.t.value * 1e3) for (kind, _), L in zip(sl, m.layers) if kind == "gap"]
+        return (tuple(sol), tuple(gp), bk)
+    alts, seen = [], {_sig(mod, slots, back)}
+    for cc, mm, sl, bk in sorted(refined, key=lambda t: t[0]):
+        Gm, _ = I.forward(mm, f, jacobian=False)
+        cm = float(np.sum(np.abs((Gm - y) / sigma) ** 2))
+        sg = _sig(mm, sl, bk)
+        if cm <= chi + AMBIG_DCHI2 and sg not in seen:
+            seen.add(sg)
+            alts.append(dict(chi2=cm, solids=[(t, lab) for t, lab in sg[0]], gaps=list(sg[1]), back=bk))
+    weak = [bool(np.isfinite(e) and e > 0.2 * L.t.value) for e, L in zip(t_err, mod.layers)]
+    unobserved = []
+    for (kind, i), L in zip(slots, mod.layers):
+        if kind == "solid" and ((L.theta.value < 0.5 and L.eps_r.value < 1.03) or L.t.value > 0.9 * L.t.hi):
+            unobserved.append(i)
+    return dict(model=mod, slots=slots, back=back, chi2=chi, chi2n=chi / n_all,
+                alarm=bool(chi > ST.chi2_alarm(n_all)), labels=pri.labels(mod), t_err=t_err, weak=weak,
+                ambiguous=bool(alts), alternatives=alts, unobserved=unobserved)
+
+
+def solve_full(f, y, sigma, N, d_guess):
+    """E057 pipeline: echo cascade (fast, exact when it fits); if the chi2 alarm still fires, parallel
+    tempering over the full parameter vector (pt.py); the lower chi2 wins. Honest reporting for both."""
+    a = solve(f, y, sigma, N, d_guess)
+    if not a["alarm"]:
+        return a
+    import pt
+    b = pt.solve(f, y, sigma, N, d_guess)
+    b["wall_s"] += a["wall_s"]
+    if b["chi2"] < a["chi2"]:
+        b["route"] = a["route"] + "+pt"
+        return b
+    a["route"] += " (pt worse)"
+    return a

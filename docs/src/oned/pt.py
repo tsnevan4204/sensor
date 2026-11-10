@@ -178,6 +178,7 @@ def solve(f, y, sigma, N, d_guess, steps=4000, n_polish=10, restarts=2, verbose=
     runs.sort(key=lambda r: r[0])
     pri = ML.LibPrior(); old = SR._PRIORS; SR._PRIORS = (pri,)
     best = None
+    refined = []
     try:
         seen = 0
         for E, x, back in runs:
@@ -188,12 +189,11 @@ def solve(f, y, sigma, N, d_guess, steps=4000, n_polish=10, restarts=2, verbose=
             mod, c = WS._fit_start(lay, slots, float(x[0]), back, f, y, sigma)
             G, _ = I.forward(mod, f, jacobian=False)
             chi = float(np.sum(np.abs((G - y) / sigma) ** 2))
+            refined.append((chi, mod, slots, back))
             if best is None or chi < best[0]:
                 best = (chi, mod, slots, back)
+        out = WS.honest_report(best[1], best[2], best[3], refined, f, y, sigma, pri)
     finally:
         SR._PRIORS = old
-    chi, mod, slots, back = best
-    n_all = 2 * f.size
-    return dict(model=mod, slots=slots, back=back, chi2=chi, chi2n=chi / n_all, alarm=bool(chi > ST.chi2_alarm(n_all)),
-                wall_s=time.time() - t0, labels=pri.labels(mod), weak=[False] * len(mod.layers), unobserved=[],
-                route="pt", t_err=[np.nan] * len(mod.layers), alternatives=[], ambiguous=False)
+    out.update(wall_s=time.time() - t0, route="pt")
+    return out
