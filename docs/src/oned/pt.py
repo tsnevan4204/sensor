@@ -140,14 +140,14 @@ def propose(pb, X, beta, rng):
     return Y
 
 
-def run(pb, n_temp=20, n_rep=8, steps=3000, beta_min=1e-4, seed=0, verbose=False):
+def run(pb, n_temp=20, n_rep=8, steps=3000, beta_min=1e-4, seed=0, verbose=False, patience=None):
     rng = np.random.default_rng(seed)
     betas = np.geomspace(1.0, beta_min, n_temp)
     beta = np.repeat(betas, n_rep)                     # chain c: temperature c // n_rep
     X = pb.sample_prior(beta.size, rng)
     E, chi = pb.energy(X)
     best = (np.inf, None, None)
-    acc = np.zeros(5)
+    last = 0
     for it in range(steps):
         Y = propose(pb, X, beta, rng)
         Ey, chy = pb.energy(Y)
@@ -163,8 +163,12 @@ def run(pb, n_temp=20, n_rep=8, steps=3000, beta_min=1e-4, seed=0, verbose=False
             E[ii], E[jj] = E[jj].copy(), E[ii].copy()
             chi[ii], chi[jj] = chi[jj].copy(), chi[ii].copy()
         k = int(np.argmin(E))
+        if E[k] < best[0] - 1e-3 * abs(best[0]) if np.isfinite(best[0]) else E[k] < best[0]:
+            last = it
         if E[k] < best[0]:
             best = (float(E[k]), X[k].copy(), float(chi[k]))
+        if patience and it - last > patience and it > 2 * patience:
+            break                                      # E058: early stop, best state stagnant
         if verbose and it % 500 == 0:
             print(f"   it {it}  best E {best[0]:.0f}  chi2n {best[2] / (2 * pb.f.size):.2f}  cold median {np.median(chi[:n_rep]) / (2 * pb.f.size):.1f}", flush=True)
     # distinct cold-ish states for polishing: best of each replica at the 3 coldest temperatures + global

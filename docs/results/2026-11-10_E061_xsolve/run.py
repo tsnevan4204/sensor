@@ -4,6 +4,7 @@ import sys, json, time, os, warnings
 warnings.filterwarnings("ignore")
 sys.path.insert(0, "/home/user/sensor/docs/src/oned")
 import numpy as np, xsolve as XS
+XS.FAST = os.environ.get("FAST") == "1"
 N, sh, nsh, s0, s1 = (int(a) for a in sys.argv[1:6])
 angles = tuple(float(a) for a in sys.argv[6].split(","))
 boost, out = float(sys.argv[7]), sys.argv[8]

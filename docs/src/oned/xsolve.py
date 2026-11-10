@@ -276,7 +276,10 @@ def signature(x, N, back):
     return (sol, gp, back)
 
 
-def solve(views, N, d_guess, steps=4000, restarts=2, n_polish=10, seed=0, verbose=False):
+def solve(views, N, d_guess, steps=4000, restarts=2, n_polish=10, seed=0, verbose=False, fast=None):
+    fast = FAST if fast is None else fast
+    if fast:                                           # E058 fast config: early stop, adaptive restart
+        return _solve_fast(views, N, d_guess, n_polish, seed, verbose)
     t0 = time.time()
     cands = []
     for back in ("air", "metal"):
@@ -286,6 +289,10 @@ def solve(views, N, d_guess, steps=4000, restarts=2, n_polish=10, seed=0, verbos
             cands += [(mp.energy(c[None, :])[0][0], c, back) for c in cand]
             if verbose:
                 print(f"  PT {back} r{rs}: chi2n {best[2] / sum(2 * v[0].size for v in mp.views):.2f} {time.time() - t0:.0f}s", flush=True)
+    return _finish(cands, views, N, d_guess, n_polish, t0)
+
+
+def _finish(cands, views, N, d_guess, n_polish, t0):
     cands.sort(key=lambda c: c[0])
     pol = {b: Polisher(views, N, b, d_guess) for b in ("air", "metal")}
     done = []
@@ -315,6 +322,31 @@ def solve(views, N, d_guess, steps=4000, restarts=2, n_polish=10, seed=0, verbos
     return dict(x=x, back=back, chi2=chi, labels=labs, chi2n=chi / n_all, alarm=bool(chi > ST.chi2_alarm(n_all)),
                 lay=lay, slots=slots, crb_t=crb, weak=weak, unobserved=unobs, alternatives=alts,
                 ambiguous=bool(alts), wall_s=time.time() - t0)
+
+
+def _solve_fast(views, N, d_guess, n_polish, seed, verbose):
+    """E058: one PT run per backing with early stopping on a coarser frequency subset; a second
+    (independent) run only if the polished, cycle-scanned answer still raises the chi2 alarm."""
+    t0 = time.time()
+    old = PT.SUB
+    PT.SUB = FAST_SUB
+    try:
+        probs = {b: MultiProblem(views, N, b, d_guess) for b in ("air", "metal")}
+    finally:
+        PT.SUB = old
+    cands = []
+    for rs in range(2):
+        for b, mp in probs.items():
+            best, cand = PT.run(mp, n_rep=FAST_REP, steps=4000, seed=seed + 101 * rs, patience=FAST_PATIENCE)
+            cands += [(mp.energy(c[None, :])[0][0], c, b) for c in cand]
+        res = _finish(list(cands), views, N, d_guess, n_polish, t0)
+        if not res["alarm"]:
+            break
+    return res
+
+
+FAST = False
+FAST_SUB, FAST_REP, FAST_PATIENCE = 48, 6, 600
 
 
 def score(res, tr, N, t_tol=(0.3e-3, 0.02), g_tol=(0.3e-3, 0.05)):
