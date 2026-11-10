@@ -426,7 +426,7 @@ def _candidates(taus, amps, N, front):
 
 SPLIT = 5e-3            # optional extra interfaces around the strongest echoes (thin layers)
 N_SPLIT = 0             # thin-layer splits OFF: they crowded the true candidate out (E049e regression)
-AMBIG_DCHI2 = 10.0      # structurally different answers within this data-chi2 of the best are reported
+AMBIG_DCHI2 = 4.0       # structurally different answers within this data-chi2 of the best are reported
 
 
 def _cand_to_x(d, lay, slots, N, back):
@@ -542,6 +542,7 @@ def _screen_batch(cands, f, y, sigma, N, chunk=2000, top_geo=400):
         Xs, cs = _class_sweeps(X, f, y, sigma, N, back)
         for o, xs_, c_ in zip(sub, Xs, cs):
             final.append((float(c_), o[1], _x_to_layers(xs_, (o[2], o[3]), N), o[3], back))
+            final.append((o[0], o[1], o[2], o[3], back))   # E049i: the unswept start stays a candidate
     final.sort(key=lambda t: t[0])
     return final
 
@@ -630,6 +631,31 @@ def solve_echo(f, y, sigma, N, d_guess, n_refine=8, verbose=False, n_split=None)
         gp = [round(L.t.value * 1e3) for (kind, _), L in zip(sl, m.layers) if kind == "gap"]
         return (tuple(sol), tuple(gp), bk)
     alts, seen = [], {_sig(mod, slots, back)}
+    # E049i: explicit alternative basins that local error bars cannot see: every gap merged into the
+    # solid layer in front of it, and every low-contrast solid (eps' < 1.3) split into solid + gap
+    old_p = SR._PRIORS
+    SR._PRIORS = (pri,)
+    try:
+        lay0 = ST.describe(mod)
+        for j, ((kind, i), L) in enumerate(zip(slots, lay0)):
+            trials = []
+            if kind == "gap" and j > 0 and slots[j - 1][0] == "solid":
+                merged = lay0[:j - 1] + [dict(lay0[j - 1], t=lay0[j - 1]["t"] + L["t"])] + lay0[j + 1:]
+                trials.append((merged, slots[:j] + slots[j + 1:]))
+            if kind == "solid" and not L["water"] and L["er"] < 1.3 and (j + 1 >= len(slots) or slots[j + 1][0] != "gap"):
+                half = dict(L, t=L["t"] / 2)
+                gap = dict(t=L["t"] / 2, er=1.0001, td=1e-5, water=False)
+                trials.append((lay0[:j] + [half, gap] + lay0[j + 1:], slots[:j + 1] + [("gap", i)] + slots[j + 1:]))
+            for L2, sl2 in trials:
+                mm = ST.rebuild(mod, layers=L2)
+                for (kd, _), Lm in zip(sl2, mm.layers):
+                    if kd == "gap":
+                        Lm.eps_r.free = Lm.tan_d.free = False
+                        Lm.eps_r.value, Lm.tan_d.value = 1.0, 0.0
+                mm, _ = ST._fit(mm, f, y, sigma)
+                refined.append((0.0, mm, sl2, back))
+    finally:
+        SR._PRIORS = old_p
     for cc, mm, sl, bk in sorted(refined, key=lambda t: t[0]):
         Gm, _ = I.forward(mm, f, jacobian=False)
         cm = float(np.sum(np.abs((Gm - y) / sigma) ** 2))

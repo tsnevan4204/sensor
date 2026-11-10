@@ -1,0 +1,12 @@
+seed 1 SILENT 188s chi2/n 1.01 route echo+split weak [False, False, False, False] t_err_mm [0.03 0.04 0.26 0.26]
+   truth [('chipbo', 11.4), ('plywoo', 6.2), ('foam', 16.3)] gaps [0. 0. 0.] metal
+   fit   [('chipbo', 11.4), ('plywoo', 6.1), ('foam', 8.9)] gaps [0.  0.  7.6] metal
+seed 2 flag 167s chi2/n 1.86 route echo (split worse) weak [False, False, False, False] t_err_mm [0.04 0.02 0.07 0.26]
+   truth [('batt', 58.0), ('wood', 23.3), ('brick', 88.1)] gaps [9.4 0. ] air
+   fit   [('batt', 56.5), ('wood', 22.4), ('brick', 85.9)] gaps [11.4  0. ] air
+seed 3 OK 43s chi2/n 0.97 route echo weak [False, False, False] t_err_mm [0.02 0.11 0.06]
+   truth [('batt', 33.3), ('brick', 64.3), ('wood', 30.3)] gaps [0. 0.] air
+   fit   [('batt', 33.2), ('brick', 64.2), ('wood', 30.3)] gaps [0. 0.] air
+seed 4 WEAK 79s chi2/n 1.02 route echo weak [False, False, False, True] t_err_mm [0.04 0.02 0.1  2.87]
+   truth [('foam', 26.6), ('water', 4.4), ('batt', 50.7)] gaps [19.4  0. ] air
+   fit   [('foam', 26.5), ('water', 4.3), ('brick', 1.3)] gaps [19.4  0. ] air
