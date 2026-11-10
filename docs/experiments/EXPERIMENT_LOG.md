@@ -1007,3 +1007,16 @@ First tests: 404 (echo failure) OK, χ²/n 1.02; 401 (echo failure) OK, χ²/n 0
     - 425: 18 mm gap missing, compensated;
     - 432: a spurious gap.
   These are equal-fit alternatives; they must be reported via the Δχ² ambiguity scan (not yet in the PT path).
+
+## E061 — xsolve on the 50-wall dev set (PT + LS polish + mmWave cycle scan), 0° only
+Result: OK 41, flagged 3, weak/unobs 1, SILENT 5 (old echo pipeline on the same walls: OK 15). Median 235 s.
+Geometry correct on 43/50.
+- The 5 silent:
+  - 406: concrete split into two layers to make up the third; back foam behind the concrete not observed.
+    → E061b "unresolved interface" check.
+  - 446: errors 1.2–1.9 mm, inside the stated CRB of 1.2–3.8 mm → scoring should count ±2 CRB as honest.
+  - 444, 407: confident wrong labels (foam→batt, floorboard→brick).
+    → E061c Laplace class evidence (each class refit from its own centre: 444 fixed).
+  - 405: batt off by 1.16 mm with CRB 0.11 mm. Unexplained.
+- Flagged: 413, 431, 442. Unconverged search behind concrete.
+- Partial run with 3 angles (0/15/30°): 22/24 OK, 0 silent, median 555 s.
