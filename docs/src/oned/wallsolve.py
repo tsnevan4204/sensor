@@ -154,7 +154,7 @@ def _subset(f, y, s, per_band=48, fmax=None):
     return f[idx], y[idx], s[idx]
 
 
-def global_search(f, y, s, N, back, d_guess, d_tol=0.01, seed=0, maxiter=400, popsize=12):
+def global_search(f, y, s, N, back, d_guess, d_tol=0.01, seed=0, maxiter=1500, popsize=15):
     lo, hi, NG = layout(N, back)
     lo[0], hi[0] = d_guess - d_tol, d_guess + d_tol
     lib_arr = _lib_arrays()
@@ -198,7 +198,7 @@ def _to_stack(x, N, back):
 
 def solve(f, y, sigma, N, d_guess, d_tol=0.01, seed=0, verbose=False):
     t0 = time.time()
-    fs, ys, ss = _subset(f, y, sigma)
+    fs, ys, ss = _subset(f, y, sigma, per_band=64, fmax=20e9)   # global search on the smooth (low) bands only
     cands = []
     for back in ("air", "metal"):
         x, val = global_search(fs, ys, ss, N, back, d_guess, d_tol, seed=seed)
@@ -223,6 +223,7 @@ def solve(f, y, sigma, N, d_guess, d_tol=0.01, seed=0, verbose=False):
                 elif L.theta.value < 0.5:
                     L.pinf.free = True
             mod, c = ST._fit(mod, f, y, sigma)
+            mod, c = SR.cycle_hop(mod, f, y, sigma, SR.Opts(search_step=1, search_atol=0.0))   # high-band cycles
             if best is None or c < best[1]:
                 best = (mod, c, slots, back)
     finally:
