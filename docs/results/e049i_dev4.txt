@@ -1,0 +1,12 @@
+seed 2 flag 169s chi2/n 1.86 route echo (split worse)
+   truth [('batt', 58.0), ('wood', 23.3), ('brick', 88.1)] gaps [9.4 0. ] air
+   fit   [('batt', 56.5), ('wood', 22.4), ('brick', 85.9)] gaps [11.4  0. ] air
+seed 1 SILENT 192s chi2/n 1.01 route echo+split
+   truth [('chipbo', 11.4), ('plywoo', 6.2), ('foam', 16.3)] gaps [0. 0. 0.] metal
+   fit   [('chipbo', 11.4), ('plywoo', 6.1), ('foam', 8.9)] gaps [0.  0.  7.6] metal
+seed 3 OK 40s chi2/n 0.97 route echo
+   truth [('batt', 33.3), ('brick', 64.3), ('wood', 30.3)] gaps [0. 0.] air
+   fit   [('batt', 33.2), ('brick', 64.2), ('wood', 30.3)] gaps [0. 0.] air
+seed 4 WEAK 77s chi2/n 1.02 route echo
+   truth [('foam', 26.6), ('water', 4.4), ('batt', 50.7)] gaps [19.4  0. ] air
+   fit   [('foam', 26.5), ('water', 4.3), ('brick', 1.3)] gaps [19.4  0. ] air

@@ -541,10 +541,17 @@ def _screen_batch(cands, f, y, sigma, N, chunk=2000, top_geo=400):
         X = np.array([o[5] for o in sub])
         Xs, cs = _class_sweeps(X, f, y, sigma, N, back)
         for o, xs_, c_ in zip(sub, Xs, cs):
-            final.append((float(c_), o[1], _x_to_layers(xs_, (o[2], o[3]), N), o[3], back))
-            final.append((o[0], o[1], o[2], o[3], back))   # E049i: the unswept start stays a candidate
+            final.append((float(c_), o[1], _x_to_layers(xs_, (o[2], o[3]), N), o[3], back, "swept"))
+            final.append((o[0], o[1], o[2], o[3], back, "raw"))   # E049i: the unswept start stays a candidate
     final.sort(key=lambda t: t[0])
-    return final
+    # E049j: interleave so neither kind crowds the other out of the short-fit slots
+    raw = [t[:5] for t in final if t[5] == "raw"]
+    swept = [t[:5] for t in final if t[5] == "swept"]
+    out2 = []
+    for a, b in zip(raw, swept):
+        out2 += [a, b]
+    out2 += raw[len(swept):] + swept[len(raw):]
+    return out2
 
 
 def solve_echo(f, y, sigma, N, d_guess, n_refine=8, verbose=False, n_split=None):
@@ -635,6 +642,7 @@ def solve_echo(f, y, sigma, N, d_guess, n_refine=8, verbose=False, n_split=None)
     # solid layer in front of it, and every low-contrast solid (eps' < 1.3) split into solid + gap
     old_p = SR._PRIORS
     SR._PRIORS = (pri,)
+    alt_tested = []                                   # dchi2 of every explicit alternative basin
     try:
         lay0 = ST.describe(mod)
         for j, ((kind, i), L) in enumerate(zip(slots, lay0)):
@@ -654,6 +662,8 @@ def solve_echo(f, y, sigma, N, d_guess, n_refine=8, verbose=False, n_split=None)
                         Lm.eps_r.value, Lm.tan_d.value = 1.0, 0.0
                 mm, _ = ST._fit(mm, f, y, sigma)
                 refined.append((0.0, mm, sl2, back))
+                Gt, _ = I.forward(mm, f, jacobian=False)
+                alt_tested.append(round(float(np.sum(np.abs((Gt - y) / sigma) ** 2)) - chi, 1))
     finally:
         SR._PRIORS = old_p
     for cc, mm, sl, bk in sorted(refined, key=lambda t: t[0]):
@@ -673,7 +683,7 @@ def solve_echo(f, y, sigma, N, d_guess, n_refine=8, verbose=False, n_split=None)
     return dict(model=mod, slots=slots, back=back, chi2=chi, chi2n=chi / n_all,
                 alarm=bool(chi > ST.chi2_alarm(n_all)), wall_s=time.time() - t0, labels=pri.labels(mod),
                 n_echoes=len(taus), n_cands=len(cands), t_err=t_err, weak=weak,
-                ambiguous=bool(alts), alternatives=alts, unobserved=unobserved)
+                ambiguous=bool(alts), alternatives=alts, unobserved=unobserved, alt_tested=alt_tested)
 
 
 
