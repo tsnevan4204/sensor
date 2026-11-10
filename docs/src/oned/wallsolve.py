@@ -66,7 +66,7 @@ def make_problem(seed, N, bands=BANDS3, snr=SNR3, p_gap=0.35, p_wet=0.0, p_metal
         nr = np.random.default_rng(seed + 7919 * (k + 1))
         ys.append(G + sig * (nr.standard_normal(f.size) + 1j * nr.standard_normal(f.size)))
         fs.append(f); ss.append(np.full(f.size, sig))
-    truth = dict(layers=desc, gaps=gaps, back=back, standoff=d, T=Tw)
+    truth = dict(layers=desc, gaps=gaps, back=back, standoff=d, T=Tw, _layers=layers)
     return np.concatenate(fs), np.concatenate(ys), np.concatenate(ss), truth
 
 
@@ -81,27 +81,34 @@ def _visible(layers, back, vis_db):
 
 
 # ============================================================================ batched forward
-# parameter vector: [d, (lt, la, lb, p, c) x N, g x NG]   (NG = N-1 (+1 if metal))
-#   t = exp(lt); eps' = 1 + exp(la); tan d = exp(lb); p in [0, .99]; theta = sigmoid(c); g_eff = max(g, 0)
+# parameter vector: [d, (lt, la, lb, u, c) x N, g x NG, T]   (NG = N-1 (+1 if metal))
+#   t = exp(lt); eps' = 1 + exp(la); tan d = exp(lb); p = 1 - exp(-u) (u in [0,7]: p up to 0.999,
+#   brick/plywood need p ~ 0.996); theta = sigmoid(c); g_eff = max(g, 0); T = water temperature (C)
 def layout(N, back):
     NG = N - 1 + (1 if back == "metal" else 0)
-    lo = [0.0] + [np.log(3e-4), np.log(0.02), np.log(1e-4), 0.0, -6.0] * N + [-10e-3] * NG
-    hi = [0.0] + [np.log(0.25), np.log(11.0), np.log(0.5), 0.99, 6.0] * N + [40e-3] * NG
+    lo = [0.0] + [np.log(3e-4), np.log(0.02), np.log(1e-4), 0.0, -6.0] * N + [-10e-3] * NG + [0.0]
+    hi = [0.0] + [np.log(0.25), np.log(11.0), np.log(0.5), 7.0, 6.0] * N + [40e-3] * NG + [40.0]
     return np.array(lo), np.array(hi), NG
 
 
-def gamma_batch(X, f, N, back, T=20.0):
+def _theta(c):
+    """Water fraction from its search coordinate, EXACTLY 0 below c ~ -4.6 (a floor of 0.25 %
+    liquid water shifts eps' by ~0.05 - far above the noise: E046 bug)."""
+    return np.clip((1 / (1 + np.exp(-c)) - 0.01) / 0.98, 0.0, 1.0)
+
+
+def gamma_batch(X, f, N, back):
     """X (P, D) -> Gamma (P, F) including the standoff phase; exact reflection recursion."""
     P = X.shape[0]
     k0 = 2 * np.pi * f / C0
-    w = W.eps_water_lhm(f, T)[None, :]
+    w = W.eps_water_lhm(f[None, :], X[:, -1:])                    # (P, F): fitted water temperature
     sw = np.sqrt(w)
     lg = -np.log(f / F_REF)[None, :]
     NG = N - 1 + (1 if back == "metal" else 0)
     ns, ts = [], []
     for i in range(N):
-        lt, la, lb, p, c = (X[:, 1 + 5 * i + j][:, None] for j in range(5))
-        er, td, th = 1 + np.exp(la), np.exp(lb), 1 / (1 + np.exp(-c))
+        lt, la, lb, u, c = (X[:, 1 + 5 * i + j][:, None] for j in range(5))
+        er, td, th, p = 1 + np.exp(la), np.exp(lb), _theta(c), 1 - np.exp(-u)
         a = 2 / np.pi * np.arctan(td / (1 - p))
         h = er * (p + (1 - p - 1j * td) * np.exp(a * lg))
         s = (1 - th) * np.sqrt(h) + th * sw
@@ -131,7 +138,7 @@ def _prior_batch(X, N, lib_arr, w=1.0):
         d = x[:, None, :] - mus[None, :, :]                        # (P, C, 2)
         z = np.einsum("pci,cij->pcj", d, Ls)
         m = np.min(np.sum(z ** 2, axis=2), axis=1)
-        dry = 1 / (1 + np.exp(c)) > 0.5
+        dry = _theta(c) < 0.5
         pen += w * np.where(dry, m, 0.0)
     return pen
 
@@ -204,11 +211,11 @@ def _to_stack(x, N, back):
     lay, slots = [], []
     NG = N - 1 + (1 if back == "metal" else 0)
     for i in range(N):
-        lt, la, lb, p, c = x[1 + 5 * i: 6 + 5 * i]
-        th = 1 / (1 + np.exp(-c))
+        lt, la, lb, u, c = x[1 + 5 * i: 6 + 5 * i]
+        th, p = float(_theta(c)), 1 - np.exp(-u)
         if th > 0.6:
             lay.append(dict(t=float(np.exp(lt)), er=1.0, td=0.0, water=True))
-        elif th > 0.03:
+        elif th > 0.005:
             lay.append(dict(t=float(np.exp(lt)), er=float(1 + np.exp(la)), td=float(np.exp(lb)), water=False,
                             moist=True, theta=float(th), pinf=float(p)))
         else:
@@ -220,7 +227,7 @@ def _to_stack(x, N, back):
             if g > GAP_MIN:
                 lay.append(dict(t=g, er=1.0001, td=1e-5, water=False))
                 slots.append(("gap", i))
-    return lay, float(x[0]), slots
+    return lay, float(x[0]), slots, float(x[-1])
 
 
 def solve(f, y, sigma, N, d_guess, d_tol=0.01, seed=0, verbose=False):
@@ -239,9 +246,9 @@ def solve(f, y, sigma, N, d_guess, d_tol=0.01, seed=0, verbose=False):
     best = None
     try:
         for val, x, back in cands:
-            lay, d, slots = _to_stack(x, N, back)
+            lay, d, slots, Tw = _to_stack(x, N, back)
             ST.SBOX = (d - 0.005, d + 0.005)
-            mod = ST.build(lay, d, back=back)
+            mod = ST.build(lay, d, back=back, water_T=Tw)
             ST.SBOX = None
             for (kind, _), L in zip(slots, mod.layers):
                 if kind == "gap":                     # gap layers are air: only thickness free
