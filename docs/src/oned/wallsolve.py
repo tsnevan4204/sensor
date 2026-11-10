@@ -424,7 +424,8 @@ def _candidates(taus, amps, N, front):
     return out
 
 
-SPLIT = 5e-3            # optional extra interfaces around each echo (thin layers)
+SPLIT = 5e-3            # optional extra interfaces around the strongest echoes (thin layers)
+N_SPLIT = 3             # only the N_SPLIT strongest echoes behind the front are split
 AMBIG_DCHI2 = 10.0      # structurally different answers within this data-chi2 of the best are reported
 
 
@@ -441,8 +442,9 @@ def solve_echo(f, y, sigma, N, d_guess, n_refine=8, verbose=False):
         k = int(np.argmin(np.abs(taus - d_guess)))
     # E049d: thin layers merge two interfaces into one echo (6 mm plywood: 18.1/28.5 mm -> 24.3 mm);
     # every echo behind the front also spawns optional interfaces at +-SPLIT, so a merged echo can split
-    later = [t for t in taus if t > taus[k] + 2e-3]
-    extra = [t + dd for t in later for dd in (-SPLIT, SPLIT) if t + dd > taus[k] + 2e-3]
+    later = [(abs(amps[0][j]), t) for j, t in enumerate(taus) if t > taus[k] + 2e-3]
+    strong = [t for _, t in sorted(later, reverse=True)[:N_SPLIT]]          # bounded: combinatorics
+    extra = [t + dd for t in strong for dd in (-SPLIT, SPLIT) if t + dd > taus[k] + 2e-3]
     taus = np.sort(np.concatenate([taus, extra]))
     taus, amps, _ = EC._refine(EC._bands(f, y, sigma), taus, iters=0)
     k = int(np.argmin(np.abs(taus - d_guess)))
