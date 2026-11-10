@@ -305,3 +305,72 @@ def score(res, truth, N, t_tol=(0.3e-3, 0.02), g_tol=(0.3e-3, 0.05)):
     return dict(ok=bool(ok), back_ok=ok_back, t_ok=t_ok, mat_ok=m_ok, gap_ok=g_ok,
                 t_err_mm=[1e3 * (s["t"] - L["t"]) for s, L in zip(solids, tl)],
                 gaps_true_mm=[1e3 * g for g in tg], gaps_fit_mm=[1e3 * g for g in fg])
+
+
+# ============================================================================ E048: measured eps(f), unknown flag
+EPS_REPORT_F = np.array([0.5e9, 0.8e9, 3.1e9, 5e9, 7.5e9, 10e9, 60e9, 62e9, 64e9])
+UNKNOWN_D2 = 13.8        # chi2(2 dof) 99.9 % quantile: farther than this from every class = unknown
+
+
+def free_refit(res, f, y, sigma):
+    """Refit the solved wall with the material-library prior OFF: every layer's eps(f) is what the
+    data say. Returns per-solid-layer measured eps(f) at EPS_REPORT_F with 1-sigma errors (Fisher,
+    delta method) and the nearest library class with its Mahalanobis distance (unknown flag)."""
+    mod = res["model"]
+    old = SR._PRIORS
+    SR._PRIORS = ()
+    try:
+        mod, c = ST._fit(mod, f, y, sigma)
+    finally:
+        SR._PRIORS = old
+    try:
+        F = I.fisher(mod, f, sigma)
+        cov, names = F["cov"], F["names"]
+    except Exception:
+        cov, names = None, mod.free_names()
+    lib = ST.library_stats()
+    T = mod.water_Tp.value if mod.water_Tp is not None else mod.water_T
+    out = []
+    for (kind, i), L in zip(res["slots"], mod.layers):
+        if kind != "solid":
+            continue
+        eps, d = I.layer_eps_and_derivs(L, EPS_REPORT_F, T, mod.law, mod.f_ref, mod.water_law)
+        err = np.full(EPS_REPORT_F.size, np.nan)
+        if cov is not None:                      # delta method on |eps| components
+            g = np.zeros((len(names), EPS_REPORT_F.size), complex)
+            for key in ("eps_r", "tan_d", "pinf", "theta"):
+                o = mod.owner(f"{L.name}.{key}")
+                if o is not None and o in names:
+                    g[names.index(o)] += d[key]
+            err = np.sqrt(np.abs(np.einsum("if,ij,jf->f", g.real, cov, g.real))
+                          + np.abs(np.einsum("if,ij,jf->f", g.imag, cov, g.imag)))
+        x = np.array([np.log(max(L.eps_r.value, 1.0001)), np.log10(max(L.tan_d.value, 1e-6))])
+        dists = {nm: float((x - mu) @ np.linalg.solve(C, x - mu)) for nm, (mu, C) in lib.items()}
+        nearest = min(dists, key=dists.get)
+        water = L.theta.value > 0.5 and not L.theta.free
+        out.append(dict(t=L.t.value, eps=eps, eps_err=err, theta=L.theta.value,
+                        label="water" if water else (nearest if dists[nearest] <= UNKNOWN_D2 else "unknown"),
+                        nearest=nearest, d2=dists[nearest]))
+    G, _ = I.forward(mod, f, jacobian=False)
+    chi = float(np.sum(np.abs((G - y) / sigma) ** 2))
+    return dict(model=mod, chi2=chi, layers=out)
+
+
+def random_causal_material(rng):
+    """Out-of-library truth material: random Jonscher host (eps' 1.5-9, tan d 1e-3-0.2, shape p)
+    plus, half the time, one Cole-Cole relaxation (centre 0.5-30 GHz, strength 0.2-3, alpha 0-0.4).
+    Exactly causal and passive; NOT representable by the solver's family when the relaxation is on."""
+    er = float(np.exp(rng.uniform(np.log(1.5), np.log(9.0))))
+    td = float(np.exp(rng.uniform(np.log(1e-3), np.log(0.2))))
+    p = float(rng.uniform(0, 0.9))
+    relax = rng.random() < 0.5
+    de, f0, al = float(rng.uniform(0.2, 3.0)), float(np.exp(rng.uniform(np.log(0.5e9), np.log(30e9)))), float(rng.uniform(0, 0.4))
+
+    def eps(f):
+        f = np.asarray(f, float)
+        a = 2 / np.pi * np.arctan(td / (1 - p))
+        e = er * (p + (1 - p - 1j * td) * (f / F_REF) ** (-a))
+        if relax:
+            e = e + de / (1 + (1j * f / f0) ** (1 - al))
+        return e
+    return eps, dict(name="custom", eps10=er, tan10=td, p=p, relax=relax, d_eps=de, f0=f0, alpha=al)
