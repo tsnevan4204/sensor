@@ -144,9 +144,24 @@ class Polisher:
             G = gamma_ang(X, f, self.N, self.back, th)
             r = (G - y[None, :]) / s[None, :]
             rs += [r.real, r.imag]
-        pen = WS._prior_batch(X, self.N, self.lib)
+        pen = self.prior(X)
         rs.append(np.sqrt(np.maximum(pen, 0) + 1e-12)[:, None])
         return np.concatenate(rs, axis=1)
+
+    force = None                                   # {layer: class index}: that layer's prior is class c
+
+    def prior(self, X):
+        if not self.force:
+            return WS._prior_batch(X, self.N, self.lib)
+        mus, Ls = self.lib
+        pen = np.zeros(X.shape[0])
+        for i in range(self.N):
+            la, lb = X[:, 2 + 5 * i], X[:, 3 + 5 * i]
+            v = np.stack([np.log(1 + np.exp(la)), lb / np.log(10)], axis=1)
+            d = v[:, None, :] - mus[None, :, :]
+            m = np.sum(np.einsum("pci,cij->pcj", d, Ls) ** 2, axis=2)
+            pen += m[:, self.force[i]] if i in self.force else np.min(m, axis=1)
+        return pen
 
     def polish(self, x0, max_nfev=60):
         x0 = np.clip(x0, self.lo, self.hi)
@@ -192,7 +207,7 @@ class Polisher:
         return out
 
 
-def labels(pol, x):
+def labels_approx(pol, x):
     """Library label per solid layer: nearest class in (ln eps', log10 tan d) by the Mahalanobis
     distance with covariance C_class + C_measurement (Fisher). A loss that the data do not measure
     (thin foam) then does not decide the class."""
@@ -222,12 +237,61 @@ def labels(pol, x):
         pr = {nm: np.exp(v_ - mx) for nm, v_ in lp.items()}
         Z = sum(pr.values())
         pr = {nm: v_ / Z for nm, v_ in pr.items()}
-        out.append(sorted(((p_, nm) for nm, p_ in pr.items() if p_ >= LABEL_P), reverse=True))
+        out.append(sorted(((p_, nm) for nm, p_ in pr.items()), reverse=True))
     return out
 
 
 VIS_DCHI2 = 25.0    # layers behind which the data change by less than this are 'not observed'
 LABEL_P = 0.10      # every class with posterior >= 10 % is reported (equal priors over classes)
+
+
+def class_evidence(pol, x, top=3, max_nfev=120):
+    """E061c: posterior class probabilities per solid layer by Laplace evidence: refit with that
+    layer's prior FORCED to class c (others: nearest class), score_c = chi2_c + Mahalanobis_c +
+    ln det C_c; P(c) ~ exp(-score_c / 2). Candidates: the `top` classes nearest in the data-only
+    estimate. Replaces reading the label off a fit that one class prior already pulled."""
+    lib = ST.library_stats()
+    names = list(lib.keys())
+    mus, Ls = pol.lib
+    logdet = {nm: float(np.log(np.linalg.det(C))) for nm, (mu, C) in lib.items()}
+    tab = {nm: (er, td, p) for nm, er, td, p in WS.class_table()}
+    out = []
+    approx = labels_approx(pol, x)
+    for i in range(pol.N):
+        cand = [nm for _, nm in approx[i][:top]]
+        sc = {}
+        for nm in cand:
+            c = names.index(nm)
+            pol.force = {i: c}
+            try:
+                # two starts: the current fit, and this class's typical (eps', tan d, p) at the
+                # same optical thickness (the dispersion shape p is not in the 2-D prior)
+                er0, td0, p0 = tab[nm]
+                starts = [x]
+                for u0 in sorted({0.0, 3.0, 7.0, float(-np.log(max(1 - min(p0, 0.999), 1e-3)))}):
+                    xc = x.copy()
+                    xc[2 + 5 * i], xc[3 + 5 * i] = np.log(er0 - 1), np.log(td0)
+                    xc[4 + 5 * i] = u0
+                    # quick screen: keep the 2 best class-centre starts by chi2
+                    starts.append(xc)
+                ch = [pol.chi2(z) for z in starts[1:]]
+                starts = [x] + [starts[1 + j] for j in np.argsort(ch)[:2]]
+                best = None
+                for x0 in starts:
+                    xp, chi, _ = pol.polish(x0, max_nfev=max_nfev)
+                    la, lb = xp[2 + 5 * i], xp[3 + 5 * i]
+                    v = np.array([np.log(1 + np.exp(la)), lb / np.log(10)])
+                    m = float(np.sum(((v - mus[c]) @ Ls[c]) ** 2))
+                    if best is None or chi + m < best:
+                        best = chi + m
+                sc[nm] = best + logdet[nm]
+            finally:
+                pol.force = None
+        mn = min(sc.values())
+        pr = {nm: np.exp(-0.5 * (v_ - mn)) for nm, v_ in sc.items()}
+        Z = sum(pr.values())
+        out.append(sorted(((p_ / Z, nm) for nm, p_ in pr.items() if p_ / Z >= LABEL_P), reverse=True))
+    return out
 
 
 LAM2_MM = C0 / (2 * 62e9)          # mmWave half-wavelength: period of a weak interface's phase
@@ -319,7 +383,7 @@ def _finish(cands, views, N, d_guess, n_polish, t0):
     sol = [L for (k, _), L in zip(slots, lay) if k == "solid"]
     weak = [bool(e > 0.2 * L["t"]) for e, L in zip(crb, sol)]
     unobs = [i for i, L in enumerate(sol) if L["er"] < 1.03]
-    labs = labels(pol[back], x)
+    labs = class_evidence(pol[back], x)
     # E061b: honesty checks for walls with fewer observable layers than the N the user gave
     #  (1) unresolved interface: adjacent solids (no gap) whose label sets overlap -> one interface unseen
     unresolved = []
