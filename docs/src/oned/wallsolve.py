@@ -374,3 +374,99 @@ def random_causal_material(rng):
             e = e + de / (1 + (1j * f / f0) ** (1 - al))
         return e
     return eps, dict(name="custom", eps10=er, tan10=td, p=p, relax=relax, d_eps=de, f0=f0, alpha=al)
+
+
+# ============================================================================ E049: echo-subset solver
+def _impedance(amps_low, idx):
+    """Interval indices from the chosen echoes' amplitudes (lowest band), recursion with two-way
+    transmission correction."""
+    a = np.real(np.asarray(amps_low)[list(idx)])
+    n_prev, T2, ns = 1.0, 1.0, []
+    for k in range(len(idx) - 1):
+        r = float(np.clip(a[k] / max(T2, 1e-3), -0.95, 0.95))
+        n = float(np.clip(n_prev * (1 - r) / (1 + r), 1.0, 9.0))
+        ns.append(n); T2 *= (1 - r ** 2); n_prev = n
+    return ns
+
+
+def _candidates(taus, amps, N, max_front=3):
+    import itertools
+    M_all = len(taus)
+    out = []
+    for M in range(N + 1, min(2 * N + 1, M_all) + 1):
+        for idx in itertools.combinations(range(M_all), M):
+            if idx[0] >= max_front:
+                continue
+            ns = _impedance(amps[0], idx)
+            dt = np.diff(np.asarray(taus)[list(idx)])
+            n_gap = (M - 1) - N
+            if n_gap < 0:
+                continue
+            for gaps in itertools.combinations(range(M - 1), n_gap):
+                if any(g + 1 < M - 1 and g + 1 in gaps for g in gaps):
+                    continue                              # two gaps in a row = one gap
+                lay, slots, k_solid = [], [], 0
+                for k in range(M - 1):
+                    if k in gaps:
+                        lay.append(dict(t=max(dt[k], 3e-4), er=1.0001, td=1e-5, water=False))
+                        slots.append(("gap", k_solid - 1))
+                    else:
+                        n = max(ns[k], 1.02)
+                        if n > 6.0:
+                            lay.append(dict(t=max(dt[k] / 8.6, 3e-4), er=1.0, td=0.0, water=True))
+                        else:
+                            lay.append(dict(t=max(dt[k] / n, 3e-4), er=n ** 2, td=0.02, water=False))
+                        slots.append(("solid", k_solid)); k_solid += 1
+                if slots and slots[0][0] == "gap":
+                    continue                              # nothing before the first solid layer
+                out.append((float(taus[idx[0]]), lay, slots))
+    return out
+
+
+def solve_echo(f, y, sigma, N, d_guess, n_refine=8, verbose=False):
+    import echoes as EC
+    t0 = time.time()
+    taus, amps, _ = EC.find_echoes(f, y, sigma, d_guess)
+    cands = _candidates(taus, amps, N)
+    scored = []
+    for d, lay, slots in cands:
+        for back in ("air", "metal"):
+            ST.SBOX = None
+            mod = ST.build(lay, d, back=back)
+            G, _ = I.forward(mod, f, jacobian=False)
+            c = float(np.sum(np.abs((G - y) / sigma) ** 2))
+            scored.append((c, d, lay, slots, back))
+    scored.sort(key=lambda t: t[0])
+    if verbose:
+        print(f"  echoes {len(taus)}, candidates {len(cands)}, screen {time.time() - t0:.1f}s", flush=True)
+    pri = ML.LibPrior()
+    old = SR._PRIORS
+    SR._PRIORS = (pri,)
+    best = None
+    try:
+        for c0, d, lay, slots, back in scored[:n_refine]:
+            ST.SBOX = (d - 0.004, d + 0.004)
+            mod = ST.build(lay, d, back=back, water_T=20.0)
+            ST.SBOX = None
+            for (kind, _), L in zip(slots, mod.layers):
+                if kind == "gap":
+                    L.eps_r.free = L.tan_d.free = False
+                    L.eps_r.value, L.tan_d.value = 1.0, 0.0
+            ST.set_dispersion_free(mod, True)
+            mod, c = ST._fit(mod, f, y, sigma)
+            mod, c = SR.cycle_hop(mod, f, y, sigma, SR.Opts(search_step=1, search_atol=0.0))
+            for L in mod.layers:                          # release the dispersion shape
+                if L.theta.value < 0.5 and L.eps_r.free:
+                    L.pinf.value, L.pinf.free = max(L.pinf.value, 0.02), True
+            mod, c = ST._fit(mod, f, y, sigma)
+            if best is None or c < best[1]:
+                best = (mod, c, slots, back)
+    finally:
+        SR._PRIORS = old
+    mod, c, slots, back = best
+    G, _ = I.forward(mod, f, jacobian=False)
+    chi = float(np.sum(np.abs((G - y) / sigma) ** 2))
+    n_all = 2 * f.size
+    return dict(model=mod, slots=slots, back=back, chi2=chi, chi2n=chi / n_all,
+                alarm=bool(chi > ST.chi2_alarm(n_all)), wall_s=time.time() - t0, labels=pri.labels(mod),
+                n_echoes=len(taus), n_cands=len(cands))
