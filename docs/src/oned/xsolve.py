@@ -379,6 +379,10 @@ def _finish(cands, views, N, d_guess, n_polish, t0):
         done[j] = (cs, xs, bk)
     done.sort(key=lambda d: d[0])
     chi, x, back = done[0]
+    # E061e: long final polish of the winner (high SNR needs more LS iterations to reach the noise floor)
+    xl, cl, _ = pol[back].polish(x, max_nfev=400)
+    if cl < chi:
+        x, chi = xl, cl
     n_all = sum(2 * v[0].size for v in views)
     alts, seen = [], {signature(x, N, back)}
     for c, xx, bk in done[1:]:

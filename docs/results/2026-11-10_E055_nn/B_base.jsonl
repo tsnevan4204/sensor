@@ -1,0 +1,7 @@
+{"seed": 400, "use_nn": 0, "ok": true, "geo_ok": true, "chi2n": 1.006288700992026, "alarm": false, "s": 69.71878862380981}
+{"seed": 401, "use_nn": 0, "ok": true, "geo_ok": true, "chi2n": 0.8885922132720875, "alarm": false, "s": 75.07527208328247}
+{"seed": 402, "use_nn": 0, "ok": true, "geo_ok": true, "chi2n": 0.9367341704702773, "alarm": false, "s": 80.18520522117615}
+{"seed": 403, "use_nn": 0, "ok": true, "geo_ok": true, "chi2n": 0.9616707074574485, "alarm": false, "s": 72.72122573852539}
+{"seed": 404, "use_nn": 0, "ok": true, "geo_ok": true, "chi2n": 1.0224500308448385, "alarm": false, "s": 69.14982533454895}
+{"seed": 405, "use_nn": 0, "ok": false, "geo_ok": false, "chi2n": 0.9274481714488788, "alarm": false, "s": 65.16418099403381}
+{"seed": 406, "use_nn": 0, "ok": false, "geo_ok": false, "chi2n": 0.9856636950260436, "alarm": false, "s": 61.89592719078064}

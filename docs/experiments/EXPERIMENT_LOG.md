@@ -1036,3 +1036,9 @@ On the 46 seeds common to all runs, OK counts: 0° 38, 3 angles 40, +20 dB 36.
 - Test A (NN guess → exact LS polish + cycle scan, no global search): 0/50 OK (PT: 41/50), median 34 s.
   → a 10k-parameter regressor does not invert the coupled deep layers; negative result.
 - Test B (NN-seeded vs unseeded PT at reduced budget): queued.
+- **3-angle run, final (50 walls):** OK 43, flagged 5, weak/unobs 2, silent 0. Median 554 s.
+- **E061d σ-floor tempering**, rerun of the 10 non-OK walls at +20 dB: 429, 426, 407 and 425 rescued.
+  - +20 dB total: OK 44/50, flagged 5 (400, 413, 420, 437, 442), weak 1 (406), silent 0.
+  - 420 has its geometry within 0.3 mm but χ²/n 2.98: the LS polish was not converged at high SNR.
+    → E061e: 400-iteration final polish of the winning answer.
+- **E060 held-out**, seeds 600–649, 0°, +20 dB, σ-floor + long polish: started.
