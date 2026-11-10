@@ -414,6 +414,8 @@ def _candidates(taus, amps, N, front):
                         slots.append(("gap", k_solid - 1))
                     else:
                         n = max(ns[k], 1.02)
+                        if n > 6.0 and "water" not in SOLIDS:
+                            n = 2.5                       # E052: no water layers; strong echo = dense solid
                         if n > 6.0:
                             lay.append(dict(t=max(dt[k] / 8.6, 3e-4), er=1.0, td=0.0, water=True))
                         else:
@@ -480,7 +482,8 @@ def _class_sweeps(X, f, y, sigma, N, back, sweeps=2):
     (plywood: eps'' ~ 13 at 0.5 GHz), so the geometry must not be judged by them."""
     tab = class_table()
     opts = [(np.log(er - 1), np.log(td), -np.log(max(1 - p, 1e-3)), -6.0) for _, er, td, p in tab]
-    opts.append((0.0, np.log(1e-3), 0.0, 6.0))                      # water
+    if "water" in SOLIDS:
+        opts.append((0.0, np.log(1e-3), 0.0, 6.0))                  # water (out of scope since E050)
     X = X.copy()
     G = gamma_batch(X, f, N, back)
     best = np.sum(np.abs((G - y[None, :]) / sigma[None, :]) ** 2, axis=1)
@@ -523,7 +526,7 @@ SWEEPS = False          # E049h-j material sweeps: off (each tweak traded one de
 ALT_BASINS = False      # E049i explicit alternative-basin refits: off (refits unreliable, see log)
 
 
-def _screen_batch(cands, f, y, sigma, N, chunk=2000, top_geo=400):
+def _screen_batch(cands, f, y, sigma, N, chunk=2000, top_geo=400, swept_only=False):
     """Score every candidate (both backings) with ONE exact batched forward per chunk."""
     out = []
     for back in ("air", "metal"):
@@ -537,7 +540,7 @@ def _screen_batch(cands, f, y, sigma, N, chunk=2000, top_geo=400):
             G = gamma_batch(X, f, N, back)
             c = np.sum(np.abs((G - y[None, :]) / sigma[None, :]) ** 2, axis=1)
             out += [(float(ci), *meta[a + j], back, X[j]) for j, ci in enumerate(c)]
-    if not SWEEPS:
+    if not (SWEEPS or swept_only):
         out.sort(key=lambda t: t[0])
         return [t[:5] for t in out]
     # E049h: geometry is judged after material sweeps; sweep the best `top_geo` geometries per backing
@@ -552,6 +555,8 @@ def _screen_batch(cands, f, y, sigma, N, chunk=2000, top_geo=400):
             final.append((float(c_), o[1], _x_to_layers(xs_, (o[2], o[3]), N), o[3], back, "swept"))
             final.append((o[0], o[1], o[2], o[3], back, "raw"))   # E049i: the unswept start stays a candidate
     final.sort(key=lambda t: t[0])
+    if swept_only:                                    # E052 rescue: the raw starts were tried already
+        return [t[:5] for t in final if t[5] == "swept"]
     # E049j: interleave so neither kind crowds the other out of the short-fit slots
     raw = [t[:5] for t in final if t[5] == "raw"]
     swept = [t[:5] for t in final if t[5] == "swept"]
@@ -562,7 +567,58 @@ def _screen_batch(cands, f, y, sigma, N, chunk=2000, top_geo=400):
     return out2
 
 
-def solve_echo(f, y, sigma, N, d_guess, n_refine=8, verbose=False, n_split=None):
+def _peel_start(lay, slots, d, f, y, sigma):
+    """E051 'peel' start: top-down, each solid layer in turn tries every library class (optical
+    thickness kept) in front of an air half-space; the class that best explains the data time-gated
+    to that layer's back face is kept. Exact forward, f < 11 GHz."""
+    import wall_inverse as I
+    sel = f < 11e9
+    fl, yl, sl = f[sel], y[sel], sigma[sel]
+    cur = []
+    for (kind, _), L in zip(slots, lay):
+        if kind == "gap":
+            cur.append(L); continue
+        tau = L["t"] * np.sqrt(L["er"])
+        best = None
+        for _, er0, td0, p0 in class_table():
+            trial = cur + [dict(t=tau / np.sqrt(er0), er=er0, td=td0, water=False, pinf=min(p0, 0.99))]
+            ST.SBOX = None
+            m = ST.build(trial, d, back="air")
+            G, _ = I.forward(m, fl, jacobian=False)
+            rmax = d + sum(q["t"] * np.sqrt(q["er"]) for q in trial) + 0.01
+            r = np.zeros_like(G)
+            for a, b in I.band_segments(fl):
+                Op = I.Gate(-0.01, rmax).op(fl[a:b])
+                r[a:b] = np.conj(Op).T @ (Op @ (yl[a:b] - G[a:b]))
+            c = float(np.sum(np.abs(r / sl) ** 2))
+            if best is None or c < best[0]:
+                best = (c, trial[-1])
+        cur.append(best[1])
+    return cur
+
+
+def _fit_start(lay, slots, d, back, f, y, sigma, hop=False):
+    ST.SBOX = (d - 0.004, d + 0.004)
+    mod = ST.build(lay, d, back=back, water_T=20.0)
+    ST.SBOX = None
+    for (kind, _), L in zip(slots, mod.layers):
+        if kind == "gap":
+            L.eps_r.free = L.tan_d.free = False
+            L.eps_r.value, L.tan_d.value = 1.0, 0.0
+    ST.set_dispersion_free(mod, True)
+    mod, c = ST._fit(mod, f, y, sigma)
+    if hop:
+        mod, c = SR.cycle_hop(mod, f, y, sigma, SR.Opts(search_step=1, search_atol=0.0))
+    for L in mod.layers:
+        if L.theta.value < 0.5 and L.eps_r.free:
+            L.pinf.value, L.pinf.free = max(L.pinf.value, 0.02), True
+    return ST._fit(mod, f, y, sigma)
+
+
+MAT_STARTS = 0          # E052: number of short-fit geometries that also get sweep + peel material starts
+
+
+def solve_echo(f, y, sigma, N, d_guess, n_refine=8, verbose=False, n_split=None, mat_starts=None):
     import echoes as EC
     t0 = time.time()
     taus, amps, _ = EC.find_echoes(f, y, sigma, d_guess)
@@ -582,7 +638,8 @@ def solve_echo(f, y, sigma, N, d_guess, n_refine=8, verbose=False, n_split=None)
     taus, amps, _ = EC._refine(EC._bands(f, y, sigma), taus, iters=0)
     k = int(np.argmin(np.abs(taus - d_guess)))
     cands = _candidates(taus, amps, N, k)
-    scored = _screen_batch(cands, f, y, sigma, N)          # E049e: vectorised screening
+    K = MAT_STARTS if mat_starts is None else mat_starts
+    scored = _screen_batch(cands, f, y, sigma, N, swept_only=K > 0)   # E049e vectorised; E052 swept
     if verbose:
         print(f"  echoes {len(taus)}, candidates {len(cands)}, screen {time.time() - t0:.1f}s", flush=True)
     pri = ML.LibPrior()
@@ -603,10 +660,27 @@ def solve_echo(f, y, sigma, N, d_guess, n_refine=8, verbose=False, n_split=None)
                     L.eps_r.value, L.tan_d.value = 1.0, 0.0
             ST.set_dispersion_free(mod, True)
             mod, c = ST._fit(mod, f, y, sigma, atol=1e-2, max_iter=15)
-            short.append((c, d, lay, slots, back))
+            short.append((c, d, lay, slots, back, mod))
         short.sort(key=lambda t: t[0])
         refined = []
-        for c0, d, lay, slots, back in short[:n_refine]:
+        # E052: material restarts - the geometry of the best short fits is kept, the materials are
+        # re-initialised by library sweeps (batched exact) and by top-down peeling (E051: given the
+        # right geometry, sweep starts reach the truth on 24/30 walls vs 14/30 for amplitude starts)
+        for c0, d, lay, slots, back, m0 in short[:K]:
+            g = [dict(L, t=L["t"]) for L in ST.describe(m0)]
+            g = [dict(t=G_["t"], er=1.0001, td=1e-5, water=False) if kd == "gap" else G_ for (kd, _), G_ in zip(slots, g)]
+            d0 = m0.standoff.value
+            x = _cand_to_x(d0, g, slots, N, back)
+            starts = [_peel_start(g, slots, d0, f, y, sigma)]
+            if x is not None:
+                Xs, _ = _class_sweeps(x[None, :], f, y, sigma, N, back)
+                starts.append(_x_to_layers(Xs[0], (g, slots), N))
+            for st in starts:
+                mod, c = _fit_start(st, slots, d0, back, f, y, sigma)
+                refined.append((c, mod, slots, back))
+                if best is None or c < best[1]:
+                    best = (mod, c, slots, back)
+        for c0, d, lay, slots, back, _m in short[:n_refine]:
             ST.SBOX = (d - 0.004, d + 0.004)
             mod = ST.build(lay, d, back=back, water_T=20.0)
             ST.SBOX = None
@@ -707,4 +781,13 @@ def solve(f, y, sigma, N, d_guess):
     pick = a if a["chi2"] <= b["chi2"] else b
     pick["route"] = "echo+split" if pick is b else "echo (split worse)"
     pick["wall_s"] = a["wall_s"] + b["wall_s"]
+    if pick["alarm"] and MAT_RESCUE:
+        c3 = solve_echo(f, y, sigma, N, d_guess, n_split=0, mat_starts=MAT_RESCUE)
+        c3["wall_s"] += pick["wall_s"]
+        if c3["chi2"] < pick["chi2"]:
+            c3["route"] = "echo+materials"
+            return c3
     return pick
+
+
+MAT_RESCUE = 0          # E052: if still alarmed, rerun with material restarts on this many geometries
