@@ -94,28 +94,49 @@ def propose(pb, X, beta, rng):
     for i in range(N):
         step[1 + 5 * i: 6 + 5 * i] = [0.004, 0.02, 0.08, 0.15, 0.0]
     step[1 + 5 * N: 1 + 5 * N + pb.NG] = 0.3e-3
-    rw = mv < 0.5
+    rw = mv < 0.45
     Y[rw] += rng.standard_normal((rw.sum(), D)) * step[None, :] * sc[rw]
     li = rng.integers(0, N, P)
     j0 = 1 + 5 * li
-    cl = (mv >= 0.5) & (mv < 0.7)
+    ar = np.arange(P)
+    cl = (mv >= 0.45) & (mv < 0.6)
     k = rng.integers(0, len(pb.cls), P)
     for a in range(3):
         Y[cl, j0[cl] + 1 + a] = pb.cls[k[cl], a] + rng.standard_normal(cl.sum()) * (0.03, 0.15, 0.2)[a]
-    hp = (mv >= 0.7) & (mv < 0.85)
     sg = rng.choice((-1.0, 1.0), P)
-    tau = np.exp(Y[np.arange(P), j0])
+    tau = np.exp(Y[ar, j0])
+    tau2 = np.exp(Y[ar, np.minimum(j0 + 5, D - 1)])
+    hp = (mv >= 0.6) & (mv < 0.7)                        # cycle hop of one layer
     Y[hp, j0[hp]] = np.log(np.maximum(tau[hp] + sg[hp] * pb.lam2, 1e-4))
-    sh = (mv >= 0.85) & (mv < 0.95) & (li < N - 1)
-    tau2 = np.exp(Y[np.arange(P), np.minimum(j0 + 5, D - 1)])
+    sh = (mv >= 0.7) & (mv < 0.77) & (li < N - 1)        # interface moved by lambda/2
     Y[sh, j0[sh]] = np.log(np.maximum(tau[sh] + sg[sh] * pb.lam2, 1e-4))
     Y[sh, j0[sh] + 5] = np.log(np.maximum(tau2[sh] - sg[sh] * pb.lam2, 1e-4))
+    # E054e: continuous transfer of optical thickness between adjacent solids (sum kept): slides a
+    # low-contrast interface (foam|batt, foam|wood) whose echo is weak
+    tr = (mv >= 0.77) & (mv < 0.85) & (li < N - 1)
+    dl = rng.standard_normal(P) * 4e-3
+    Y[tr, j0[tr]] = np.log(np.maximum(tau[tr] + dl[tr], 1e-4))
+    Y[tr, j0[tr] + 5] = np.log(np.maximum(tau2[tr] - dl[tr], 1e-4))
     if pb.NG:
-        gp = mv >= 0.95
-        gj = 1 + 5 * N + rng.integers(0, pb.NG, P)
-        cur = Y[np.arange(P), gj]
-        new = np.where(cur > 0, -5e-3, rng.uniform(5e-3, 30e-3, P))
-        Y[gp, gj[gp]] = new[gp]
+        gi = np.minimum(li, pb.NG - 1)
+        gj = 1 + 5 * N + gi
+        lj = 1 + 5 * np.minimum(gi, N - 1)               # the solid in front of gap gi
+        g = Y[ar, gj]
+        tl = np.exp(Y[ar, lj])
+        # E054e: solid <-> gap transfer (rear interface kept): foam vs gap
+        tg = (mv >= 0.85) & (mv < 0.93) & (g > 0)
+        dg = rng.standard_normal(P) * 4e-3
+        Y[tg, gj[tg]] = g[tg] - dg[tg]
+        Y[tg, lj[tg]] = np.log(np.maximum(tl[tg] + dg[tg], 1e-4))
+        # gap open/close, conserving the rear interface's optical position
+        gp = mv >= 0.93
+        op = gp & (g <= 0)
+        gn = rng.uniform(5e-3, 30e-3, P)
+        Y[op, gj[op]] = gn[op]
+        Y[op, lj[op]] = np.log(np.maximum(tl[op] - gn[op], 1e-4))
+        cz = gp & (g > 0)
+        Y[cz, gj[cz]] = -5e-3
+        Y[cz, lj[cz]] = np.log(tl[cz] + g[cz])
     return Y
 
 

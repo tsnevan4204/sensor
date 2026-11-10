@@ -1,0 +1,334 @@
+"""
+E053: multi-angle known-N solver in parameter-vector space (same coordinates as wallsolve.gamma_batch).
+
+Forward: exact TE plane-wave reflection of the layered wall at incidence angle th,
+    kz_i = sqrt(n_i^2 - sin^2 th) (decaying branch), r_i = (kz_{i-1} - kz_i)/(kz_{i-1} + kz_i),
+    e_i = exp(-2j k0 kz_i t_i), air path exp(-2j k0 cos(th) d); th = 0 reproduces gamma_batch exactly.
+A measurement is a list of 'views' (f, y, sigma, th). Search: parallel tempering (pt.py moves) with the
+energy summed over views. Polish: bounded least squares (scipy, trust-region reflective) with the
+Jacobian from ONE batched forward call per view (central differences, D+... rows). Error bars: Fisher
+from the same Jacobian (delta method for physical thickness). Alternatives: every polished answer with a
+different structure within AMBIG_DCHI2.
+Physics of the gain: a layer's delay is 2 k0 t sqrt(n^2 - sin^2 th): from several angles, n and t
+separate (velocity analysis), which a single normal-incidence view cannot do for low-contrast layers.
+"""
+from __future__ import annotations
+import time
+import numpy as np
+from scipy.optimize import least_squares
+import wallsolve as WS
+import stack as ST
+import pt as PT
+
+C0, F_REF = WS.C0, WS.F_REF
+
+
+def gamma_ang(X, f, N, back, th):
+    P = X.shape[0]
+    k0 = 2 * np.pi * f / C0
+    s2 = np.sin(th) ** 2
+    lg = -np.log(f / F_REF)[None, :]
+    NG = N - 1 + (1 if back == "metal" else 0)
+    kz, ts = [], []
+
+    def branch(z):
+        return np.where(z.imag > 0, -z, z)
+    for i in range(N):
+        lt, la, lb, u = (X[:, 1 + 5 * i + j][:, None] for j in range(4))
+        er, td, p = 1 + np.exp(la), np.exp(lb), 1 - np.exp(-u)
+        a = 2 / np.pi * np.arctan(td / (1 - p))
+        h = er * (p + (1 - p - 1j * td) * np.exp(a * lg))
+        kz.append(branch(np.sqrt(h - s2 + 0j)))
+        ts.append(np.exp(lt) / np.sqrt(er))
+        if i < NG:
+            g = np.maximum(X[:, 1 + 5 * N + i], 0.0)[:, None]
+            kz.append(np.full((P, f.size), np.sqrt(1 - s2) + 0j)); ts.append(g)
+    kb = branch(np.sqrt((ST.METAL_EPS if back == "metal" else 1.0) - s2 + 0j)) * np.ones((1, f.size))
+    k_air = np.sqrt(1 - s2)
+    G = (kz[-1] - kb) / (kz[-1] + kb)
+    for i in range(len(kz) - 1, -1, -1):
+        kp = kz[i - 1] if i > 0 else k_air
+        e = np.exp(-2j * k0[None, :] * kz[i] * ts[i])
+        r = (kp - kz[i]) / (kp + kz[i])
+        G = (r + G * e) / (1 + r * G * e)
+    return G * np.exp(-2j * k0[None, :] * k_air * X[:, :1])
+
+
+def gamma_stack_ang(f, layers, back, th):
+    """World (truth) side: exact TE reflection of (t, eps callable) layers."""
+    k0 = 2 * np.pi * f / C0
+    s2 = np.sin(th) ** 2
+    br = lambda z: np.where(z.imag > 0, -z, z)
+    kz = [np.sqrt(1 - s2) * np.ones_like(f, complex)] + [br(np.sqrt(e(f) - s2 + 0j)) for _, e in layers]
+    kb = br(np.sqrt((ST.METAL_EPS if back == "metal" else 1.0) - s2 + 0j)) * np.ones_like(f)
+    G = (kz[-1] - kb) / (kz[-1] + kb)
+    for i in range(len(layers), 0, -1):
+        e = np.exp(-2j * k0 * kz[i] * layers[i - 1][0])
+        r = (kz[i - 1] - kz[i]) / (kz[i - 1] + kz[i])
+        G = (r + G * e) / (1 + r * G * e)
+    return G
+
+
+def make_views(seed, N, angles_deg=(0.0,), snr_boost_db=0.0):
+    """Same wall as wallsolve.make_problem(seed, N); one noisy measurement per angle."""
+    _, _, _, tr = WS.make_problem(seed, N)
+    views = []
+    for ai, adeg in enumerate(angles_deg):
+        th = np.radians(adeg)
+        fs, ys, ss = [], [], []
+        for k, ((a, b), sn) in enumerate(zip(WS.BANDS3, WS.SNR3)):
+            f = np.linspace(a, b, WS.NPTS)
+            G = gamma_stack_ang(f, tr["_layers"], tr["back"], th) * np.exp(-2j * 2 * np.pi * f / C0 * tr["standoff"] * np.cos(th))
+            sig = 10 ** (-(sn + snr_boost_db) / 20) / np.sqrt(2)
+            nr = np.random.default_rng(seed + 7919 * (k + 1) + 104729 * ai)
+            ys.append(G + sig * (nr.standard_normal(f.size) + 1j * nr.standard_normal(f.size)))
+            fs.append(f); ss.append(np.full(f.size, sig))
+        views.append((np.concatenate(fs), np.concatenate(ys), np.concatenate(ss), th))
+    return views, tr
+
+
+class MultiProblem(PT.Problem):
+    """pt.Problem whose energy sums the chi2 of every view (each tempered on f < FMAX, SUB per band)."""
+    def __init__(self, views, N, back, d_guess, d_tol=3e-3):
+        f, y, s, th = views[0]
+        super().__init__(f, y, s, N, back, d_guess, d_tol)
+        self.views = []
+        for (f, y, s, th) in views:
+            q = PT.Problem(f, y, s, N, back, d_guess, d_tol)
+            self.views.append((q.f, q.y, q.s, th))
+
+    def energy(self, X):
+        chi = np.zeros(X.shape[0])
+        for f, y, s, th in self.views:
+            G = gamma_ang(X, f, self.N, self.back, th)
+            chi += np.sum(np.abs((G - y[None, :]) / s[None, :]) ** 2, axis=1)
+        pen = WS._prior_batch(X, self.N, self.lib)
+        for i in range(self.N):
+            lt, la = X[:, 1 + 5 * i], X[:, 2 + 5 * i]
+            er = 1 + np.exp(la)
+            k = np.argmin(np.abs(np.log(er)[:, None] - np.log(self.cer)[None, :]), axis=1)
+            t = np.exp(lt) / np.sqrt(er)
+            lo, hi = PT.T_WIDEN[0] * self.trng[k, 0], PT.T_WIDEN[1] * self.trng[k, 1]
+            pen += (np.maximum(0, np.log(lo / t)) ** 2 + np.maximum(0, np.log(t / hi)) ** 2) / 0.05 ** 2
+        out = 0.5 * (chi + pen)
+        bad = np.any(X < self.lo[None, :] - 1e-12, axis=1) | np.any(X > self.hi[None, :] + 1e-12, axis=1)
+        return np.where(np.isfinite(out) & ~bad, out, np.inf), chi
+
+
+def free_mask(N, back):
+    lo, hi, NG = WS.layout(N, back)
+    m = np.ones(lo.size, bool)
+    m[-1] = False                                       # water temperature (no water)
+    for i in range(N):
+        m[5 + 5 * i] = False                            # water coordinate c
+    return m
+
+
+class Polisher:
+    """Bounded least squares on all views (all frequencies) + library prior as residuals."""
+    def __init__(self, views, N, back, d_guess, d_tol=3e-3):
+        self.views, self.N, self.back = views, N, back
+        self.lo, self.hi, self.NG = WS.layout(N, back)
+        self.lo[0], self.hi[0] = d_guess - d_tol, d_guess + d_tol
+        self.m = free_mask(N, back)
+        self.lib = WS._lib_arrays()
+
+    def full(self, xf, x0):
+        X = np.repeat(x0[None, :], xf.shape[0], 0)
+        X[:, self.m] = xf
+        return X
+
+    def res_batch(self, X):
+        rs = []
+        for f, y, s, th in self.views:
+            G = gamma_ang(X, f, self.N, self.back, th)
+            r = (G - y[None, :]) / s[None, :]
+            rs += [r.real, r.imag]
+        pen = WS._prior_batch(X, self.N, self.lib)
+        rs.append(np.sqrt(np.maximum(pen, 0) + 1e-12)[:, None])
+        return np.concatenate(rs, axis=1)
+
+    def polish(self, x0, max_nfev=60):
+        x0 = np.clip(x0, self.lo, self.hi)
+        lo, hi = self.lo[self.m], self.hi[self.m] + 1e-12
+        xf0 = np.clip(x0[self.m], lo, hi - 1e-12)
+
+        def fun(xf):
+            return self.res_batch(self.full(xf[None, :], x0))[0]
+
+        def jac(xf):
+            h = 1e-6 * np.maximum(np.abs(xf), 1e-3)
+            P = np.vstack([xf + np.diag(h), xf - np.diag(h)])
+            R = self.res_batch(self.full(P, x0))
+            n = xf.size
+            return ((R[:n] - R[n:]) / (2 * h[:, None])).T
+        sol = least_squares(fun, xf0, jac=jac, bounds=(lo, hi), method="trf", x_scale="jac", max_nfev=max_nfev)
+        x = x0.copy(); x[self.m] = sol.x
+        return x, self.chi2(x), sol
+
+    def chi2(self, x):
+        c = 0.0
+        for f, y, s, th in self.views:
+            G = gamma_ang(x[None, :], f, self.N, self.back, th)[0]
+            c += float(np.sum(np.abs((G - y) / s) ** 2))
+        return c
+
+    def crb_t(self, x):
+        """1-sigma error of each solid layer's physical thickness (Fisher, data only)."""
+        xf = x[self.m]
+        h = 1e-6 * np.maximum(np.abs(xf), 1e-3)
+        P = np.vstack([xf + np.diag(h), xf - np.diag(h)])
+        R = self.res_batch(self.full(P, x))[:, :-1]
+        n = xf.size
+        J = ((R[:n] - R[n:]) / (2 * h[:, None])).T
+        C = np.linalg.pinv(J.T @ J)
+        idx = np.flatnonzero(self.m)
+        out = []
+        for i in range(self.N):
+            jl, ja = list(idx).index(1 + 5 * i), list(idx).index(2 + 5 * i)
+            er = 1 + np.exp(x[2 + 5 * i]); t = np.exp(x[1 + 5 * i]) / np.sqrt(er)
+            g = np.zeros(n); g[jl] = t; g[ja] = -0.5 * t * (er - 1) / er
+            out.append(float(np.sqrt(max(g @ C @ g, 0))))
+        return out
+
+
+def labels(pol, x):
+    """Library label per solid layer: nearest class in (ln eps', log10 tan d) by the Mahalanobis
+    distance with covariance C_class + C_measurement (Fisher). A loss that the data do not measure
+    (thin foam) then does not decide the class."""
+    lib = ST.library_stats()
+    xf = x[pol.m]
+    h = 1e-6 * np.maximum(np.abs(xf), 1e-3)
+    P = np.vstack([xf + np.diag(h), xf - np.diag(h)])
+    R = pol.res_batch(pol.full(P, x))[:, :-1]
+    n = xf.size
+    J = ((R[:n] - R[n:]) / (2 * h[:, None])).T
+    C = np.linalg.pinv(J.T @ J)
+    idx = list(np.flatnonzero(pol.m))
+    out = []
+    for i in range(pol.N):
+        ja, jb = idx.index(2 + 5 * i), idx.index(3 + 5 * i)
+        la, lb = x[2 + 5 * i], x[3 + 5 * i]
+        er = 1 + np.exp(la)
+        v = np.array([np.log(er), lb / np.log(10)])
+        A = np.diag([(er - 1) / er, 1 / np.log(10)])
+        Cm = A @ C[np.ix_([ja, jb], [ja, jb])] @ A.T
+        lp = {}
+        for nm, (mu, Cc) in lib.items():
+            S = Cc + Cm
+            dv = v - mu
+            lp[nm] = -0.5 * float(dv @ np.linalg.solve(S, dv)) - 0.5 * float(np.log(np.linalg.det(S)))
+        mx = max(lp.values())
+        pr = {nm: np.exp(v_ - mx) for nm, v_ in lp.items()}
+        Z = sum(pr.values())
+        pr = {nm: v_ / Z for nm, v_ in pr.items()}
+        out.append(sorted(((p_, nm) for nm, p_ in pr.items() if p_ >= LABEL_P), reverse=True))
+    return out
+
+
+LABEL_P = 0.10      # every class with posterior >= 10 % is reported (equal priors over classes)
+
+
+LAM2_MM = C0 / (2 * 62e9)          # mmWave half-wavelength: period of a weak interface's phase
+
+
+def cycle_scan(pol, x, ks=(-3, -2, -1, 1, 2, 3), max_nfev=40):
+    """E054f: integer-ambiguity scan of every interface at the mmWave period: move it by k*lambda/2
+    (thickness transferred between the two adjacent media, optical sum kept), re-polish, keep the best."""
+    N, D = pol.N, x.size
+    best_x, best_c = x, pol.chi2(x)
+    pairs = []
+    for i in range(N - 1):
+        g = 1 + 5 * N + i
+        if i < pol.NG and x[g] > 0:
+            pairs.append(("sg", i, g))                  # solid i <-> gap i
+            pairs.append(("gs", i + 1, g))              # gap i <-> solid i+1
+        else:
+            pairs.append(("ss", i, i + 1))
+    if pol.NG > N - 1 and x[1 + 5 * N + N - 1] > 0:
+        pairs.append(("sg", N - 1, 1 + 5 * N + N - 1))
+    for kind, a, b in pairs:
+        for k in ks:
+            y = best_x.copy()
+            dl = k * LAM2_MM
+            if kind == "ss":
+                ta, tb = np.exp(y[1 + 5 * a]), np.exp(y[1 + 5 * b])
+                if ta + dl <= 1e-4 or tb - dl <= 1e-4:
+                    continue
+                y[1 + 5 * a], y[1 + 5 * b] = np.log(ta + dl), np.log(tb - dl)
+            else:
+                ta = np.exp(y[1 + 5 * a])
+                if ta + dl <= 1e-4 or y[b] - dl <= 0:
+                    continue
+                y[1 + 5 * a] = np.log(ta + dl); y[b] -= dl
+            if np.any(y < pol.lo) or np.any(y > pol.hi):
+                continue
+            yp, c, _ = pol.polish(y, max_nfev=max_nfev)
+            if c < best_c - 1e-6:
+                best_x, best_c = yp, c
+    return best_x, best_c
+
+
+def signature(x, N, back):
+    lay, slots = PT.x_to_lay(x, N, back)
+    sol = tuple(round(L["t"] * 1e3) for (k, _), L in zip(slots, lay) if k == "solid")
+    gp = tuple(round(L["t"] * 1e3) for (k, _), L in zip(slots, lay) if k == "gap")
+    return (sol, gp, back)
+
+
+def solve(views, N, d_guess, steps=4000, restarts=2, n_polish=10, seed=0, verbose=False):
+    t0 = time.time()
+    cands = []
+    for back in ("air", "metal"):
+        mp = MultiProblem(views, N, back, d_guess)
+        for rs in range(restarts):
+            best, cand = PT.run(mp, steps=steps, seed=seed + 101 * rs)
+            cands += [(mp.energy(c[None, :])[0][0], c, back) for c in cand]
+            if verbose:
+                print(f"  PT {back} r{rs}: chi2n {best[2] / sum(2 * v[0].size for v in mp.views):.2f} {time.time() - t0:.0f}s", flush=True)
+    cands.sort(key=lambda c: c[0])
+    pol = {b: Polisher(views, N, b, d_guess) for b in ("air", "metal")}
+    done = []
+    for E, x, back in cands[:n_polish]:
+        xp, chi, _ = pol[back].polish(x)
+        done.append((chi, xp, back))
+    done.sort(key=lambda d: d[0])
+    # E054f: mmWave integer-ambiguity scan on the two best polished answers
+    for j in range(min(2, len(done))):
+        c, xx, bk = done[j]
+        xs, cs = cycle_scan(pol[bk], xx)
+        done[j] = (cs, xs, bk)
+    done.sort(key=lambda d: d[0])
+    chi, x, back = done[0]
+    n_all = sum(2 * v[0].size for v in views)
+    alts, seen = [], {signature(x, N, back)}
+    for c, xx, bk in done[1:]:
+        sg = signature(xx, N, bk)
+        if c <= chi + WS.AMBIG_DCHI2 and sg not in seen:
+            seen.add(sg); alts.append(dict(chi2=c, solids=list(sg[0]), gaps=list(sg[1]), back=bk))
+    crb = pol[back].crb_t(x)
+    lay, slots = PT.x_to_lay(x, N, back)
+    sol = [L for (k, _), L in zip(slots, lay) if k == "solid"]
+    weak = [bool(e > 0.2 * L["t"]) for e, L in zip(crb, sol)]
+    unobs = [i for i, L in enumerate(sol) if L["er"] < 1.03]
+    labs = labels(pol[back], x)
+    return dict(x=x, back=back, chi2=chi, labels=labs, chi2n=chi / n_all, alarm=bool(chi > ST.chi2_alarm(n_all)),
+                lay=lay, slots=slots, crb_t=crb, weak=weak, unobserved=unobs, alternatives=alts,
+                ambiguous=bool(alts), wall_s=time.time() - t0)
+
+
+def score(res, tr, N, t_tol=(0.3e-3, 0.02), g_tol=(0.3e-3, 0.05)):
+    lay, slots = res["lay"], res["slots"]
+    sol = [L for (k, _), L in zip(slots, lay) if k == "solid"]
+    gaps = [0.0] * len(tr["gaps"])
+    for (k, i), L in zip(slots, lay):
+        if k == "gap" and i < len(gaps):
+            gaps[i] = L["t"]
+    t_ok = [abs(L["t"] - T["t"]) <= max(t_tol[0], t_tol[1] * T["t"]) for L, T in zip(sol, tr["layers"])]
+    g_ok = [abs(a - b) <= max(g_tol[0], g_tol[1] * b) for a, b in zip(gaps, tr["gaps"])]
+    mat_ok = [T["name"] in [nm for _, nm in lab] for lab, T in zip(res["labels"], tr["layers"])]
+    mat_top = [lab[0][1] == T["name"] for lab, T in zip(res["labels"], tr["layers"])]
+    ok = all(t_ok) and all(g_ok) and res["back"] == tr["back"] and all(mat_ok)
+    geo_ok = all(t_ok) and all(g_ok) and res["back"] == tr["back"]
+    return dict(ok=bool(ok), geo_ok=bool(geo_ok), mat_top=mat_top, t_ok=t_ok, g_ok=g_ok, mat_ok=mat_ok, back_ok=res["back"] == tr["back"],
+                t_err_mm=[1e3 * (L["t"] - T["t"]) for L, T in zip(sol, tr["layers"])])
