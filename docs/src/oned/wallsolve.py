@@ -389,14 +389,15 @@ def _impedance(amps_low, idx):
     return ns
 
 
-def _candidates(taus, amps, N, max_front=3):
+def _candidates(taus, amps, N, front):
+    """front: index of the echo that is the wall's front face (pinned by the known standoff)."""
     import itertools
     M_all = len(taus)
     out = []
-    for M in range(N + 1, min(2 * N + 1, M_all) + 1):
-        for idx in itertools.combinations(range(M_all), M):
-            if idx[0] >= max_front:
-                continue
+    later = [k for k in range(M_all) if k > front]
+    for M in range(N + 1, min(2 * N + 1, len(later) + 1) + 1):
+        for rest in itertools.combinations(later, M - 1):
+            idx = (front,) + rest
             ns = _impedance(amps[0], idx)
             dt = np.diff(np.asarray(taus)[list(idx)])
             n_gap = (M - 1) - N
@@ -427,7 +428,14 @@ def solve_echo(f, y, sigma, N, d_guess, n_refine=8, verbose=False):
     import echoes as EC
     t0 = time.time()
     taus, amps, _ = EC.find_echoes(f, y, sigma, d_guess)
-    cands = _candidates(taus, amps, N)
+    # E049b: the radar-to-wall distance is KNOWN: the front face is the echo nearest d_guess
+    # (within 3 mm); if the front face is too weak to be found (foam, batt), one is inserted there
+    k = int(np.argmin(np.abs(taus - d_guess))) if len(taus) else -1
+    if k < 0 or abs(taus[k] - d_guess) > 3e-3:
+        taus = np.sort(np.append(taus, d_guess))
+        taus, amps, _ = EC._refine(EC._bands(f, y, sigma), taus, iters=0)
+        k = int(np.argmin(np.abs(taus - d_guess)))
+    cands = _candidates(taus, amps, N, k)
     scored = []
     for d, lay, slots in cands:
         for back in ("air", "metal"):
