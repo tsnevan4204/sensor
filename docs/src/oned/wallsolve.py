@@ -424,6 +424,10 @@ def _candidates(taus, amps, N, front):
     return out
 
 
+SPLIT = 5e-3            # optional extra interfaces around each echo (thin layers)
+AMBIG_DCHI2 = 10.0      # structurally different answers within this data-chi2 of the best are reported
+
+
 def solve_echo(f, y, sigma, N, d_guess, n_refine=8, verbose=False):
     import echoes as EC
     t0 = time.time()
@@ -435,6 +439,13 @@ def solve_echo(f, y, sigma, N, d_guess, n_refine=8, verbose=False):
         taus = np.sort(np.append(taus, d_guess))
         taus, amps, _ = EC._refine(EC._bands(f, y, sigma), taus, iters=0)
         k = int(np.argmin(np.abs(taus - d_guess)))
+    # E049d: thin layers merge two interfaces into one echo (6 mm plywood: 18.1/28.5 mm -> 24.3 mm);
+    # every echo behind the front also spawns optional interfaces at +-SPLIT, so a merged echo can split
+    later = [t for t in taus if t > taus[k] + 2e-3]
+    extra = [t + dd for t in later for dd in (-SPLIT, SPLIT) if t + dd > taus[k] + 2e-3]
+    taus = np.sort(np.concatenate([taus, extra]))
+    taus, amps, _ = EC._refine(EC._bands(f, y, sigma), taus, iters=0)
+    k = int(np.argmin(np.abs(taus - d_guess)))
     cands = _candidates(taus, amps, N, k)
     scored = []
     for d, lay, slots in cands:
@@ -467,6 +478,7 @@ def solve_echo(f, y, sigma, N, d_guess, n_refine=8, verbose=False):
             mod, c = ST._fit(mod, f, y, sigma, atol=1e-2, max_iter=15)
             short.append((c, d, lay, slots, back))
         short.sort(key=lambda t: t[0])
+        refined = []
         for c0, d, lay, slots, back in short[:n_refine]:
             ST.SBOX = (d - 0.004, d + 0.004)
             mod = ST.build(lay, d, back=back, water_T=20.0)
@@ -482,6 +494,7 @@ def solve_echo(f, y, sigma, N, d_guess, n_refine=8, verbose=False):
                 if L.theta.value < 0.5 and L.eps_r.free:
                     L.pinf.value, L.pinf.free = max(L.pinf.value, 0.02), True
             mod, c = ST._fit(mod, f, y, sigma)
+            refined.append((c, mod, slots, back))
             if best is None or c < best[1]:
                 best = (mod, c, slots, back)
     finally:
@@ -499,7 +512,21 @@ def solve_echo(f, y, sigma, N, d_guess, n_refine=8, verbose=False):
     except Exception:
         pass
     t_err = [crb.get(f"{L.name}.t", np.nan) for L in mod.layers]
+    # E049d: ambiguity report - structurally different answers that fit (almost) as well as the best
+    def _sig(m, sl, bk):
+        sol = [(round(L.t.value * 1e3), lab) for (kind, _), L, lab in zip(sl, m.layers, pri.labels(m)) if kind == "solid"]
+        gp = [round(L.t.value * 1e3) for (kind, _), L in zip(sl, m.layers) if kind == "gap"]
+        return (tuple(sol), tuple(gp), bk)
+    alts, seen = [], {_sig(mod, slots, back)}
+    for cc, mm, sl, bk in sorted(refined, key=lambda t: t[0]):
+        Gm, _ = I.forward(mm, f, jacobian=False)
+        cm = float(np.sum(np.abs((Gm - y) / sigma) ** 2))
+        sg = _sig(mm, sl, bk)
+        if cm <= chi + AMBIG_DCHI2 and sg not in seen:
+            seen.add(sg)
+            alts.append(dict(chi2=cm, solids=[(t, lab) for t, lab in sg[0]], gaps=list(sg[1]), back=bk))
     weak = [bool(np.isfinite(e) and e > 0.2 * L.t.value) for e, L in zip(t_err, mod.layers)]
     return dict(model=mod, slots=slots, back=back, chi2=chi, chi2n=chi / n_all,
                 alarm=bool(chi > ST.chi2_alarm(n_all)), wall_s=time.time() - t0, labels=pri.labels(mod),
-                n_echoes=len(taus), n_cands=len(cands), t_err=t_err, weak=weak)
+                n_echoes=len(taus), n_cands=len(cands), t_err=t_err, weak=weak,
+                ambiguous=bool(alts), alternatives=alts)
