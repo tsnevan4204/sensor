@@ -960,7 +960,8 @@ def invert(model0, f, y, sigma, n_starts=24, regs=(), rng=None, keep_init_for=()
 def fisher(model, f, sigma):
     """Fisher information for the free parameters (data term only) and derived quantities."""
     _, Jc = forward(model, f)
-    J = np.vstack([Jc.real, Jc.imag]) / sigma
+    s2 = np.concatenate([sigma, sigma])[:, None] if np.ndim(sigma) else sigma   # per-frequency noise (E046)
+    J = np.vstack([Jc.real, Jc.imag]) / s2
     F = J.T @ J
     try:
         cov = np.linalg.inv(F)
