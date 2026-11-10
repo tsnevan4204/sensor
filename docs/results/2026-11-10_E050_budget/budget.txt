@@ -1,0 +1,45 @@
+concrete120|gap20|plasterboard ['concrete', 'plasterboard'] {'3band +0dB': 1, '3band +20dB': 2, '3band+VHF +0dB': 1, '3band+VHF +20dB': 2, '3band,3angles +0dB': 1, '3band,3angles +20dB': 2, '3band+VHF,3angles +0dB': 1, '3band+VHF,3angles +20dB': 2}
+brick100|batt60|plasterboard ['brick', 'batt', 'plasterboard'] {'3band +0dB': 3, '3band +20dB': 3, '3band+VHF +0dB': 3, '3band+VHF +20dB': 3, '3band,3angles +0dB': 3, '3band,3angles +20dB': 3, '3band+VHF,3angles +0dB': 3, '3band+VHF,3angles +20dB': 3}
+foam30|gap10|plasterboard ['foam', 'plasterboard'] {'3band +0dB': 2, '3band +20dB': 2, '3band+VHF +0dB': 2, '3band+VHF +20dB': 2, '3band,3angles +0dB': 2, '3band,3angles +20dB': 2, '3band+VHF,3angles +0dB': 2, '3band+VHF,3angles +20dB': 2}
+batt80|plywood12 ['batt', 'plywood'] {'3band +0dB': 2, '3band +20dB': 2, '3band+VHF +0dB': 2, '3band+VHF +20dB': 2, '3band,3angles +0dB': 2, '3band,3angles +20dB': 2, '3band+VHF,3angles +0dB': 2, '3band+VHF,3angles +20dB': 2}
+concrete150|plasterboard ['concrete', 'plasterboard'] {'3band +0dB': 1, '3band +20dB': 2, '3band+VHF +0dB': 1, '3band+VHF +20dB': 2, '3band,3angles +0dB': 1, '3band,3angles +20dB': 2, '3band+VHF,3angles +0dB': 1, '3band+VHF,3angles +20dB': 2}
+random0 ['plasterboard', 'plywood', 'batt'] {'3band +0dB': 3, '3band +20dB': 3, '3band+VHF +0dB': 3, '3band+VHF +20dB': 3, '3band,3angles +0dB': 3, '3band,3angles +20dB': 3, '3band+VHF,3angles +0dB': 3, '3band+VHF,3angles +20dB': 3}
+random1 ['batt', 'plywood', 'foam'] {'3band +0dB': 3, '3band +20dB': 3, '3band+VHF +0dB': 3, '3band+VHF +20dB': 3, '3band,3angles +0dB': 3, '3band,3angles +20dB': 3, '3band+VHF,3angles +0dB': 3, '3band+VHF,3angles +20dB': 3}
+random2 ['plywood', 'glass', 'foam'] {'3band +0dB': 3, '3band +20dB': 3, '3band+VHF +0dB': 3, '3band+VHF +20dB': 3, '3band,3angles +0dB': 3, '3band,3angles +20dB': 3, '3band+VHF,3angles +0dB': 3, '3band+VHF,3angles +20dB': 3}
+random3 ['wood', 'plasterboard', 'plywood'] {'3band +0dB': 3, '3band +20dB': 3, '3band+VHF +0dB': 3, '3band+VHF +20dB': 3, '3band,3angles +0dB': 3, '3band,3angles +20dB': 3, '3band+VHF,3angles +0dB': 3, '3band+VHF,3angles +20dB': 3}
+random4 ['floorboard', 'concrete', 'plasterboard'] {'3band +0dB': 3, '3band +20dB': 3, '3band+VHF +0dB': 3, '3band+VHF +20dB': 3, '3band,3angles +0dB': 3, '3band,3angles +20dB': 3, '3band+VHF,3angles +0dB': 3, '3band+VHF,3angles +20dB': 3}
+random5 ['ceiling_board', 'concrete', 'tile'] {'3band +0dB': 1, '3band +20dB': 3, '3band+VHF +0dB': 1, '3band+VHF +20dB': 3, '3band,3angles +0dB': 2, '3band,3angles +20dB': 3, '3band+VHF,3angles +0dB': 2, '3band+VHF,3angles +20dB': 3}
+random6 ['chipboard', 'glass', 'plasterboard'] {'3band +0dB': 3, '3band +20dB': 3, '3band+VHF +0dB': 3, '3band+VHF +20dB': 3, '3band,3angles +0dB': 3, '3band,3angles +20dB': 3, '3band+VHF,3angles +0dB': 3, '3band+VHF,3angles +20dB': 3}
+random7 ['concrete', 'brick', 'floorboard'] {'3band +0dB': 1, '3band +20dB': 3, '3band+VHF +0dB': 1, '3band+VHF +20dB': 3, '3band,3angles +0dB': 1, '3band,3angles +20dB': 3, '3band+VHF,3angles +0dB': 1, '3band+VHF,3angles +20dB': 3}
+random8 ['glass', 'plasterboard', 'chipboard'] {'3band +0dB': 3, '3band +20dB': 3, '3band+VHF +0dB': 3, '3band+VHF +20dB': 3, '3band,3angles +0dB': 3, '3band,3angles +20dB': 3, '3band+VHF,3angles +0dB': 3, '3band+VHF,3angles +20dB': 3}
+random9 ['floorboard', 'concrete', 'marble'] {'3band +0dB': 3, '3band +20dB': 3, '3band+VHF +0dB': 3, '3band+VHF +20dB': 3, '3band,3angles +0dB': 3, '3band,3angles +20dB': 3, '3band+VHF,3angles +0dB': 3, '3band+VHF,3angles +20dB': 3}
+random10 ['floorboard', 'brick', 'floorboard'] {'3band +0dB': 3, '3band +20dB': 3, '3band+VHF +0dB': 3, '3band+VHF +20dB': 3, '3band,3angles +0dB': 3, '3band,3angles +20dB': 3, '3band+VHF,3angles +0dB': 3, '3band+VHF,3angles +20dB': 3}
+random11 ['wood', 'glass', 'concrete'] {'3band +0dB': 3, '3band +20dB': 3, '3band+VHF +0dB': 3, '3band+VHF +20dB': 3, '3band,3angles +0dB': 3, '3band,3angles +20dB': 3, '3band+VHF,3angles +0dB': 3, '3band+VHF,3angles +20dB': 3}
+random12 ['floorboard', 'wood', 'brick'] {'3band +0dB': 3, '3band +20dB': 3, '3band+VHF +0dB': 3, '3band+VHF +20dB': 3, '3band,3angles +0dB': 3, '3band,3angles +20dB': 3, '3band+VHF,3angles +0dB': 3, '3band+VHF,3angles +20dB': 3}
+random13 ['brick', 'foam', 'ceiling_board'] {'3band +0dB': 3, '3band +20dB': 3, '3band+VHF +0dB': 3, '3band+VHF +20dB': 3, '3band,3angles +0dB': 3, '3band,3angles +20dB': 3, '3band+VHF,3angles +0dB': 3, '3band+VHF,3angles +20dB': 3}
+random14 ['plywood', 'ceiling_board', 'chipboard'] {'3band +0dB': 3, '3band +20dB': 3, '3band+VHF +0dB': 3, '3band+VHF +20dB': 3, '3band,3angles +0dB': 3, '3band,3angles +20dB': 3, '3band+VHF,3angles +0dB': 3, '3band+VHF,3angles +20dB': 3}
+random15 ['plywood', 'glass', 'wood'] {'3band +0dB': 3, '3band +20dB': 3, '3band+VHF +0dB': 3, '3band+VHF +20dB': 3, '3band,3angles +0dB': 3, '3band,3angles +20dB': 3, '3band+VHF,3angles +0dB': 3, '3band+VHF,3angles +20dB': 3}
+random16 ['marble', 'plasterboard', 'batt'] {'3band +0dB': 3, '3band +20dB': 3, '3band+VHF +0dB': 3, '3band+VHF +20dB': 3, '3band,3angles +0dB': 3, '3band,3angles +20dB': 3, '3band+VHF,3angles +0dB': 3, '3band+VHF,3angles +20dB': 3}
+random17 ['tile', 'batt', 'ceiling_board'] {'3band +0dB': 3, '3band +20dB': 3, '3band+VHF +0dB': 3, '3band+VHF +20dB': 3, '3band,3angles +0dB': 3, '3band,3angles +20dB': 3, '3band+VHF,3angles +0dB': 3, '3band+VHF,3angles +20dB': 3}
+random18 ['batt', 'plywood', 'brick'] {'3band +0dB': 3, '3band +20dB': 3, '3band+VHF +0dB': 3, '3band+VHF +20dB': 3, '3band,3angles +0dB': 3, '3band,3angles +20dB': 3, '3band+VHF,3angles +0dB': 3, '3band+VHF,3angles +20dB': 3}
+random19 ['glass', 'plasterboard', 'concrete'] {'3band +0dB': 3, '3band +20dB': 3, '3band+VHF +0dB': 3, '3band+VHF +20dB': 3, '3band,3angles +0dB': 3, '3band,3angles +20dB': 3, '3band+VHF,3angles +0dB': 3, '3band+VHF,3angles +20dB': 3}
+random20 ['batt', 'chipboard', 'foam'] {'3band +0dB': 3, '3band +20dB': 3, '3band+VHF +0dB': 3, '3band+VHF +20dB': 3, '3band,3angles +0dB': 3, '3band,3angles +20dB': 3, '3band+VHF,3angles +0dB': 3, '3band+VHF,3angles +20dB': 3}
+random21 ['plasterboard', 'ceiling_board', 'chipboard'] {'3band +0dB': 3, '3band +20dB': 3, '3band+VHF +0dB': 3, '3band+VHF +20dB': 3, '3band,3angles +0dB': 3, '3band,3angles +20dB': 3, '3band+VHF,3angles +0dB': 3, '3band+VHF,3angles +20dB': 3}
+random22 ['batt', 'concrete', 'ceiling_board'] {'3band +0dB': 2, '3band +20dB': 3, '3band+VHF +0dB': 2, '3band+VHF +20dB': 3, '3band,3angles +0dB': 2, '3band,3angles +20dB': 3, '3band+VHF,3angles +0dB': 2, '3band+VHF,3angles +20dB': 3}
+random23 ['wood', 'ceiling_board', 'floorboard'] {'3band +0dB': 3, '3band +20dB': 3, '3band+VHF +0dB': 3, '3band+VHF +20dB': 3, '3band,3angles +0dB': 3, '3band,3angles +20dB': 3, '3band+VHF,3angles +0dB': 3, '3band+VHF,3angles +20dB': 3}
+random24 ['plywood', 'wood', 'batt'] {'3band +0dB': 3, '3band +20dB': 3, '3band+VHF +0dB': 3, '3band+VHF +20dB': 3, '3band,3angles +0dB': 3, '3band,3angles +20dB': 3, '3band+VHF,3angles +0dB': 3, '3band+VHF,3angles +20dB': 3}
+random25 ['floorboard', 'foam', 'plywood'] {'3band +0dB': 3, '3band +20dB': 3, '3band+VHF +0dB': 3, '3band+VHF +20dB': 3, '3band,3angles +0dB': 3, '3band,3angles +20dB': 3, '3band+VHF,3angles +0dB': 3, '3band+VHF,3angles +20dB': 3}
+random26 ['marble', 'plasterboard', 'marble'] {'3band +0dB': 3, '3band +20dB': 3, '3band+VHF +0dB': 3, '3band+VHF +20dB': 3, '3band,3angles +0dB': 3, '3band,3angles +20dB': 3, '3band+VHF,3angles +0dB': 3, '3band+VHF,3angles +20dB': 3}
+random27 ['marble', 'concrete', 'brick'] {'3band +0dB': 2, '3band +20dB': 3, '3band+VHF +0dB': 3, '3band+VHF +20dB': 3, '3band,3angles +0dB': 3, '3band,3angles +20dB': 3, '3band+VHF,3angles +0dB': 3, '3band+VHF,3angles +20dB': 3}
+random28 ['plywood', 'foam', 'batt'] {'3band +0dB': 2, '3band +20dB': 3, '3band+VHF +0dB': 2, '3band+VHF +20dB': 3, '3band,3angles +0dB': 3, '3band,3angles +20dB': 3, '3band+VHF,3angles +0dB': 3, '3band+VHF,3angles +20dB': 3}
+random29 ['plywood', 'batt', 'brick'] {'3band +0dB': 3, '3band +20dB': 3, '3band+VHF +0dB': 3, '3band+VHF +20dB': 3, '3band,3angles +0dB': 3, '3band,3angles +20dB': 3, '3band+VHF,3angles +0dB': 3, '3band+VHF,3angles +20dB': 3}
+
+layers observed (30 random 3-layer walls):
+  3band +0dB                   83/90 = 92%
+  3band +20dB                  90/90 = 100%
+  3band+VHF +0dB               84/90 = 93%
+  3band+VHF +20dB              90/90 = 100%
+  3band,3angles +0dB           86/90 = 96%
+  3band,3angles +20dB          90/90 = 100%
+  3band+VHF,3angles +0dB       86/90 = 96%
+  3band+VHF,3angles +20dB      90/90 = 100%

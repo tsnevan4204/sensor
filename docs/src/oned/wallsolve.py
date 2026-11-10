@@ -22,11 +22,12 @@ import matlib as ML
 
 C0 = W.C0
 F_REF = ST.F_REF
-SOLIDS = [m for m in ST.ALL_MATERIALS if m != "air"]
+SOLIDS = [m for m in ST.ALL_MATERIALS if m not in ("air", "water")]   # owner: no liquid-water layers
 BANDS3 = ((0.4e9, 0.96e9), (3.1e9, 10.6e9), (60e9, 64e9))     # sub-GHz imaging + UWB + mmWave
 SNR3 = (30.0, 40.0, 40.0)        # sub-GHz is limited to FCC 15.209 levels: assume 10 dB less SNR
 NPTS = 256
 GAP_MIN = 0.2e-3                 # a gap below this is reported as "no gap"
+GAP_LO = 5e-3                    # owner: gaps below ~one resolution cell are out of scope (>= 5 mm or none)
 
 
 # ============================================================================ truth generator
@@ -50,7 +51,7 @@ def make_problem(seed, N, bands=BANDS3, snr=SNR3, p_gap=0.35, p_wet=0.0, p_metal
             layers.append((t, e)); desc.append(dict(name=nm, t=t, **dsc))
             last = i == N - 1
             if (not last or back == "metal") and rng.random() < p_gap:
-                g = float(np.exp(rng.uniform(np.log(1e-3), np.log(30e-3))))
+                g = float(np.exp(rng.uniform(np.log(GAP_LO), np.log(30e-3))))
                 layers.append((g, lambda f: np.ones(np.shape(f), complex)))
                 gaps.append(g)
             elif not last or back == "metal":

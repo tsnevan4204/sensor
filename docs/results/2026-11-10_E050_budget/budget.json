@@ -1,0 +1,1681 @@
+{
+ "concrete120|gap20|plasterboard": {
+  "layers": [
+   "concrete",
+   "plasterboard"
+  ],
+  "obs": {
+   "3band +0dB": [
+    true,
+    false
+   ],
+   "3band +20dB": [
+    true,
+    true
+   ],
+   "3band+VHF +0dB": [
+    true,
+    false
+   ],
+   "3band+VHF +20dB": [
+    true,
+    true
+   ],
+   "3band,3angles +0dB": [
+    true,
+    false
+   ],
+   "3band,3angles +20dB": [
+    true,
+    true
+   ],
+   "3band+VHF,3angles +0dB": [
+    true,
+    false
+   ],
+   "3band+VHF,3angles +20dB": [
+    true,
+    true
+   ]
+  }
+ },
+ "brick100|batt60|plasterboard": {
+  "layers": [
+   "brick",
+   "batt",
+   "plasterboard"
+  ],
+  "obs": {
+   "3band +0dB": [
+    true,
+    true,
+    true
+   ],
+   "3band +20dB": [
+    true,
+    true,
+    true
+   ],
+   "3band+VHF +0dB": [
+    true,
+    true,
+    true
+   ],
+   "3band+VHF +20dB": [
+    true,
+    true,
+    true
+   ],
+   "3band,3angles +0dB": [
+    true,
+    true,
+    true
+   ],
+   "3band,3angles +20dB": [
+    true,
+    true,
+    true
+   ],
+   "3band+VHF,3angles +0dB": [
+    true,
+    true,
+    true
+   ],
+   "3band+VHF,3angles +20dB": [
+    true,
+    true,
+    true
+   ]
+  }
+ },
+ "foam30|gap10|plasterboard": {
+  "layers": [
+   "foam",
+   "plasterboard"
+  ],
+  "obs": {
+   "3band +0dB": [
+    true,
+    true
+   ],
+   "3band +20dB": [
+    true,
+    true
+   ],
+   "3band+VHF +0dB": [
+    true,
+    true
+   ],
+   "3band+VHF +20dB": [
+    true,
+    true
+   ],
+   "3band,3angles +0dB": [
+    true,
+    true
+   ],
+   "3band,3angles +20dB": [
+    true,
+    true
+   ],
+   "3band+VHF,3angles +0dB": [
+    true,
+    true
+   ],
+   "3band+VHF,3angles +20dB": [
+    true,
+    true
+   ]
+  }
+ },
+ "batt80|plywood12": {
+  "layers": [
+   "batt",
+   "plywood"
+  ],
+  "obs": {
+   "3band +0dB": [
+    true,
+    true
+   ],
+   "3band +20dB": [
+    true,
+    true
+   ],
+   "3band+VHF +0dB": [
+    true,
+    true
+   ],
+   "3band+VHF +20dB": [
+    true,
+    true
+   ],
+   "3band,3angles +0dB": [
+    true,
+    true
+   ],
+   "3band,3angles +20dB": [
+    true,
+    true
+   ],
+   "3band+VHF,3angles +0dB": [
+    true,
+    true
+   ],
+   "3band+VHF,3angles +20dB": [
+    true,
+    true
+   ]
+  }
+ },
+ "concrete150|plasterboard": {
+  "layers": [
+   "concrete",
+   "plasterboard"
+  ],
+  "obs": {
+   "3band +0dB": [
+    true,
+    false
+   ],
+   "3band +20dB": [
+    true,
+    true
+   ],
+   "3band+VHF +0dB": [
+    true,
+    false
+   ],
+   "3band+VHF +20dB": [
+    true,
+    true
+   ],
+   "3band,3angles +0dB": [
+    true,
+    false
+   ],
+   "3band,3angles +20dB": [
+    true,
+    true
+   ],
+   "3band+VHF,3angles +0dB": [
+    true,
+    false
+   ],
+   "3band+VHF,3angles +20dB": [
+    true,
+    true
+   ]
+  }
+ },
+ "random0": {
+  "layers": [
+   "plasterboard",
+   "plywood",
+   "batt"
+  ],
+  "obs": {
+   "3band +0dB": [
+    true,
+    true,
+    true
+   ],
+   "3band +20dB": [
+    true,
+    true,
+    true
+   ],
+   "3band+VHF +0dB": [
+    true,
+    true,
+    true
+   ],
+   "3band+VHF +20dB": [
+    true,
+    true,
+    true
+   ],
+   "3band,3angles +0dB": [
+    true,
+    true,
+    true
+   ],
+   "3band,3angles +20dB": [
+    true,
+    true,
+    true
+   ],
+   "3band+VHF,3angles +0dB": [
+    true,
+    true,
+    true
+   ],
+   "3band+VHF,3angles +20dB": [
+    true,
+    true,
+    true
+   ]
+  }
+ },
+ "random1": {
+  "layers": [
+   "batt",
+   "plywood",
+   "foam"
+  ],
+  "obs": {
+   "3band +0dB": [
+    true,
+    true,
+    true
+   ],
+   "3band +20dB": [
+    true,
+    true,
+    true
+   ],
+   "3band+VHF +0dB": [
+    true,
+    true,
+    true
+   ],
+   "3band+VHF +20dB": [
+    true,
+    true,
+    true
+   ],
+   "3band,3angles +0dB": [
+    true,
+    true,
+    true
+   ],
+   "3band,3angles +20dB": [
+    true,
+    true,
+    true
+   ],
+   "3band+VHF,3angles +0dB": [
+    true,
+    true,
+    true
+   ],
+   "3band+VHF,3angles +20dB": [
+    true,
+    true,
+    true
+   ]
+  }
+ },
+ "random2": {
+  "layers": [
+   "plywood",
+   "glass",
+   "foam"
+  ],
+  "obs": {
+   "3band +0dB": [
+    true,
+    true,
+    true
+   ],
+   "3band +20dB": [
+    true,
+    true,
+    true
+   ],
+   "3band+VHF +0dB": [
+    true,
+    true,
+    true
+   ],
+   "3band+VHF +20dB": [
+    true,
+    true,
+    true
+   ],
+   "3band,3angles +0dB": [
+    true,
+    true,
+    true
+   ],
+   "3band,3angles +20dB": [
+    true,
+    true,
+    true
+   ],
+   "3band+VHF,3angles +0dB": [
+    true,
+    true,
+    true
+   ],
+   "3band+VHF,3angles +20dB": [
+    true,
+    true,
+    true
+   ]
+  }
+ },
+ "random3": {
+  "layers": [
+   "wood",
+   "plasterboard",
+   "plywood"
+  ],
+  "obs": {
+   "3band +0dB": [
+    true,
+    true,
+    true
+   ],
+   "3band +20dB": [
+    true,
+    true,
+    true
+   ],
+   "3band+VHF +0dB": [
+    true,
+    true,
+    true
+   ],
+   "3band+VHF +20dB": [
+    true,
+    true,
+    true
+   ],
+   "3band,3angles +0dB": [
+    true,
+    true,
+    true
+   ],
+   "3band,3angles +20dB": [
+    true,
+    true,
+    true
+   ],
+   "3band+VHF,3angles +0dB": [
+    true,
+    true,
+    true
+   ],
+   "3band+VHF,3angles +20dB": [
+    true,
+    true,
+    true
+   ]
+  }
+ },
+ "random4": {
+  "layers": [
+   "floorboard",
+   "concrete",
+   "plasterboard"
+  ],
+  "obs": {
+   "3band +0dB": [
+    true,
+    true,
+    true
+   ],
+   "3band +20dB": [
+    true,
+    true,
+    true
+   ],
+   "3band+VHF +0dB": [
+    true,
+    true,
+    true
+   ],
+   "3band+VHF +20dB": [
+    true,
+    true,
+    true
+   ],
+   "3band,3angles +0dB": [
+    true,
+    true,
+    true
+   ],
+   "3band,3angles +20dB": [
+    true,
+    true,
+    true
+   ],
+   "3band+VHF,3angles +0dB": [
+    true,
+    true,
+    true
+   ],
+   "3band+VHF,3angles +20dB": [
+    true,
+    true,
+    true
+   ]
+  }
+ },
+ "random5": {
+  "layers": [
+   "ceiling_board",
+   "concrete",
+   "tile"
+  ],
+  "obs": {
+   "3band +0dB": [
+    true,
+    false,
+    false
+   ],
+   "3band +20dB": [
+    true,
+    true,
+    true
+   ],
+   "3band+VHF +0dB": [
+    true,
+    false,
+    false
+   ],
+   "3band+VHF +20dB": [
+    true,
+    true,
+    true
+   ],
+   "3band,3angles +0dB": [
+    true,
+    true,
+    false
+   ],
+   "3band,3angles +20dB": [
+    true,
+    true,
+    true
+   ],
+   "3band+VHF,3angles +0dB": [
+    true,
+    true,
+    false
+   ],
+   "3band+VHF,3angles +20dB": [
+    true,
+    true,
+    true
+   ]
+  }
+ },
+ "random6": {
+  "layers": [
+   "chipboard",
+   "glass",
+   "plasterboard"
+  ],
+  "obs": {
+   "3band +0dB": [
+    true,
+    true,
+    true
+   ],
+   "3band +20dB": [
+    true,
+    true,
+    true
+   ],
+   "3band+VHF +0dB": [
+    true,
+    true,
+    true
+   ],
+   "3band+VHF +20dB": [
+    true,
+    true,
+    true
+   ],
+   "3band,3angles +0dB": [
+    true,
+    true,
+    true
+   ],
+   "3band,3angles +20dB": [
+    true,
+    true,
+    true
+   ],
+   "3band+VHF,3angles +0dB": [
+    true,
+    true,
+    true
+   ],
+   "3band+VHF,3angles +20dB": [
+    true,
+    true,
+    true
+   ]
+  }
+ },
+ "random7": {
+  "layers": [
+   "concrete",
+   "brick",
+   "floorboard"
+  ],
+  "obs": {
+   "3band +0dB": [
+    true,
+    false,
+    false
+   ],
+   "3band +20dB": [
+    true,
+    true,
+    true
+   ],
+   "3band+VHF +0dB": [
+    true,
+    false,
+    false
+   ],
+   "3band+VHF +20dB": [
+    true,
+    true,
+    true
+   ],
+   "3band,3angles +0dB": [
+    true,
+    false,
+    false
+   ],
+   "3band,3angles +20dB": [
+    true,
+    true,
+    true
+   ],
+   "3band+VHF,3angles +0dB": [
+    true,
+    false,
+    false
+   ],
+   "3band+VHF,3angles +20dB": [
+    true,
+    true,
+    true
+   ]
+  }
+ },
+ "random8": {
+  "layers": [
+   "glass",
+   "plasterboard",
+   "chipboard"
+  ],
+  "obs": {
+   "3band +0dB": [
+    true,
+    true,
+    true
+   ],
+   "3band +20dB": [
+    true,
+    true,
+    true
+   ],
+   "3band+VHF +0dB": [
+    true,
+    true,
+    true
+   ],
+   "3band+VHF +20dB": [
+    true,
+    true,
+    true
+   ],
+   "3band,3angles +0dB": [
+    true,
+    true,
+    true
+   ],
+   "3band,3angles +20dB": [
+    true,
+    true,
+    true
+   ],
+   "3band+VHF,3angles +0dB": [
+    true,
+    true,
+    true
+   ],
+   "3band+VHF,3angles +20dB": [
+    true,
+    true,
+    true
+   ]
+  }
+ },
+ "random9": {
+  "layers": [
+   "floorboard",
+   "concrete",
+   "marble"
+  ],
+  "obs": {
+   "3band +0dB": [
+    true,
+    true,
+    true
+   ],
+   "3band +20dB": [
+    true,
+    true,
+    true
+   ],
+   "3band+VHF +0dB": [
+    true,
+    true,
+    true
+   ],
+   "3band+VHF +20dB": [
+    true,
+    true,
+    true
+   ],
+   "3band,3angles +0dB": [
+    true,
+    true,
+    true
+   ],
+   "3band,3angles +20dB": [
+    true,
+    true,
+    true
+   ],
+   "3band+VHF,3angles +0dB": [
+    true,
+    true,
+    true
+   ],
+   "3band+VHF,3angles +20dB": [
+    true,
+    true,
+    true
+   ]
+  }
+ },
+ "random10": {
+  "layers": [
+   "floorboard",
+   "brick",
+   "floorboard"
+  ],
+  "obs": {
+   "3band +0dB": [
+    true,
+    true,
+    true
+   ],
+   "3band +20dB": [
+    true,
+    true,
+    true
+   ],
+   "3band+VHF +0dB": [
+    true,
+    true,
+    true
+   ],
+   "3band+VHF +20dB": [
+    true,
+    true,
+    true
+   ],
+   "3band,3angles +0dB": [
+    true,
+    true,
+    true
+   ],
+   "3band,3angles +20dB": [
+    true,
+    true,
+    true
+   ],
+   "3band+VHF,3angles +0dB": [
+    true,
+    true,
+    true
+   ],
+   "3band+VHF,3angles +20dB": [
+    true,
+    true,
+    true
+   ]
+  }
+ },
+ "random11": {
+  "layers": [
+   "wood",
+   "glass",
+   "concrete"
+  ],
+  "obs": {
+   "3band +0dB": [
+    true,
+    true,
+    true
+   ],
+   "3band +20dB": [
+    true,
+    true,
+    true
+   ],
+   "3band+VHF +0dB": [
+    true,
+    true,
+    true
+   ],
+   "3band+VHF +20dB": [
+    true,
+    true,
+    true
+   ],
+   "3band,3angles +0dB": [
+    true,
+    true,
+    true
+   ],
+   "3band,3angles +20dB": [
+    true,
+    true,
+    true
+   ],
+   "3band+VHF,3angles +0dB": [
+    true,
+    true,
+    true
+   ],
+   "3band+VHF,3angles +20dB": [
+    true,
+    true,
+    true
+   ]
+  }
+ },
+ "random12": {
+  "layers": [
+   "floorboard",
+   "wood",
+   "brick"
+  ],
+  "obs": {
+   "3band +0dB": [
+    true,
+    true,
+    true
+   ],
+   "3band +20dB": [
+    true,
+    true,
+    true
+   ],
+   "3band+VHF +0dB": [
+    true,
+    true,
+    true
+   ],
+   "3band+VHF +20dB": [
+    true,
+    true,
+    true
+   ],
+   "3band,3angles +0dB": [
+    true,
+    true,
+    true
+   ],
+   "3band,3angles +20dB": [
+    true,
+    true,
+    true
+   ],
+   "3band+VHF,3angles +0dB": [
+    true,
+    true,
+    true
+   ],
+   "3band+VHF,3angles +20dB": [
+    true,
+    true,
+    true
+   ]
+  }
+ },
+ "random13": {
+  "layers": [
+   "brick",
+   "foam",
+   "ceiling_board"
+  ],
+  "obs": {
+   "3band +0dB": [
+    true,
+    true,
+    true
+   ],
+   "3band +20dB": [
+    true,
+    true,
+    true
+   ],
+   "3band+VHF +0dB": [
+    true,
+    true,
+    true
+   ],
+   "3band+VHF +20dB": [
+    true,
+    true,
+    true
+   ],
+   "3band,3angles +0dB": [
+    true,
+    true,
+    true
+   ],
+   "3band,3angles +20dB": [
+    true,
+    true,
+    true
+   ],
+   "3band+VHF,3angles +0dB": [
+    true,
+    true,
+    true
+   ],
+   "3band+VHF,3angles +20dB": [
+    true,
+    true,
+    true
+   ]
+  }
+ },
+ "random14": {
+  "layers": [
+   "plywood",
+   "ceiling_board",
+   "chipboard"
+  ],
+  "obs": {
+   "3band +0dB": [
+    true,
+    true,
+    true
+   ],
+   "3band +20dB": [
+    true,
+    true,
+    true
+   ],
+   "3band+VHF +0dB": [
+    true,
+    true,
+    true
+   ],
+   "3band+VHF +20dB": [
+    true,
+    true,
+    true
+   ],
+   "3band,3angles +0dB": [
+    true,
+    true,
+    true
+   ],
+   "3band,3angles +20dB": [
+    true,
+    true,
+    true
+   ],
+   "3band+VHF,3angles +0dB": [
+    true,
+    true,
+    true
+   ],
+   "3band+VHF,3angles +20dB": [
+    true,
+    true,
+    true
+   ]
+  }
+ },
+ "random15": {
+  "layers": [
+   "plywood",
+   "glass",
+   "wood"
+  ],
+  "obs": {
+   "3band +0dB": [
+    true,
+    true,
+    true
+   ],
+   "3band +20dB": [
+    true,
+    true,
+    true
+   ],
+   "3band+VHF +0dB": [
+    true,
+    true,
+    true
+   ],
+   "3band+VHF +20dB": [
+    true,
+    true,
+    true
+   ],
+   "3band,3angles +0dB": [
+    true,
+    true,
+    true
+   ],
+   "3band,3angles +20dB": [
+    true,
+    true,
+    true
+   ],
+   "3band+VHF,3angles +0dB": [
+    true,
+    true,
+    true
+   ],
+   "3band+VHF,3angles +20dB": [
+    true,
+    true,
+    true
+   ]
+  }
+ },
+ "random16": {
+  "layers": [
+   "marble",
+   "plasterboard",
+   "batt"
+  ],
+  "obs": {
+   "3band +0dB": [
+    true,
+    true,
+    true
+   ],
+   "3band +20dB": [
+    true,
+    true,
+    true
+   ],
+   "3band+VHF +0dB": [
+    true,
+    true,
+    true
+   ],
+   "3band+VHF +20dB": [
+    true,
+    true,
+    true
+   ],
+   "3band,3angles +0dB": [
+    true,
+    true,
+    true
+   ],
+   "3band,3angles +20dB": [
+    true,
+    true,
+    true
+   ],
+   "3band+VHF,3angles +0dB": [
+    true,
+    true,
+    true
+   ],
+   "3band+VHF,3angles +20dB": [
+    true,
+    true,
+    true
+   ]
+  }
+ },
+ "random17": {
+  "layers": [
+   "tile",
+   "batt",
+   "ceiling_board"
+  ],
+  "obs": {
+   "3band +0dB": [
+    true,
+    true,
+    true
+   ],
+   "3band +20dB": [
+    true,
+    true,
+    true
+   ],
+   "3band+VHF +0dB": [
+    true,
+    true,
+    true
+   ],
+   "3band+VHF +20dB": [
+    true,
+    true,
+    true
+   ],
+   "3band,3angles +0dB": [
+    true,
+    true,
+    true
+   ],
+   "3band,3angles +20dB": [
+    true,
+    true,
+    true
+   ],
+   "3band+VHF,3angles +0dB": [
+    true,
+    true,
+    true
+   ],
+   "3band+VHF,3angles +20dB": [
+    true,
+    true,
+    true
+   ]
+  }
+ },
+ "random18": {
+  "layers": [
+   "batt",
+   "plywood",
+   "brick"
+  ],
+  "obs": {
+   "3band +0dB": [
+    true,
+    true,
+    true
+   ],
+   "3band +20dB": [
+    true,
+    true,
+    true
+   ],
+   "3band+VHF +0dB": [
+    true,
+    true,
+    true
+   ],
+   "3band+VHF +20dB": [
+    true,
+    true,
+    true
+   ],
+   "3band,3angles +0dB": [
+    true,
+    true,
+    true
+   ],
+   "3band,3angles +20dB": [
+    true,
+    true,
+    true
+   ],
+   "3band+VHF,3angles +0dB": [
+    true,
+    true,
+    true
+   ],
+   "3band+VHF,3angles +20dB": [
+    true,
+    true,
+    true
+   ]
+  }
+ },
+ "random19": {
+  "layers": [
+   "glass",
+   "plasterboard",
+   "concrete"
+  ],
+  "obs": {
+   "3band +0dB": [
+    true,
+    true,
+    true
+   ],
+   "3band +20dB": [
+    true,
+    true,
+    true
+   ],
+   "3band+VHF +0dB": [
+    true,
+    true,
+    true
+   ],
+   "3band+VHF +20dB": [
+    true,
+    true,
+    true
+   ],
+   "3band,3angles +0dB": [
+    true,
+    true,
+    true
+   ],
+   "3band,3angles +20dB": [
+    true,
+    true,
+    true
+   ],
+   "3band+VHF,3angles +0dB": [
+    true,
+    true,
+    true
+   ],
+   "3band+VHF,3angles +20dB": [
+    true,
+    true,
+    true
+   ]
+  }
+ },
+ "random20": {
+  "layers": [
+   "batt",
+   "chipboard",
+   "foam"
+  ],
+  "obs": {
+   "3band +0dB": [
+    true,
+    true,
+    true
+   ],
+   "3band +20dB": [
+    true,
+    true,
+    true
+   ],
+   "3band+VHF +0dB": [
+    true,
+    true,
+    true
+   ],
+   "3band+VHF +20dB": [
+    true,
+    true,
+    true
+   ],
+   "3band,3angles +0dB": [
+    true,
+    true,
+    true
+   ],
+   "3band,3angles +20dB": [
+    true,
+    true,
+    true
+   ],
+   "3band+VHF,3angles +0dB": [
+    true,
+    true,
+    true
+   ],
+   "3band+VHF,3angles +20dB": [
+    true,
+    true,
+    true
+   ]
+  }
+ },
+ "random21": {
+  "layers": [
+   "plasterboard",
+   "ceiling_board",
+   "chipboard"
+  ],
+  "obs": {
+   "3band +0dB": [
+    true,
+    true,
+    true
+   ],
+   "3band +20dB": [
+    true,
+    true,
+    true
+   ],
+   "3band+VHF +0dB": [
+    true,
+    true,
+    true
+   ],
+   "3band+VHF +20dB": [
+    true,
+    true,
+    true
+   ],
+   "3band,3angles +0dB": [
+    true,
+    true,
+    true
+   ],
+   "3band,3angles +20dB": [
+    true,
+    true,
+    true
+   ],
+   "3band+VHF,3angles +0dB": [
+    true,
+    true,
+    true
+   ],
+   "3band+VHF,3angles +20dB": [
+    true,
+    true,
+    true
+   ]
+  }
+ },
+ "random22": {
+  "layers": [
+   "batt",
+   "concrete",
+   "ceiling_board"
+  ],
+  "obs": {
+   "3band +0dB": [
+    true,
+    true,
+    false
+   ],
+   "3band +20dB": [
+    true,
+    true,
+    true
+   ],
+   "3band+VHF +0dB": [
+    true,
+    true,
+    false
+   ],
+   "3band+VHF +20dB": [
+    true,
+    true,
+    true
+   ],
+   "3band,3angles +0dB": [
+    true,
+    true,
+    false
+   ],
+   "3band,3angles +20dB": [
+    true,
+    true,
+    true
+   ],
+   "3band+VHF,3angles +0dB": [
+    true,
+    true,
+    false
+   ],
+   "3band+VHF,3angles +20dB": [
+    true,
+    true,
+    true
+   ]
+  }
+ },
+ "random23": {
+  "layers": [
+   "wood",
+   "ceiling_board",
+   "floorboard"
+  ],
+  "obs": {
+   "3band +0dB": [
+    true,
+    true,
+    true
+   ],
+   "3band +20dB": [
+    true,
+    true,
+    true
+   ],
+   "3band+VHF +0dB": [
+    true,
+    true,
+    true
+   ],
+   "3band+VHF +20dB": [
+    true,
+    true,
+    true
+   ],
+   "3band,3angles +0dB": [
+    true,
+    true,
+    true
+   ],
+   "3band,3angles +20dB": [
+    true,
+    true,
+    true
+   ],
+   "3band+VHF,3angles +0dB": [
+    true,
+    true,
+    true
+   ],
+   "3band+VHF,3angles +20dB": [
+    true,
+    true,
+    true
+   ]
+  }
+ },
+ "random24": {
+  "layers": [
+   "plywood",
+   "wood",
+   "batt"
+  ],
+  "obs": {
+   "3band +0dB": [
+    true,
+    true,
+    true
+   ],
+   "3band +20dB": [
+    true,
+    true,
+    true
+   ],
+   "3band+VHF +0dB": [
+    true,
+    true,
+    true
+   ],
+   "3band+VHF +20dB": [
+    true,
+    true,
+    true
+   ],
+   "3band,3angles +0dB": [
+    true,
+    true,
+    true
+   ],
+   "3band,3angles +20dB": [
+    true,
+    true,
+    true
+   ],
+   "3band+VHF,3angles +0dB": [
+    true,
+    true,
+    true
+   ],
+   "3band+VHF,3angles +20dB": [
+    true,
+    true,
+    true
+   ]
+  }
+ },
+ "random25": {
+  "layers": [
+   "floorboard",
+   "foam",
+   "plywood"
+  ],
+  "obs": {
+   "3band +0dB": [
+    true,
+    true,
+    true
+   ],
+   "3band +20dB": [
+    true,
+    true,
+    true
+   ],
+   "3band+VHF +0dB": [
+    true,
+    true,
+    true
+   ],
+   "3band+VHF +20dB": [
+    true,
+    true,
+    true
+   ],
+   "3band,3angles +0dB": [
+    true,
+    true,
+    true
+   ],
+   "3band,3angles +20dB": [
+    true,
+    true,
+    true
+   ],
+   "3band+VHF,3angles +0dB": [
+    true,
+    true,
+    true
+   ],
+   "3band+VHF,3angles +20dB": [
+    true,
+    true,
+    true
+   ]
+  }
+ },
+ "random26": {
+  "layers": [
+   "marble",
+   "plasterboard",
+   "marble"
+  ],
+  "obs": {
+   "3band +0dB": [
+    true,
+    true,
+    true
+   ],
+   "3band +20dB": [
+    true,
+    true,
+    true
+   ],
+   "3band+VHF +0dB": [
+    true,
+    true,
+    true
+   ],
+   "3band+VHF +20dB": [
+    true,
+    true,
+    true
+   ],
+   "3band,3angles +0dB": [
+    true,
+    true,
+    true
+   ],
+   "3band,3angles +20dB": [
+    true,
+    true,
+    true
+   ],
+   "3band+VHF,3angles +0dB": [
+    true,
+    true,
+    true
+   ],
+   "3band+VHF,3angles +20dB": [
+    true,
+    true,
+    true
+   ]
+  }
+ },
+ "random27": {
+  "layers": [
+   "marble",
+   "concrete",
+   "brick"
+  ],
+  "obs": {
+   "3band +0dB": [
+    true,
+    true,
+    false
+   ],
+   "3band +20dB": [
+    true,
+    true,
+    true
+   ],
+   "3band+VHF +0dB": [
+    true,
+    true,
+    true
+   ],
+   "3band+VHF +20dB": [
+    true,
+    true,
+    true
+   ],
+   "3band,3angles +0dB": [
+    true,
+    true,
+    true
+   ],
+   "3band,3angles +20dB": [
+    true,
+    true,
+    true
+   ],
+   "3band+VHF,3angles +0dB": [
+    true,
+    true,
+    true
+   ],
+   "3band+VHF,3angles +20dB": [
+    true,
+    true,
+    true
+   ]
+  }
+ },
+ "random28": {
+  "layers": [
+   "plywood",
+   "foam",
+   "batt"
+  ],
+  "obs": {
+   "3band +0dB": [
+    true,
+    false,
+    true
+   ],
+   "3band +20dB": [
+    true,
+    true,
+    true
+   ],
+   "3band+VHF +0dB": [
+    true,
+    false,
+    true
+   ],
+   "3band+VHF +20dB": [
+    true,
+    true,
+    true
+   ],
+   "3band,3angles +0dB": [
+    true,
+    true,
+    true
+   ],
+   "3band,3angles +20dB": [
+    true,
+    true,
+    true
+   ],
+   "3band+VHF,3angles +0dB": [
+    true,
+    true,
+    true
+   ],
+   "3band+VHF,3angles +20dB": [
+    true,
+    true,
+    true
+   ]
+  }
+ },
+ "random29": {
+  "layers": [
+   "plywood",
+   "batt",
+   "brick"
+  ],
+  "obs": {
+   "3band +0dB": [
+    true,
+    true,
+    true
+   ],
+   "3band +20dB": [
+    true,
+    true,
+    true
+   ],
+   "3band+VHF +0dB": [
+    true,
+    true,
+    true
+   ],
+   "3band+VHF +20dB": [
+    true,
+    true,
+    true
+   ],
+   "3band,3angles +0dB": [
+    true,
+    true,
+    true
+   ],
+   "3band,3angles +20dB": [
+    true,
+    true,
+    true
+   ],
+   "3band+VHF,3angles +0dB": [
+    true,
+    true,
+    true
+   ],
+   "3band+VHF,3angles +20dB": [
+    true,
+    true,
+    true
+   ]
+  }
+ }
+}

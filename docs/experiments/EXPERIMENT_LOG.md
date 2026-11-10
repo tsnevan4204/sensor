@@ -943,3 +943,21 @@ Failure classes from the 15 flagged walls:
 4. Lossy/dispersive layers (plywood, tile) with poor starting materials.
 Often the front 1–2 layers are exact and the error starts at the first strong absorber or low-contrast layer.
 **Conclusion:** the echo pipeline is a good fast initialiser for the front of the wall but is not a reliable solver for the stated problem; the target accuracy is not reached.
+
+## E050 — information budget (CRB only, no search)
+Hypothesis: extra bands (0.1–0.4 GHz), +20 dB SNR (chirp averaging) or 3 angles (0/15/30°, TE) raise the
+fraction of layers that are observable (CRB(t) ≤ max(0.3 mm, 2 %), CRB(ε')/ε' ≤ 3 %) on 30 random 3-layer walls.
+
+| design | +0 dB | +20 dB |
+|---|---|---|
+| 3 bands | 92 % | 100 % |
+| 3 bands + VHF | 93 % | 100 % |
+| 3 bands, 3 angles | 96 % | 100 % |
+| 3 bands + VHF, 3 angles | 96 % | 100 % |
+
+Targeted: concrete 120–150 mm then plasterboard → back layer observed only at +20 dB (any design);
+foam|gap10|plasterboard and batt80|plywood12 fully observed in all designs.
+Conclusion: identifiability is not the bottleneck; +20 dB (100 chirps averaged, ~10 ms) is the cheapest lever
+and also solves the absorber cases tested; angles add +4 % at +0 dB; VHF adds ~nothing. The remaining
+failures (E049g) are SEARCH failures. Decision: default SNR budget +20 dB in the dev set as an option;
+multi-angle (E053) kept as a robustness extension, not a necessity. Results: results/2026-11-10_E050_budget/.
