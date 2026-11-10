@@ -5,3 +5,4 @@
 {"seed": 404, "use_nn": 1, "ok": true, "geo_ok": true, "chi2n": 1.0224288473762126, "alarm": false, "s": 67.90149903297424}
 {"seed": 405, "use_nn": 1, "ok": true, "geo_ok": true, "chi2n": 0.9309917539792493, "alarm": false, "s": 63.909173250198364}
 {"seed": 406, "use_nn": 1, "ok": false, "geo_ok": false, "chi2n": 0.9877284963404444, "alarm": false, "s": 64.00343823432922}
+{"seed": 407, "use_nn": 1, "ok": false, "geo_ok": false, "chi2n": 1.2771989975222506, "alarm": true, "s": 77.13392853736877}
