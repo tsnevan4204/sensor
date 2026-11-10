@@ -961,3 +961,35 @@ Conclusion: identifiability is not the bottleneck; +20 dB (100 chirps averaged, 
 and also solves the absorber cases tested; angles add +4 % at +0 dB; VHF adds ~nothing. The remaining
 failures (E049g) are SEARCH failures. Decision: default SNR budget +20 dB in the dev set as an option;
 multi-angle (E053) kept as a robustness extension, not a necessity. Results: results/2026-11-10_E050_budget/.
+
+## E051 — starting materials at the TRUE geometry (initialiser isolated)
+30 walls (seeds 300–329), true optical interface depths given, exact LM from each start:
+amplitude-recursion 14/30, library sweeps (batched exact) 24/30, top-down peel 18/30, sweep∪peel 25/30.
+Of the remaining failures, 3 reach χ²/n ≈ 1.0 with wrong back-layer thickness (behind concrete: unobservable
+at +0 dB, consistent with E050). Conclusion: amplitude starts are a major failure source; sweeps fix most.
+
+## E052 — 50-wall dev set (seeds 400–449; no water, gaps ≥ 5 mm), echo cascade + material rescue
+Rescue = when χ² still alarms: swept screening of all candidate geometries + peel starts (wallsolve.MAT_RESCUE=3).
+Result: OK 15, flagged 29, weak 2, unobs 1, crash 1, SILENT 2 (406 foam|concrete|foam: back layer behind
+concrete, CRB 12.5 mm — unobservable but not flagged; 436: −0.35 mm on plywood, just outside tolerance). Median 134 s.
+Stage attribution (diagnose.py) of the 35 non-OK walls: truth reaches χ²/n ≈ 1 with small CRB in all but 2 —
+information is present; 33/35 first fail at ECHO DETECTION (true interfaces closer than the UWB resolution
+c/2B ≈ 2 cm merge; dispersion shifts echo phase). The echo-sum initialiser is the bottleneck.
+
+## E056 — exact layer-stripping beam search (negative result)
+Range-horizon dynamic programme: above a horizon the wall is decided, the measured Γ is an exact Möbius
+map of the next interface's z = r·e^{-2jk n t}; each child scored by the windowed range energy of the UWB
+residual (causality: a new interface only changes ranges ≥ z − pulse width). Library classes (+ε'/tanδ
+variants, widened thickness ranges). Truth-like structure never survived to the pool (0/8 walls) for
+gates h−4 cm, h−2 cm, h, h+2 cm and beams 200/1000. Cause: with B = 7.5 GHz the pulse half-width (≈4 cm
+Hann) exceeds typical layer optical thickness (15–40 mm); a decision cannot be scored until 2–4 later
+decisions are made (lag), or it is scored with unmodelled later echoes (look-ahead bias that thin fake
+layers absorb). Range-sequential decisions are not separable at this bandwidth: the wall must be fitted
+as a whole. Code kept in beam.py for reference.
+
+## E054 — parallel tempering over the full continuous parameter vector (in progress)
+pt.py: replica exchange (20 temperatures × 8 replicas, β 1→1e-4) on χ²/2 + library prior + widened
+thickness-range prior; moves: random walk, library class swap (optical thickness kept), λ/2 cycle hop,
+interface shift, gap open/close; all chains = one batched exact forward call. Tempered on f < 11 GHz
+(mmWave phase too rugged), then exact LM on all bands from the best 6 states, both backings.
+First tests: 404 (echo failure) OK, χ²/n 1.02; 401 (echo failure) OK, χ²/n 0.89; ~120 s each.

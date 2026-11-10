@@ -1,0 +1,9 @@
+{"seed": 405, "tag": "flag", "chi_solver": 68.11, "chi_truth": 0.93, "crb": [0.006, 0.074, 0.038], "ifc": [0.0, 15.6, 50.2, 68.8], "miss": [0.0, 15.6, 68.8], "first": "2 echoes (true interface not detected)"}
+{"seed": 409, "tag": "flag", "chi_solver": 46.04, "chi_truth": 0.96, "crb": [0.046, 0.021, 0.023, 0.008], "ifc": [0.0, 128.4, 152.6, 171.6, 191.8], "miss": [128.4, 152.6, 171.6], "first": "2 echoes (true interface not detected)"}
+{"seed": 416, "tag": "flag", "chi_solver": 33.75, "chi_truth": 0.99, "crb": [0.007, 0.07, 0.109, 0.087], "ifc": [0.0, 24.4, 152.5, 165.8, 189.8], "miss": [24.4, 152.5, 165.8], "first": "2 echoes (true interface not detected)"}
+{"seed": 425, "tag": "weak", "chi_solver": 1.04, "chi_truth": 1.04, "crb": [0.015, 0.152, 0.011, 0.455], "ifc": [0.0, 24.1, 205.6, 223.4, 477.3], "miss": [477.3], "first": "2 echoes (true interface not detected)"}
+{"seed": 431, "tag": "flag", "chi_solver": 1.21, "chi_truth": 0.94, "crb": [0.034, 0.038, 0.289, 0.272], "ifc": [0.0, 12.4, 20.9, 327.6, 353.7], "miss": [0.0, 12.4, 327.6, 353.7], "first": "2 echoes (true interface not detected)"}
+{"seed": 436, "tag": "SILENT", "chi_solver": 0.97, "chi_truth": 0.95, "crb": [0.031, 0.026, 0.034], "ifc": [0.0, 47.6, 62.3, 80.8], "miss": [0.0], "first": "2 echoes (true interface not detected)"}
+{"seed": 440, "tag": "flag", "chi_solver": 1.29, "chi_truth": 1.02, "crb": [0.049, 0.028, 0.093], "ifc": [0.0, 139.5, 158.1, 213.3], "miss": [], "first": "3/4 candidate ranking or refinement (truth fits better but was not reached)"}
+{"seed": 444, "tag": "flag", "chi_solver": 1.26, "chi_truth": 0.95, "crb": [0.01, 0.152, 0.157, 0.032], "ifc": [0.0, 32.7, 49.9, 60.0, 80.8], "miss": [49.9, 60.0, 80.8], "first": "2 echoes (true interface not detected)"}
+{"seed": 449, "tag": "flag", "chi_solver": 1.12, "chi_truth": 0.98, "crb": [0.049, 0.036, 0.031], "ifc": [0.0, 65.8, 88.4, 107.0], "miss": [65.8], "first": "2 echoes (true interface not detected)"}
