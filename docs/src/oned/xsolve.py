@@ -226,6 +226,7 @@ def labels(pol, x):
     return out
 
 
+VIS_DCHI2 = 25.0    # layers behind which the data change by less than this are 'not observed'
 LABEL_P = 0.10      # every class with posterior >= 10 % is reported (equal priors over classes)
 
 
@@ -319,8 +320,33 @@ def _finish(cands, views, N, d_guess, n_polish, t0):
     weak = [bool(e > 0.2 * L["t"]) for e, L in zip(crb, sol)]
     unobs = [i for i, L in enumerate(sol) if L["er"] < 1.03]
     labs = labels(pol[back], x)
+    # E061b: honesty checks for walls with fewer observable layers than the N the user gave
+    #  (1) unresolved interface: adjacent solids (no gap) whose label sets overlap -> one interface unseen
+    unresolved = []
+    j = 0
+    for (k, i), L in zip(slots, lay):
+        pass
+    sl = [i for (k, i) in slots if k == "solid"]
+    for i in range(N - 1):
+        gap_between = any(k == "gap" and gi == i for k, gi in slots)
+        if not gap_between and set(nm for _, nm in labs[i]) & set(nm for _, nm in labs[i + 1]):
+            unresolved.append(i)
+    #  (2) visibility depth: everything behind solid i's back face replaced by air (metal backing kept
+    #      only if it is the backing) changes chi2 by < VIS_DCHI2 -> layers i+1.. are not observed
+    vis_from = None
+    for i in range(N - 1):
+        xa = x.copy()
+        for q in range(i + 1, N):
+            xa[2 + 5 * q] = np.log(1e-4); xa[3 + 5 * q] = np.log(1e-4)
+        for g in range(i, pol[back].NG):
+            xa[1 + 5 * N + g] = -5e-3
+        if pol[back].chi2(xa) - chi < VIS_DCHI2:
+            vis_from = i + 1
+            break
+    unobs = sorted(set(unobs) | set(range(vis_from, N) if vis_from is not None else []))
+    weak = [w or (i in unresolved) or ((i - 1) in unresolved) for i, w in enumerate(weak)]
     return dict(x=x, back=back, chi2=chi, labels=labs, chi2n=chi / n_all, alarm=bool(chi > ST.chi2_alarm(n_all)),
-                lay=lay, slots=slots, crb_t=crb, weak=weak, unobserved=unobs, alternatives=alts,
+                lay=lay, slots=slots, crb_t=crb, unresolved=unresolved, visible_layers=vis_from if vis_from is not None else N, weak=weak, unobserved=unobs, alternatives=alts,
                 ambiguous=bool(alts), wall_s=time.time() - t0)
 
 
