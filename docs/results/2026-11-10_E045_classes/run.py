@@ -13,7 +13,7 @@ def one(seed):
     f, y, s, d0, tr = ST.make_case(seed, n_exact=N)
     t0 = time.time()
     try:
-        m, c, info = KN.invert_cls(f, y, s, N)
+        m, c, info = KN.invert_combo(f, y, s, N)
     except Exception as e:
         return dict(seed=seed, crash=repr(e))
     tl = tr["layers"]

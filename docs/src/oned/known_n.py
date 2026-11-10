@@ -273,3 +273,17 @@ def invert_cls(f, y, sigma, N, k=3, beam=6, n_full=3, verbose=False):
     info.update(wall_s=time.time() - t0, chi2=chi, map_cost=c, alarm=bool(chi > ST.chi2_alarm(n_all)),
                 labels=pri.labels(mod), classes=[{l: 1.0} for l in pri.labels(mod)], n_seq=len(scored))
     return mod, chi, info
+
+
+def invert_combo(f, y, sigma, N):
+    """E045b: material-class search first (fast); only if its chi2 alarm fires, run the E044
+    pipeline (DP segmentation + agglomerative reduction) and keep the lower data chi2."""
+    a = invert_cls(f, y, sigma, N)
+    if not a[2]["alarm"]:
+        a[2]["route"] = "classes"
+        return a
+    b = invert(f, y, sigma, N)
+    pick = a if a[1] <= b[1] else b
+    pick[2]["route"] = "classes+fallback:" + ("classes" if pick is a else "reduce")
+    pick[2]["wall_s"] = a[2]["wall_s"] + b[2]["wall_s"]
+    return pick
