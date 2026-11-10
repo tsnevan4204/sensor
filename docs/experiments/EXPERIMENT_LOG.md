@@ -1020,3 +1020,19 @@ Geometry correct on 43/50.
   - 405: batt off by 1.16 mm with CRB 0.11 mm. Unexplained.
 - Flagged: 413, 431, 442. Unconverged search behind concrete.
 - Partial run with 3 angles (0/15/30°): 22/24 OK, 0 silent, median 555 s.
+
+## E061 (cont.) — 3 angles and +20 dB on the dev set
+On the 46 seeds common to all runs, OK counts: 0° 38, 3 angles 40, +20 dB 36.
+- **3 angles (0/15/30°, TE, ideal geometry), median 556 s:**
+  - fixes 400, 405, 407, 444 (low-contrast and label cases), breaks 429, 434 (flagged search failures);
+  - 0 silent vs 4 at 0° on the same walls, with the pre-E061b honesty code: the angles themselves remove the silent failures.
+- **+20 dB, all 50 walls:** 40 OK, 9 flagged, 1 weak, 0 silent.
+  - fixes 405, 431, 444, 446 (431 and 446 are behind-concrete cases); 406's geometry is now within 1.2 mm;
+  - breaks 420, 425, 426, 429, 437 by search failure (χ²/n 2–910): the sharper landscape is harder to temper.
+  - → E061d: temper at σ_PT = max(σ, nominal-SNR σ); the LS polish and cycle scan use the true σ. Rerun on the 10 non-OK walls.
+
+## E055 — tiny simulation-trained NN initialiser (numpy MLP, 7.8k params, 20k training walls)
+- Validation (std units): front layer 0.03–0.25, backing accuracy 0.99, standoff 0.08; layers 2–3 and gaps 0.6–0.9 (≈ prior mean).
+- Test A (NN guess → exact LS polish + cycle scan, no global search): 0/50 OK (PT: 41/50), median 34 s.
+  → a 10k-parameter regressor does not invert the coupled deep layers; negative result.
+- Test B (NN-seeded vs unseeded PT at reduced budget): queued.

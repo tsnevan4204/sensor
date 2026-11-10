@@ -87,6 +87,9 @@ def make_views(seed, N, angles_deg=(0.0,), snr_boost_db=0.0):
     return views, tr
 
 
+PT_SIGMA_FLOOR = True
+
+
 class MultiProblem(PT.Problem):
     """pt.Problem whose energy sums the chi2 of every view (each tempered on f < FMAX, SUB per band)."""
     def __init__(self, views, N, back, d_guess, d_tol=3e-3):
@@ -95,7 +98,10 @@ class MultiProblem(PT.Problem):
         self.views = []
         for (f, y, s, th) in views:
             q = PT.Problem(f, y, s, N, back, d_guess, d_tol)
-            self.views.append((q.f, q.y, q.s, th))
+            # E061d: temper never colder than the nominal design SNR (30 dB low band, 40 dB above):
+            # extra SNR (chirp averaging) sharpens the landscape; the LS polish uses the true sigma
+            fl = np.where(q.f < 1e9, 10 ** (-30 / 20), 10 ** (-40 / 20)) / np.sqrt(2) if PT_SIGMA_FLOOR else 0.0
+            self.views.append((q.f, q.y, np.maximum(q.s, fl), th))
 
     def energy(self, X):
         chi = np.zeros(X.shape[0])
