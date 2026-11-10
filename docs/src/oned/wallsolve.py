@@ -452,7 +452,73 @@ def _cand_to_x(d, lay, slots, N, back):
     return x if si == N else None
 
 
-def _screen_batch(cands, f, y, sigma, N, chunk=2000):
+_CLASS_TABLE = None
+
+
+def class_table(n=200, seed=4321):
+    """Typical (eps' at 10 GHz, tan d at 10 GHz, dispersion shape p) of every library material
+    (median over the generator's variability) + water: starting materials for the class sweeps."""
+    global _CLASS_TABLE
+    if _CLASS_TABLE is None:
+        rng = np.random.default_rng(seed)
+        rows = []
+        for nm in SOLIDS:
+            if nm == "water":
+                continue
+            v = np.array([[d["eps10"], d["tan10"], d.get("p", 0.0)] for d in
+                          (ST.material_law(nm, rng)[1] for _ in range(n))])
+            rows.append((nm, *np.median(v, axis=0)))
+        _CLASS_TABLE = rows
+    return _CLASS_TABLE
+
+
+def _class_sweeps(X, f, y, sigma, N, back, sweeps=2):
+    """E049h: per candidate geometry, coordinate sweeps over the material library: each solid layer in
+    turn tries every class's typical (eps', tan d, p) (and water) with its OPTICAL thickness kept, the
+    best is kept. Echo amplitudes give poor starting materials for lossy, dispersive layers
+    (plywood: eps'' ~ 13 at 0.5 GHz), so the geometry must not be judged by them."""
+    tab = class_table()
+    opts = [(np.log(er - 1), np.log(td), -np.log(max(1 - p, 1e-3)), -6.0) for _, er, td, p in tab]
+    opts.append((0.0, np.log(1e-3), 0.0, 6.0))                      # water
+    X = X.copy()
+    G = gamma_batch(X, f, N, back)
+    best = np.sum(np.abs((G - y[None, :]) / sigma[None, :]) ** 2, axis=1)
+    for _ in range(sweeps):
+        for i in range(N):
+            j0 = 1 + 5 * i
+            tau = X[:, j0].copy()                                   # log optical thickness: unchanged
+            for la, lb, u, c in opts:
+                Xt = X.copy()
+                Xt[:, j0 + 1], Xt[:, j0 + 2], Xt[:, j0 + 3], Xt[:, j0 + 4] = la, lb, u, c
+                Xt[:, j0] = tau
+                Gt = gamma_batch(Xt, f, N, back)
+                ct = np.sum(np.abs((Gt - y[None, :]) / sigma[None, :]) ** 2, axis=1)
+                better = ct < best
+                X[better], best[better] = Xt[better], ct[better]
+    return X, best
+
+
+def _x_to_layers(x, slots_meta, N):
+    """Inverse of _cand_to_x for the solid layers (gaps unchanged): updated layer list."""
+    lay, slots = slots_meta
+    out, si = [], 0
+    for (kind, i), L in zip(slots, lay):
+        if kind == "solid":
+            lt, la, lb, u, c = x[1 + 5 * si: 6 + 5 * si]
+            th = float(_theta(c))
+            if th > 0.6:
+                out.append(dict(t=float(np.exp(lt) / 8.6), er=1.0, td=0.0, water=True))
+            else:
+                er = float(1 + np.exp(la))
+                out.append(dict(t=float(np.exp(lt) / np.sqrt(er)), er=er, td=float(np.exp(lb)), water=False,
+                                pinf=float(min(1 - np.exp(-u), 0.998))))
+            si += 1
+        else:
+            out.append(L)
+    return out
+
+
+def _screen_batch(cands, f, y, sigma, N, chunk=2000, top_geo=400):
     """Score every candidate (both backings) with ONE exact batched forward per chunk."""
     out = []
     for back in ("air", "metal"):
@@ -465,9 +531,19 @@ def _screen_batch(cands, f, y, sigma, N, chunk=2000):
             X = np.array(xs[a:a + chunk])
             G = gamma_batch(X, f, N, back)
             c = np.sum(np.abs((G - y[None, :]) / sigma[None, :]) ** 2, axis=1)
-            out += [(float(ci), *meta[a + j], back) for j, ci in enumerate(c)]
-    out.sort(key=lambda t: t[0])
-    return out
+            out += [(float(ci), *meta[a + j], back, X[j]) for j, ci in enumerate(c)]
+    # E049h: geometry is judged after material sweeps; sweep the best `top_geo` geometries per backing
+    final = []
+    for back in ("air", "metal"):
+        sub = sorted([o for o in out if o[4] == back], key=lambda t: t[0])[:top_geo]
+        if not sub:
+            continue
+        X = np.array([o[5] for o in sub])
+        Xs, cs = _class_sweeps(X, f, y, sigma, N, back)
+        for o, xs_, c_ in zip(sub, Xs, cs):
+            final.append((float(c_), o[1], _x_to_layers(xs_, (o[2], o[3]), N), o[3], back))
+    final.sort(key=lambda t: t[0])
+    return final
 
 
 def solve_echo(f, y, sigma, N, d_guess, n_refine=8, verbose=False, n_split=None):

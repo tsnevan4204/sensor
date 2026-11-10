@@ -1,0 +1,12 @@
+seed 1 flag 72s chi2/n 43.68 route echo (split worse) unobserved []
+   truth [('chipbo', 11.4), ('plywoo', 6.2), ('foam', 16.3)] gaps [0. 0. 0.] metal
+   fit   [('plaste', 18.5), ('ceilin', 12.3), ('marble', 8.1)] gaps [0. 0.] air
+seed 4 UNOBS 91s chi2/n 1.01 route echo unobserved [2]
+   truth [('foam', 26.6), ('water', 4.4), ('batt', 50.7)] gaps [19.4  0. ] air
+   fit   [('foam', 26.5), ('water', 4.4), ('air', 236.1)] gaps [ 19.4 152.1] air
+seed 2 OK 33s chi2/n 0.99 route echo unobserved []
+   truth [('batt', 58.0), ('wood', 23.3), ('brick', 88.1)] gaps [9.4 0. ] air
+   fit   [('batt', 58.0), ('wood', 23.2), ('brick', 88.1)] gaps [9.4 0. ] air
+seed 3 OK 37s chi2/n 0.97 route echo unobserved []
+   truth [('batt', 33.3), ('brick', 64.3), ('wood', 30.3)] gaps [0. 0.] air
+   fit   [('batt', 33.2), ('brick', 64.2), ('wood', 30.3)] gaps [0. 0.] air
