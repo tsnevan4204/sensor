@@ -23,12 +23,19 @@ import stack as ST
 C0 = WS.C0
 T_WIDEN = (0.7, 1.4)
 FMAX = 11e9
+SUB = 96          # frequencies per band used while tempering (all are used in the LM polish)
 
 
 class Problem:
     def __init__(self, f, y, s, N, back, d_guess, d_tol=3e-3, fmax=FMAX):
         sel = f < fmax                                   # mmWave phase is too rugged to temper over
         f, y, s = f[sel], y[sel], s[sel]
+        if SUB:                                          # E054c: temper on a subset of each band
+            import wall_inverse as I
+            idx = []
+            for a, b in I.band_segments(f):
+                idx += list(np.linspace(a, b - 1, min(SUB, b - a)).astype(int))
+            f, y, s = f[idx], y[idx], s[idx]
         self.f, self.y, self.s, self.N, self.back = f, y, s, N, back
         self.lo, self.hi, self.NG = WS.layout(N, back)
         self.lo[0], self.hi[0] = d_guess - d_tol, d_guess + d_tol
@@ -158,16 +165,16 @@ def x_to_lay(x, N, back):
     return lay, slots
 
 
-def solve(f, y, sigma, N, d_guess, steps=1500, n_polish=6, verbose=False, seed=0):
+def solve(f, y, sigma, N, d_guess, steps=4000, n_polish=10, restarts=2, verbose=False, seed=0):
     import matlib as ML, search as SR, wall_inverse as I
     t0 = time.time()
     runs = []
-    for back in ("air", "metal"):
+    for back, rs in [(b, r) for b in ("air", "metal") for r in range(restarts)]:
         pb = Problem(f, y, sigma, N, back, d_guess)
-        best, cand = run(pb, steps=steps, verbose=verbose, seed=seed)
+        best, cand = run(pb, steps=steps, verbose=verbose, seed=seed + 101 * rs)
         if verbose:
             print(f"  PT {back}: chi2n {best[2] / (2 * f.size):.2f}  {time.time() - t0:.0f}s", flush=True)
-        runs += [(pb.energy(c[None, :])[0][0], c, back) for c in cand]
+        runs += [(pb.energy(c[None, :])[0][0] / pb.f.size, c, back) for c in cand]
     runs.sort(key=lambda r: r[0])
     pri = ML.LibPrior(); old = SR._PRIORS; SR._PRIORS = (pri,)
     best = None
