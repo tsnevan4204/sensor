@@ -1129,3 +1129,6 @@ On the 46 seeds common to all runs, OK counts: 0° 38, 3 angles 40, +20 dB 36.
   More budget alone does not rescue every 5-layer wall.
   Infrastructure: detached (nohup) jobs die when the idle session's container is reclaimed. Long runs must sit under a
   tracked background task.
+- **E063 3× budget, final:** 916 OK (errors ≤ 0.03 mm); 902 close (χ²/n 6.4, layers 3 and 5 off by 2.1 and 1.4 mm);
+  904 (χ²/n 4382) and 910 (877) remain in wrong basins.
+  → Budget alone does not scale the search to N = 5. E065 layer sweep is now tested on 902/904/910 from the same PT candidates.

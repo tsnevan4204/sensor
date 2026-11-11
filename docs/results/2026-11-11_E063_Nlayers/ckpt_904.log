@@ -1,3 +1,7 @@
 904 air 0 PT done 353.61 290 s
 904 air 1 PT done 376.16 296 s
 904 air 2 PT done 477.69 289 s
+904 metal 0 PT done 117.13 314 s
+904 metal 1 PT done 88.69 332 s
+904 metal 2 PT done 154.02 312 s
+904 RESULT ok False chi2n 4381.519 [ -0.3 -11.6   2.2   2.  -30.4]

@@ -1,3 +1,7 @@
 902 air 0 PT done 3.94 287 s
 902 air 1 PT done 1.17 295 s
 902 air 2 PT done 2.91 293 s
+902 metal 0 PT done 13.32 318 s
+902 metal 1 PT done 16.03 335 s
+902 metal 2 PT done 10.88 319 s
+902 RESULT ok False chi2n 6.371 [ 0.   0.  -2.1  0.  -1.4]

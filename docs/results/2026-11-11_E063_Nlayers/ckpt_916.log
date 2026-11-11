@@ -1,3 +1,7 @@
 916 air 0 PT done 1.34 290 s
 916 air 1 PT done 0.96 295 s
 916 air 2 PT done 1.0 294 s
+916 metal 0 PT done 8.54 314 s
+916 metal 1 PT done 7.0 327 s
+916 metal 2 PT done 20.53 316 s
+916 RESULT ok True chi2n 1.021 [-0. -0.  0.  0. -0.]
