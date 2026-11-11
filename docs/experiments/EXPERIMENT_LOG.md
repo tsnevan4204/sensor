@@ -1132,3 +1132,15 @@ On the 46 seeds common to all runs, OK counts: 0° 38, 3 angles 40, +20 dB 36.
 - **E063 3× budget, final:** 916 OK (errors ≤ 0.03 mm); 902 close (χ²/n 6.4, layers 3 and 5 off by 2.1 and 1.4 mm);
   904 (χ²/n 4382) and 910 (877) remain in wrong basins.
   → Budget alone does not scale the search to N = 5. E065 layer sweep is now tested on 902/904/910 from the same PT candidates.
+- **E065 layer sweep** (per-layer class × thickness resampling): runs (21 s on 902) but finds no improvement on 902/904/910.
+- **902 diagnosis:** floorboard | plasterboard | foam | batt | brick. The fit has the foam at 22.3 mm (true 12.5).
+  - Its tempering energy is 0.48 per frequency (looks perfect), yet full χ²/n = 36.
+  - Per band at the true σ:
+    | band | wrong fit χ²/pt | truth χ²/pt |
+    |---|---|---|
+    | low | 1.5 | 0.97 |
+    | UWB | **86.6** | 1.08 |
+    | mmWave | 21.3 | 0.92 |
+  - The σ floor (E061d), which helped at N = 3, divides the UWB evidence by 100 at +20 dB, so the tempering cannot see that it is
+    wrong. At N = 5 the floored data are ambiguous.
+- → **E066:** stage-2 tempering at the true σ, seeded from the stage-1 (floored) candidates. Testing on 902/904/910.
