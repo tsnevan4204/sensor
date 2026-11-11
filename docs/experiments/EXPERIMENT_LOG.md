@@ -1078,3 +1078,11 @@ On the 46 seeds common to all runs, OK counts: 0° 38, 3 angles 40, +20 dB 36.
   Cause: the angle error is unmodelled. Δkz/kz ≈ 0.1 % per degree gives ~0.25 rad at 60 GHz, above the noise.
   401 and 405 have their geometry right but χ²/n 1.07–1.16.
   → E062b: per-view angle offsets fitted as well (±3°). Rerunning.
+- **E060 held-out #2** (seeds 700–749, current code incl. E060b/d; 0°, +20 dB): OK 39, flagged 10, silent 1 (725: brick behind
+  concrete + plywood, 3.0 mm off). 49/50 correct-or-honest (clean). Median 232 s.
+  → Held-out #1 (clean, older code) 47/50. Combined honesty ≈ 96–98 %; exact rate 78–82 %.
+  The remaining silent cases (641, 725) are both a weak layer BEHIND concrete with an optimistic linearised CRB.
+- **E062b sweep, angles fitted too:** OK 4, flagged 13, weak 1, silent 2. The truth reproduces the data (χ²/n 0.96 at the true
+  offsets/angles), so this is a search failure: each view's standoff offset has mmWave cycles (1 mm = 2.5 rad at 62 GHz) that the
+  <11 GHz tempering cannot resolve.
+  → E062c: the per-view offsets join the mmWave cycle scan. Testing.

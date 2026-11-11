@@ -380,11 +380,17 @@ def cycle_scan(pol, x, ks=(-3, -2, -1, 1, 2, 3), max_nfev=40):
             pairs.append(("ss", i, i + 1))
     if pol.NG > N - 1 and x[1 + 5 * N + N - 1] > 0:
         pairs.append(("sg", N - 1, 1 + 5 * N + N - 1))
+    # E062c: per-view standoff offsets (sweeping sensor) also have mmWave cycles: 1 mm = 2.5 rad at 62 GHz
+    if x.size > pol.DL:
+        V = (x.size - pol.DL) // 2
+        pairs += [("off", pol.DL + v, None) for v in range(V)]
     for kind, a, b in pairs:
         for k in ks:
             y = best_x.copy()
             dl = k * LAM2_MM
-            if kind == "ss":
+            if kind == "off":
+                y[a] += dl / 2          # standoff: two-way path 2*dl/2 = one mmWave half-cycle per k
+            elif kind == "ss":
                 ta, tb = np.exp(y[1 + 5 * a]), np.exp(y[1 + 5 * b])
                 if ta + dl <= 1e-4 or tb - dl <= 1e-4:
                     continue
