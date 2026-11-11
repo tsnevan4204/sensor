@@ -1074,3 +1074,7 @@ On the 46 seeds common to all runs, OK counts: 0° 38, 3 angles 40, +20 dB 36.
   - CAVEAT: E060b/d were designed after seeing 618/624 fail, so 47/50 is the clean held-out number;
     a second fresh set is needed to confirm 49/50.
   - Open: 641, an optimistic linearised CRB for a weak layer behind concrete.
+- **E062 sweep, fitted standoff offsets only** (true σ: 1 mm distance, 1° angle; 20 walls): 14 of the ideal OKs became flagged, 0 silent.
+  Cause: the angle error is unmodelled. Δkz/kz ≈ 0.1 % per degree gives ~0.25 rad at 60 GHz, above the noise.
+  401 and 405 have their geometry right but χ²/n 1.07–1.16.
+  → E062b: per-view angle offsets fitted as well (±3°). Rerunning.

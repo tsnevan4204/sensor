@@ -26,6 +26,9 @@ C0, F_REF = WS.C0, WS.F_REF
 def gamma_ang(X, f, N, back, th):
     P = X.shape[0]
     k0 = 2 * np.pi * f / C0
+    th = np.asarray(th, float)
+    if th.ndim == 1:
+        th = th[:, None]                               # E062b: one angle per row (P, 1)
     s2 = np.sin(th) ** 2
     lg = -np.log(f / F_REF)[None, :]
     NG = N - 1 + (1 if back == "metal" else 0)
@@ -42,7 +45,7 @@ def gamma_ang(X, f, N, back, th):
         ts.append(np.exp(lt) / np.sqrt(er))
         if i < NG:
             g = np.maximum(X[:, 1 + 5 * N + i], 0.0)[:, None]
-            kz.append(np.full((P, f.size), np.sqrt(1 - s2) + 0j)); ts.append(g)
+            kz.append(np.broadcast_to(np.sqrt(1 - s2) + 0j, (P, f.size)).copy()); ts.append(g)
     kb = branch(np.sqrt((ST.METAL_EPS if back == "metal" else 1.0) - s2 + 0j)) * np.ones((1, f.size))
     k_air = np.sqrt(1 - s2)
     G = (kz[-1] - kb) / (kz[-1] + kb)
@@ -95,15 +98,18 @@ def make_views(seed, N, angles_deg=(0.0,), snr_boost_db=0.0, pos_err=0.0, ang_er
 PT_SIGMA_FLOOR = True
 VIEW_OFFSETS = False     # E062: each view (k >= 1) gets its own standoff offset (sensor position unknown)
 OFF_TOL = 3e-3
+ANG_TOL = np.radians(3.0)
 
 
-def view_X(X, k, DL):
-    """Parameter rows for view k: the standoff of view k >= 1 is d + offset_k (extra coordinate)."""
+def view_X(X, k, DL, th=0.0):
+    """Parameter rows and angles for view k: view k >= 1 has standoff d + offset_k and angle
+    th_nominal + dth_k (extra coordinates DL + (k-1) and DL + V + (k-1), V = #views - 1)."""
     if X.shape[1] <= DL or k == 0:
-        return X
+        return X, th
+    V = (X.shape[1] - DL) // 2
     Y = X.copy()
     Y[:, 0] = Y[:, 0] + X[:, DL + k - 1]
-    return Y
+    return Y, th + X[:, DL + V + k - 1]
 
 
 class MultiProblem(PT.Problem):
@@ -120,15 +126,16 @@ class MultiProblem(PT.Problem):
             self.views.append((q.f, q.y, np.maximum(q.s, fl), th))
         if VIEW_OFFSETS and len(views) > 1:
             V = len(views) - 1
-            self.lo = np.concatenate([self.lo, np.full(V, -OFF_TOL)])
-            self.hi = np.concatenate([self.hi, np.full(V, OFF_TOL)])
+            self.lo = np.concatenate([self.lo, np.full(V, -OFF_TOL), np.full(V, -ANG_TOL)])
+            self.hi = np.concatenate([self.hi, np.full(V, OFF_TOL), np.full(V, ANG_TOL)])
             self.D = self.lo.size
-            self.off_step = 0.15e-3
+            self.off_step = np.concatenate([np.full(V, 0.15e-3), np.full(V, np.radians(0.1))])
 
     def energy(self, X):
         chi = np.zeros(X.shape[0])
         for k, (f, y, s, th) in enumerate(self.views):
-            G = gamma_ang(view_X(X, k, self.DL), f, self.N, self.back, th)
+            Xk, tk = view_X(X, k, self.DL, th)
+            G = gamma_ang(Xk, f, self.N, self.back, tk)
             chi += np.sum(np.abs((G - y[None, :]) / s[None, :]) ** 2, axis=1)
         pen = WS._prior_batch(X, self.N, self.lib)
         for i in range(self.N):
@@ -162,9 +169,9 @@ class Polisher:
         self.DL = self.lo.size
         if VIEW_OFFSETS and len(views) > 1:
             V = len(views) - 1
-            self.lo = np.concatenate([self.lo, np.full(V, -OFF_TOL)])
-            self.hi = np.concatenate([self.hi, np.full(V, OFF_TOL)])
-            self.m = np.concatenate([self.m, np.ones(V, bool)])
+            self.lo = np.concatenate([self.lo, np.full(V, -OFF_TOL), np.full(V, -ANG_TOL)])
+            self.hi = np.concatenate([self.hi, np.full(V, OFF_TOL), np.full(V, ANG_TOL)])
+            self.m = np.concatenate([self.m, np.ones(2 * V, bool)])
         self.lib = WS._lib_arrays()
         ps = p_stats()
         self.pstat = [ps[nm] for nm in ST.library_stats()]
@@ -177,7 +184,8 @@ class Polisher:
     def res_batch(self, X):
         rs = []
         for k, (f, y, s, th) in enumerate(self.views):
-            G = gamma_ang(view_X(X, k, self.DL), f, self.N, self.back, th)
+            Xk, tk = view_X(X, k, self.DL, th)
+            G = gamma_ang(Xk, f, self.N, self.back, tk)
             r = (G - y[None, :]) / s[None, :]
             rs += [r.real, r.imag]
         pen = self.prior(X)
@@ -223,7 +231,8 @@ class Polisher:
     def chi2(self, x):
         c = 0.0
         for k, (f, y, s, th) in enumerate(self.views):
-            G = gamma_ang(view_X(x[None, :], k, self.DL), f, self.N, self.back, th)[0]
+            Xk, tk = view_X(x[None, :], k, self.DL, th)
+            G = gamma_ang(Xk, f, self.N, self.back, tk)[0]
             c += float(np.sum(np.abs((G - y) / s) ** 2))
         return c
 
