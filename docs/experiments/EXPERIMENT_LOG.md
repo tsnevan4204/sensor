@@ -1122,3 +1122,10 @@ On the 46 seeds common to all runs, OK counts: 0° 38, 3 angles 40, +20 dB 36.
 - Diagnosis running on 902, 916, 904, 910: χ² of the polished truth + CRB (information), and 3× PT budget.
 - E063 diagnosis, information part: the polished truth reaches χ²/n 0.98–1.02 on 902, 904, 910 and 916, with CRBs 0.0–1.0 mm.
   The information is present at N = 5; failures are SEARCH. The 3× budget part was killed by a container restart and is rerunning.
+- E063 3× budget, air-backed passes (3 of 6 per wall), tempering χ²/n:
+  - 902: 3.9 / 1.17 / 2.9;
+  - 916: 1.34 / 0.96 / 1.0 (converging);
+  - 904: 354 / 376 / 478 and 910: 117 / 95 / 169 (stuck in wrong basins).
+  More budget alone does not rescue every 5-layer wall.
+  Infrastructure: detached (nohup) jobs die when the idle session's container is reclaimed. Long runs must sit under a
+  tracked background task.
