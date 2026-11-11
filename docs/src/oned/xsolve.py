@@ -108,8 +108,11 @@ def view_X(X, k, DL, th=0.0):
         return X, th
     V = (X.shape[1] - DL) // 2
     Y = X.copy()
-    Y[:, 0] = Y[:, 0] + X[:, DL + k - 1]
-    return Y, th + X[:, DL + V + k - 1]
+    tk = th + X[:, DL + V + k - 1]
+    # E062d: the offset is in AIR-PATH units: d_k cos(th_k) = d cos(th_nominal) + offset_k, so an angle
+    # change no longer drags the large air phase with it (the (offset, angle) valley is decoupled)
+    Y[:, 0] = (X[:, 0] * np.cos(th) + X[:, DL + k - 1]) / np.cos(tk)
+    return Y, tk
 
 
 class MultiProblem(PT.Problem):
@@ -389,7 +392,7 @@ def cycle_scan(pol, x, ks=(-3, -2, -1, 1, 2, 3), max_nfev=40):
             y = best_x.copy()
             dl = k * LAM2_MM
             if kind == "off":
-                y[a] += dl / 2          # standoff: two-way path 2*dl/2 = one mmWave half-cycle per k
+                y[a] += dl / 2          # air path: two-way 2*dl/2 = one mmWave half-cycle per k
             elif kind == "ss":
                 ta, tb = np.exp(y[1 + 5 * a]), np.exp(y[1 + 5 * b])
                 if ta + dl <= 1e-4 or tb - dl <= 1e-4:
