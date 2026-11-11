@@ -297,6 +297,7 @@ def labels_approx(pol, x):
     return out
 
 
+LAYER_SWEEP = True  # E065: per-layer global resampling after the search
 PROFILE = True      # E064: profile-likelihood thickness intervals
 VIS_DCHI2 = 25.0    # layers behind which the data change by less than this are 'not observed'
 LABEL_P = 0.10
@@ -489,6 +490,47 @@ def profile_scan(pol, x, i, chi0, max_nfev=30):
     return out
 
 
+def layer_sweep(pol, x, mp, n_t=40, sweeps=2, top=3, max_nfev=80):
+    """E065: per-layer global resampling. For each solid layer i: every library class x n_t thicknesses
+    in its (widened) range, other layers fixed; two variants: (a) layers behind keep their thickness,
+    (b) the next layer absorbs the change (its rear interface keeps its optical position). Scored in one
+    batched call on the tempering data (mp: MultiProblem, < 11 GHz, sigma floor); the best `top` are
+    polished on all data; any improvement is adopted. Repeated `sweeps` times."""
+    N = pol.N
+    tab = WS.class_table()
+    best_x, best_c = x, pol.chi2(x)
+    for _ in range(sweeps):
+        improved = False
+        for i in range(N):
+            rows = []
+            for nm, er0, td0, p0 in tab:
+                lo, hi = ST.thickness_range(nm)
+                ts = np.geomspace(PT.T_WIDEN[0] * lo, PT.T_WIDEN[1] * hi, n_t)
+                for t in ts:
+                    for variant in ((0, 1) if i < N - 1 else (0,)):
+                        y = best_x.copy()
+                        tau_old = np.exp(y[1 + 5 * i])
+                        y[2 + 5 * i], y[3 + 5 * i] = np.log(er0 - 1), np.log(td0)
+                        y[4 + 5 * i] = -np.log(max(1 - min(p0, 0.999), 1e-3))
+                        tau_new = t * np.sqrt(er0)
+                        y[1 + 5 * i] = np.log(tau_new)
+                        if variant == 1:
+                            tau_n = np.exp(y[1 + 5 * (i + 1)]) - (tau_new - tau_old)
+                            if tau_n <= 1e-4:
+                                continue
+                            y[1 + 5 * (i + 1)] = np.log(tau_n)
+                        rows.append(y)
+            X = np.clip(np.array(rows), mp.lo, mp.hi)
+            E, _ = mp.energy(X)
+            for j in np.argsort(E)[:top]:
+                yp, c, _ = pol.polish(X[j], max_nfev=max_nfev)
+                if c < best_c - 1.0:
+                    best_x, best_c, improved = yp, c, True
+        if not improved:
+            break
+    return best_x, best_c
+
+
 def low_contrast_variants(x, N, pol, er_max=1.3):
     out = []
     for i in range(N):
@@ -550,6 +592,15 @@ def _finish(cands, views, N, d_guess, n_polish, t0):
         xs, cs = cycle_scan(pol[bk], xx)
         done[j] = (cs, xs, bk)
     done.sort(key=lambda d: d[0])
+    if LAYER_SWEEP:                                    # E065: per-layer global resampling of the 2 best
+        for j in range(min(2, len(done))):
+            c, xx, bk = done[j]
+            mp_ = MultiProblem(views, N, bk, d_guess)
+            xs, cs = layer_sweep(pol[bk], xx, mp_)
+            if cs < c:
+                xs, cs = cycle_scan(pol[bk], xs)
+                done[j] = (cs, xs, bk)
+        done.sort(key=lambda d: d[0])
     chi, x, back = done[0]
     # E061e: long final polish of the winner (high SNR needs more LS iterations to reach the noise floor)
     xl, cl, _ = pol[back].polish(x, max_nfev=400)
