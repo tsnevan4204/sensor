@@ -15,3 +15,11 @@ To look at a whole state without changing anything: `git switch --detach <commit
 
 ## E042 (in progress): global blocky inversion
 Replaces the per-depth search of E034/E041 with one continuous inversion of all depths (thin slices, total-variation regularisation, frequency continuation), then segmentation and the exact polish. Lives in a new file, `profile.py`; `stack.py` (world, TMM) and `peel.py` stay untouched, so reverting = not calling `profile.py`.
+
+## 78542a6 — xsolve known-N solver (recommended config)
+- Solver: `xsolve.solve`, 0°, +20 dB averaging.
+  - Search: parallel tempering at the nominal SNR (σ floor), then LS polish, mmWave cycle scan and low-contrast structural alternatives.
+  - Reporting: Laplace class evidence with label sets (Δscore ≤ 9), plus unresolved-interface and visibility checks.
+- Held-out 3-layer walls: #1 47/50 correct-or-honest (clean; 49/50 after fixes), #2 49/50 (clean); exact 78–82 %; ~4 min/wall.
+- Fast config (`xsolve.FAST=True`): 41/50 on dev, 0 silent, 77 s/wall.
+- Revert: `git checkout 78542a6 -- docs/src/oned`
