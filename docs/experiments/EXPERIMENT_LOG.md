@@ -1063,3 +1063,8 @@ On the 46 seeds common to all runs, OK counts: 0° 38, 3 angles 40, +20 dB 36.
   **E060d:** label set = all classes within evidence-score Δ ≤ 9 (score noise ~10 with ~20 correlated parameters).
 - **E062 sweeping sensor:** per-view standoff offsets (fitted, ±3 mm); true geometry has σ = 1 mm distance and 1° angle
   errors; 3 angles; 20 walls (400–419). Running.
+- **E060 held-out, FINAL** (50 fresh walls, seeds 600–649; 0°, +20 dB; code as of the run start: σ-floor + long polish).
+  Median 238 s.
+  - OK 41, flagged 4 (601, 626, 628, 639), honest 2 (643 ambiguity with truth listed, 647 weak/unobserved), SILENT 3 (618, 624, 641).
+  - Correct or honestly reported: 47/50 (94 %).
+  - Rerun of the 9 non-OK walls with E060b/E060d: running.
