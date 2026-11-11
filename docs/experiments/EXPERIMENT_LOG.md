@@ -1093,3 +1093,10 @@ On the 46 seeds common to all runs, OK counts: 0° 38, 3 angles 40, +20 dB 36.
 - **E062d:** offsets in air-path units, d_k cosθ_k = d cosθ_nom + off_k, so the angle only enters inside the wall.
   401: χ²/n 1.47 → 1.013, geometry within 0.02 mm. 405: search failure at the reduced budget.
   Full 20-wall rerun (full config) started.
+- **E062d full** (20 walls, 3 angles, σ 1 mm / 1° unknown, per-view air-path + angle fitted; full config): OK 5, flagged 13, weak 1,
+  silent 1 (401: labels, geometry within 0.04 mm). Ideal 3-angle on the same walls: 18 OK. Median 618 s.
+  - Most flags are search failures (χ²/n 30–260).
+  - Some are near-misses (χ²/n 1.09–1.15, geometry within 0.1 mm).
+  - Four extra coupled nuisance parameters make the tempering much harder.
+  CONCLUSION: with unknown sensor pose, the multi-angle sweep is NOT recommended with the current search. Recommended design:
+  stationary 0° with +20 dB averaging. A sweep needs pose tracking to ≲0.1 mm / 0.1°, or a pose-aware search (future work).
