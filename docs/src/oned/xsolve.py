@@ -138,6 +138,8 @@ class Polisher:
         self.lo[0], self.hi[0] = d_guess - d_tol, d_guess + d_tol
         self.m = free_mask(N, back)
         self.lib = WS._lib_arrays()
+        ps = p_stats()
+        self.pstat = [ps[nm] for nm in ST.library_stats()]
 
     def full(self, xf, x0):
         X = np.repeat(x0[None, :], xf.shape[0], 0)
@@ -166,7 +168,14 @@ class Polisher:
             v = np.stack([np.log(1 + np.exp(la)), lb / np.log(10)], axis=1)
             d = v[:, None, :] - mus[None, :, :]
             m = np.sum(np.einsum("pci,cij->pcj", d, Ls) ** 2, axis=2)
-            pen += m[:, self.force[i]] if i in self.force else np.min(m, axis=1)
+            if i in self.force:
+                c = self.force[i]
+                pen += m[:, c]
+                mu_p, sd_p = self.pstat[c]
+                pp = 1 - np.exp(-X[:, 4 + 5 * i])
+                pen += ((pp - mu_p) / sd_p) ** 2
+            else:
+                pen += np.min(m, axis=1)
         return pen
 
     def polish(self, x0, max_nfev=60):
@@ -251,6 +260,22 @@ VIS_DCHI2 = 25.0    # layers behind which the data change by less than this are 
 LABEL_P = 0.10      # every class with posterior >= 10 % is reported (equal priors over classes)
 
 
+_PSTAT = None
+
+
+def p_stats(n=400, seed=24680):
+    """E060c: mean / sd of the dispersion shape p per library class (generator variability)."""
+    global _PSTAT
+    if _PSTAT is None:
+        rng = np.random.default_rng(seed)
+        out = {}
+        for nm in ST.library_stats():
+            ps = [min(ST.material_law(nm, rng)[1].get("p", 0.0), 0.999) for _ in range(n)]
+            out[nm] = (float(np.mean(ps)), max(float(np.std(ps)), 0.03))
+        _PSTAT = out
+    return _PSTAT
+
+
 def class_evidence(pol, x, top=3, max_nfev=120):
     """E061c: posterior class probabilities per solid layer by Laplace evidence: refit with that
     layer's prior FORCED to class c (others: nearest class), score_c = chi2_c + Mahalanobis_c +
@@ -288,6 +313,8 @@ def class_evidence(pol, x, top=3, max_nfev=120):
                     la, lb = xp[2 + 5 * i], xp[3 + 5 * i]
                     v = np.array([np.log(1 + np.exp(la)), lb / np.log(10)])
                     m = float(np.sum(((v - mus[c]) @ Ls[c]) ** 2))
+                    mu_p, sd_p = pol.pstat[c]
+                    m += ((1 - np.exp(-xp[4 + 5 * i]) - mu_p) / sd_p) ** 2 + 2 * np.log(sd_p)
                     if best is None or chi + m < best:
                         best = chi + m
                 sc[nm] = best + logdet[nm]
