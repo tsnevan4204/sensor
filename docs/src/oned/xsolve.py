@@ -69,25 +69,41 @@ def gamma_stack_ang(f, layers, back, th):
     return G
 
 
-def make_views(seed, N, angles_deg=(0.0,), snr_boost_db=0.0):
-    """Same wall as wallsolve.make_problem(seed, N); one noisy measurement per angle."""
+def make_views(seed, N, angles_deg=(0.0,), snr_boost_db=0.0, pos_err=0.0, ang_err_deg=0.0):
+    """Same wall as wallsolve.make_problem(seed, N); one noisy measurement per angle.
+    E062: the TRUE sensor standoff of each view is d + N(0, pos_err) and its true angle the nominal
+    + N(0, ang_err_deg); the returned views carry only the NOMINAL angle (what the solver knows)."""
     _, _, _, tr = WS.make_problem(seed, N)
     views = []
+    er = np.random.default_rng(seed + 31337)
     for ai, adeg in enumerate(angles_deg):
-        th = np.radians(adeg)
+        th_nom = np.radians(adeg)
+        th = th_nom + np.radians(ang_err_deg) * er.standard_normal() if ai > 0 else th_nom
+        dk = tr["standoff"] + (pos_err * er.standard_normal() if ai > 0 else 0.0)
         fs, ys, ss = [], [], []
         for k, ((a, b), sn) in enumerate(zip(WS.BANDS3, WS.SNR3)):
             f = np.linspace(a, b, WS.NPTS)
-            G = gamma_stack_ang(f, tr["_layers"], tr["back"], th) * np.exp(-2j * 2 * np.pi * f / C0 * tr["standoff"] * np.cos(th))
+            G = gamma_stack_ang(f, tr["_layers"], tr["back"], th) * np.exp(-2j * 2 * np.pi * f / C0 * dk * np.cos(th))
             sig = 10 ** (-(sn + snr_boost_db) / 20) / np.sqrt(2)
             nr = np.random.default_rng(seed + 7919 * (k + 1) + 104729 * ai)
             ys.append(G + sig * (nr.standard_normal(f.size) + 1j * nr.standard_normal(f.size)))
             fs.append(f); ss.append(np.full(f.size, sig))
-        views.append((np.concatenate(fs), np.concatenate(ys), np.concatenate(ss), th))
+        views.append((np.concatenate(fs), np.concatenate(ys), np.concatenate(ss), th_nom))
     return views, tr
 
 
 PT_SIGMA_FLOOR = True
+VIEW_OFFSETS = False     # E062: each view (k >= 1) gets its own standoff offset (sensor position unknown)
+OFF_TOL = 3e-3
+
+
+def view_X(X, k, DL):
+    """Parameter rows for view k: the standoff of view k >= 1 is d + offset_k (extra coordinate)."""
+    if X.shape[1] <= DL or k == 0:
+        return X
+    Y = X.copy()
+    Y[:, 0] = Y[:, 0] + X[:, DL + k - 1]
+    return Y
 
 
 class MultiProblem(PT.Problem):
@@ -102,11 +118,17 @@ class MultiProblem(PT.Problem):
             # extra SNR (chirp averaging) sharpens the landscape; the LS polish uses the true sigma
             fl = np.where(q.f < 1e9, 10 ** (-30 / 20), 10 ** (-40 / 20)) / np.sqrt(2) if PT_SIGMA_FLOOR else 0.0
             self.views.append((q.f, q.y, np.maximum(q.s, fl), th))
+        if VIEW_OFFSETS and len(views) > 1:
+            V = len(views) - 1
+            self.lo = np.concatenate([self.lo, np.full(V, -OFF_TOL)])
+            self.hi = np.concatenate([self.hi, np.full(V, OFF_TOL)])
+            self.D = self.lo.size
+            self.off_step = 0.15e-3
 
     def energy(self, X):
         chi = np.zeros(X.shape[0])
-        for f, y, s, th in self.views:
-            G = gamma_ang(X, f, self.N, self.back, th)
+        for k, (f, y, s, th) in enumerate(self.views):
+            G = gamma_ang(view_X(X, k, self.DL), f, self.N, self.back, th)
             chi += np.sum(np.abs((G - y[None, :]) / s[None, :]) ** 2, axis=1)
         pen = WS._prior_batch(X, self.N, self.lib)
         for i in range(self.N):
@@ -137,6 +159,12 @@ class Polisher:
         self.lo, self.hi, self.NG = WS.layout(N, back)
         self.lo[0], self.hi[0] = d_guess - d_tol, d_guess + d_tol
         self.m = free_mask(N, back)
+        self.DL = self.lo.size
+        if VIEW_OFFSETS and len(views) > 1:
+            V = len(views) - 1
+            self.lo = np.concatenate([self.lo, np.full(V, -OFF_TOL)])
+            self.hi = np.concatenate([self.hi, np.full(V, OFF_TOL)])
+            self.m = np.concatenate([self.m, np.ones(V, bool)])
         self.lib = WS._lib_arrays()
         ps = p_stats()
         self.pstat = [ps[nm] for nm in ST.library_stats()]
@@ -148,8 +176,8 @@ class Polisher:
 
     def res_batch(self, X):
         rs = []
-        for f, y, s, th in self.views:
-            G = gamma_ang(X, f, self.N, self.back, th)
+        for k, (f, y, s, th) in enumerate(self.views):
+            G = gamma_ang(view_X(X, k, self.DL), f, self.N, self.back, th)
             r = (G - y[None, :]) / s[None, :]
             rs += [r.real, r.imag]
         pen = self.prior(X)
@@ -194,8 +222,8 @@ class Polisher:
 
     def chi2(self, x):
         c = 0.0
-        for f, y, s, th in self.views:
-            G = gamma_ang(x[None, :], f, self.N, self.back, th)[0]
+        for k, (f, y, s, th) in enumerate(self.views):
+            G = gamma_ang(view_X(x[None, :], k, self.DL), f, self.N, self.back, th)[0]
             c += float(np.sum(np.abs((G - y) / s) ** 2))
         return c
 

@@ -1051,3 +1051,15 @@ On the 46 seeds common to all runs, OK counts: 0° 38, 3 angles 40, +20 dB 36.
     → E060b: explicit low-contrast structural alternatives (merge an adjacent gap into the layer / split the layer
     into layer + gap at 25/50/75 %), polished; a better one replaces the best.
     624 rerun: exact (errors ≤ 0.15 mm, χ²/n 0.999 vs 1.059).
+- **E058 fast config** (dev set, +20 dB): OK 41, flagged 8, weak 1, silent 0. Median 77 s, p90 169 s.
+  - Settings: early stop, adaptive second restart, 48 freqs/band while tempering, 6 replicas.
+  - Full config: 44/50 at ~254 s → the fast one gives up 3 walls (all flagged) for 3.3× the speed.
+- **E060 held-out, 46/50:** OK 37, ambig (truth listed) 1, weak 1, flagged 4, silent 3.
+  - Silent cases:
+    - 624: fixed by E060b;
+    - 618: label overlap, → E060d label sets;
+    - 641: chipboard behind concrete off by 1.2 mm with CRB 0.36 mm (3.3σ: optimistic local CRB behind an absorber).
+- **E060c** (dispersion shape p in class evidence): worse (444 back to batt) → reverted.
+  **E060d:** label set = all classes within evidence-score Δ ≤ 9 (score noise ~10 with ~20 correlated parameters).
+- **E062 sweeping sensor:** per-view standoff offsets (fitted, ±3 mm); true geometry has σ = 1 mm distance and 1° angle
+  errors; 3 angles; 20 walls (400–419). Running.

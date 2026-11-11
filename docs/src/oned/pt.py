@@ -40,6 +40,7 @@ class Problem:
         self.lo, self.hi, self.NG = WS.layout(N, back)
         self.lo[0], self.hi[0] = d_guess - d_tol, d_guess + d_tol
         self.D = self.lo.size
+        self.DL = self.D                                 # layout size (extra coords may follow)
         self.lib = WS._lib_arrays()
         tab = WS.class_table()
         self.cls = np.array([(np.log(er - 1), np.log(td), -np.log(max(1 - p, 1e-3))) for _, er, td, p in tab])
@@ -67,7 +68,7 @@ class Problem:
     def sample_prior(self, P, rng):
         X = np.zeros((P, self.D))
         X[:, 0] = rng.uniform(self.lo[0], self.hi[0], P)
-        X[:, -1] = 20.0
+        X[:, self.DL - 1] = 20.0
         for i in range(self.N):
             k = rng.integers(0, len(self.cls), P)
             la, lb, u = self.cls[k].T
@@ -94,6 +95,7 @@ def propose(pb, X, beta, rng):
     for i in range(N):
         step[1 + 5 * i: 6 + 5 * i] = [0.004, 0.02, 0.08, 0.15, 0.0]
     step[1 + 5 * N: 1 + 5 * N + pb.NG] = 0.3e-3
+    step[getattr(pb, "DL", D):] = getattr(pb, "off_step", 0.0)     # E062: per-view standoff offsets
     rw = mv < 0.45
     Y[rw] += rng.standard_normal((rw.sum(), D)) * step[None, :] * sc[rw]
     li = rng.integers(0, N, P)
