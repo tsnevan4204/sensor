@@ -1100,3 +1100,17 @@ On the 46 seeds common to all runs, OK counts: 0° 38, 3 angles 40, +20 dB 36.
   - Four extra coupled nuisance parameters make the tempering much harder.
   CONCLUSION: with unknown sensor pose, the multi-angle sweep is NOT recommended with the current search. Recommended design:
   stationary 0° with +20 dB averaging. A sweep needs pose tracking to ≲0.1 mm / 0.1°, or a pose-aware search (future work).
+
+## E064 — profile-likelihood thickness intervals + global profile scan
+- E064 (local profile, Δχ² = 4): intervals just as tight as the CRB on 641/725.
+  The fit sits in a separate basin; a local profile cannot see the truth's.
+- Diagnosis by truth refits:
+  - 641: the truth basin is WORSE by Δχ² = +4.8, so the data prefer the fit. This is an equal-fit ambiguity just outside the 95 % cut.
+  - 725: the truth basin is BETTER by 44.6, below the χ² alarm (~166): a missed basin.
+- E064b global profile scan: each thickness pinned at t̂(1+r), r ∈ [−30 %, +30 %] (20 points), everything else re-polished.
+  Better points are released and adopted; disconnected points with Δχ² < 4 widen the interval.
+  - 725 → OK (brick error 3.03 → 0.55 mm).
+  - 604 control unchanged.
+  - 641 unchanged. Correct behaviour: its truth lies at Δχ² = 4.8 (P ≈ 3 % for 1 dof). A calibrated 95 % interval is expected to
+    miss ~1 wall in 20 like this; widening the cut to catch it would be tuning.
+- Cost: ~+60–90 s per 3-layer wall.
