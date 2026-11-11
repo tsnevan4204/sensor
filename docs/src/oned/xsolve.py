@@ -191,10 +191,15 @@ class Polisher:
             G = gamma_ang(Xk, f, self.N, self.back, tk)
             r = (G - y[None, :]) / s[None, :]
             rs += [r.real, r.imag]
+        if self.pin is not None:                       # E064: physical thickness of layer i pinned to t0
+            i, t0 = self.pin
+            t = np.exp(X[:, 1 + 5 * i]) / np.sqrt(1 + np.exp(X[:, 2 + 5 * i]))
+            rs.append(((t - t0) / 1e-6)[:, None])
         pen = self.prior(X)
         rs.append(np.sqrt(np.maximum(pen, 0) + 1e-12)[:, None])
         return np.concatenate(rs, axis=1)
 
+    pin = None
     force = None                                   # {layer: class index}: that layer's prior is class c
 
     def prior(self, X):
@@ -292,6 +297,7 @@ def labels_approx(pol, x):
     return out
 
 
+PROFILE = True      # E064: profile-likelihood thickness intervals
 VIS_DCHI2 = 25.0    # layers behind which the data change by less than this are 'not observed'
 LABEL_P = 0.10
 LABEL_DSCORE = 9.0   # E060d: label set = classes within this evidence-score difference      # every class with posterior >= 10 % is reported (equal priors over classes)
@@ -411,6 +417,51 @@ def cycle_scan(pol, x, ks=(-3, -2, -1, 1, 2, 3), max_nfev=40):
     return best_x, best_c
 
 
+def profile_t(pol, x, i, chi0, crb, dchi=4.0, max_nfev=40, max_expand=6):
+    """E064: profile-likelihood 95 % interval of solid layer i's physical thickness: pin t, re-polish
+    every other parameter, find where the data chi2 rises by dchi (= 4). Replaces the linearised CRB,
+    which is optimistic for weak layers behind absorbers (held-out 641, 725)."""
+    er = 1 + np.exp(x[2 + 5 * i])
+    t_hat = float(np.exp(x[1 + 5 * i]) / np.sqrt(er))
+
+    def dchi_at(t):
+        y = x.copy()
+        y[1 + 5 * i] = np.log(max(t, 1e-4) * np.sqrt(er))
+        y = np.clip(y, pol.lo, pol.hi)
+        pol.pin = (i, t)
+        try:
+            yp, c, _ = pol.polish(y, max_nfev=max_nfev)
+        finally:
+            pol.pin = None
+        return pol.chi2(yp) - chi0
+    out = []
+    for sgn in (-1.0, 1.0):
+        d = max(2 * crb, 2e-4, 0.002 * t_hat)
+        lo_ok, val = 0.0, None
+        for _ in range(max_expand):
+            t = t_hat + sgn * d
+            if t <= 1e-4:
+                break
+            v = dchi_at(t)
+            if v >= dchi:
+                val = d
+                break
+            lo_ok = d
+            d *= 2.5
+        if val is None:
+            out.append(lo_ok if lo_ok else d)            # not closed: interval extends at least this far
+            continue
+        a, b = lo_ok, val                                 # bisection on the crossing
+        for _ in range(3):
+            m = 0.5 * (a + b)
+            if dchi_at(t_hat + sgn * m) >= dchi:
+                b = m
+            else:
+                a = m
+        out.append(b)
+    return (t_hat - out[0], t_hat + out[1])
+
+
 def low_contrast_variants(x, N, pol, er_max=1.3):
     out = []
     for i in range(N):
@@ -491,9 +542,14 @@ def _finish(cands, views, N, d_guess, n_polish, t0):
         if c <= chi + WS.AMBIG_DCHI2 and sg not in seen:
             seen.add(sg); alts.append(dict(chi2=c, solids=list(sg[0]), gaps=list(sg[1]), back=bk))
     crb = pol[back].crb_t(x)
+    t_int = None
+    if PROFILE:
+        t_int = [profile_t(pol[back], x, i, chi, crb[i]) for i in range(N)]
     lay, slots = PT.x_to_lay(x, N, back)
     sol = [L for (k, _), L in zip(slots, lay) if k == "solid"]
     weak = [bool(e > 0.2 * L["t"]) for e, L in zip(crb, sol)]
+    if t_int is not None:
+        weak = [w or bool((hi - lo) / 2 > 0.2 * L["t"]) for w, (lo, hi), L in zip(weak, t_int, sol)]
     unobs = [i for i, L in enumerate(sol) if L["er"] < 1.03]
     labs = class_evidence(pol[back], x)
     # E061b: honesty checks for walls with fewer observable layers than the N the user gave
@@ -522,7 +578,7 @@ def _finish(cands, views, N, d_guess, n_polish, t0):
     unobs = sorted(set(unobs) | set(range(vis_from, N) if vis_from is not None else []))
     weak = [w or (i in unresolved) or ((i - 1) in unresolved) for i, w in enumerate(weak)]
     return dict(x=x, back=back, chi2=chi, labels=labs, chi2n=chi / n_all, alarm=bool(chi > ST.chi2_alarm(n_all)),
-                lay=lay, slots=slots, crb_t=crb, unresolved=unresolved, visible_layers=vis_from if vis_from is not None else N, weak=weak, unobserved=unobs, alternatives=alts,
+                lay=lay, slots=slots, crb_t=crb, t_int=t_int, unresolved=unresolved, visible_layers=vis_from if vis_from is not None else N, weak=weak, unobserved=unobs, alternatives=alts,
                 ambiguous=bool(alts), wall_s=time.time() - t0)
 
 

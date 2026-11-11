@@ -33,11 +33,13 @@ for seed in [int(x) for x in os.environ["SEEDS"].split(",")][sh::nsh]:
         tag = "weak/unobs"
     elif amb:
         tag = "ambig(truth listed)"
+    elif res.get("t_int") and all(lo - 1e-9 <= T["t"] <= hi + 1e-9 for (lo, hi), T in zip(res["t_int"], tr["layers"])) and sc["g_ok"] and all(sc["mat_ok"]) and sc["back_ok"]:
+        tag = "within-bars"
     else:
         tag = "SILENT"
     rec = dict(seed=seed, tag=tag, geo_ok=sc["geo_ok"], mat_ok=sc["mat_ok"], mat_top=sc["mat_top"],
                t_err_mm=sc["t_err_mm"], g_ok=sc["g_ok"], back_ok=sc["back_ok"], chi2n=res["chi2n"],
-               crb_mm=[1e3 * e for e in res["crb_t"]], labels=res["labels"], n_alt=len(res["alternatives"]),
+               crb_mm=[1e3 * e for e in res["crb_t"]], t_int_mm=[[1e3 * a, 1e3 * b] for a, b in (res.get("t_int") or [])], labels=res["labels"], n_alt=len(res["alternatives"]),
                truth=[(L["name"], L["t"]) for L in tr["layers"]], gaps=tr["gaps"], back=tr["back"],
                wall_s=time.time() - t)
     open(out, "a").write(json.dumps(rec, default=float) + "\n")
