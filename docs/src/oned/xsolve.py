@@ -375,7 +375,18 @@ def class_evidence(pol, x, top=3, max_nfev=120):
 LAM2_MM = C0 / (2 * 62e9)          # mmWave half-wavelength: period of a weak interface's phase
 
 
-def cycle_scan(pol, x, ks=(-3, -2, -1, 1, 2, 3), max_nfev=40):
+def cycle_scan(pol, x, ks=(-3, -2, -1, 1, 2, 3), max_nfev=40, rounds=3):
+    """E066b: repeated until no improvement (several simultaneous cycle slips, e.g. two layers)."""
+    c0 = pol.chi2(x)
+    for _ in range(rounds):
+        x1, c1 = _cycle_scan_once(pol, x, ks, max_nfev)
+        if c1 >= c0 - 1e-6:
+            break
+        x, c0 = x1, c1
+    return x, c0
+
+
+def _cycle_scan_once(pol, x, ks=(-3, -2, -1, 1, 2, 3), max_nfev=40):
     """E054f: integer-ambiguity scan of every interface at the mmWave period: move it by k*lambda/2
     (thickness transferred between the two adjacent media, optical sum kept), re-polish, keep the best."""
     N, D = pol.N, x.size
@@ -394,11 +405,18 @@ def cycle_scan(pol, x, ks=(-3, -2, -1, 1, 2, 3), max_nfev=40):
     if x.size > pol.DL:
         V = (x.size - pol.DL) // 2
         pairs += [("off", pol.DL + v, None) for v in range(V)]
+    # E066b: single-layer cycle slip: layer i's optical thickness +- k*lambda/2, everything behind rigid
+    pairs = [("one", i, None) for i in range(N)] + pairs
     for kind, a, b in pairs:
         for k in ks:
             y = best_x.copy()
             dl = k * LAM2_MM
-            if kind == "off":
+            if kind == "one":
+                ta = np.exp(y[1 + 5 * a])
+                if ta + dl <= 1e-4:
+                    continue
+                y[1 + 5 * a] = np.log(ta + dl)
+            elif kind == "off":
                 y[a] += dl / 2          # air path: two-way 2*dl/2 = one mmWave half-cycle per k
             elif kind == "ss":
                 ta, tb = np.exp(y[1 + 5 * a]), np.exp(y[1 + 5 * b])

@@ -1144,3 +1144,10 @@ On the 46 seeds common to all runs, OK counts: 0° 38, 3 angles 40, +20 dB 36.
   - The σ floor (E061d), which helped at N = 3, divides the UWB evidence by 100 at +20 dB, so the tempering cannot see that it is
     wrong. At N = 5 the floored data are ambiguous.
 - → **E066:** stage-2 tempering at the true σ, seeded from the stage-1 (floored) candidates. Testing on 902/904/910.
+- **E066 stage-2 tempering at the true σ** (seeded from 8 stage-1 candidates, 4000 steps):
+  - 910 χ²/n 877 → 84, 4 of 5 layers exact (layer 1 −1.94 mm);
+  - 902 unchanged (layers 3 and 5 −2.08 / −1.43 mm);
+  - 904 still wrong.
+  - The 902/910 residual errors are single-layer mmWave cycle slips: optical ≈ λ/2 = 2.4 mm with everything behind rigid.
+    The cycle scan had only pairwise-transfer moves.
+- → **E066b:** single-layer cycle-slip moves (layer i ± kλ/2, rest rigid), scan repeated until no improvement. Rerunning.
