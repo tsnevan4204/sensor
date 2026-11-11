@@ -1086,3 +1086,10 @@ On the 46 seeds common to all runs, OK counts: 0° 38, 3 angles 40, +20 dB 36.
   offsets/angles), so this is a search failure: each view's standoff offset has mmWave cycles (1 mm = 2.5 rad at 62 GHz) that the
   <11 GHz tempering cannot resolve.
   → E062c: the per-view offsets join the mmWave cycle scan. Testing.
+- **E062c** (view offsets in the cycle scan): no change on 401/405.
+  Diagnosis: the (offset, angle) pair forms a near-degenerate valley. A 1° angle change moves d·cosθ by mm, and the offset absorbs it,
+  with mmWave-cycle minima along the valley. The solver sat 1.3–1.9 mm and 1.2° off the truth, χ²/n 1.47.
+  From the truth geometry the polish converges to 0.957.
+- **E062d:** offsets in air-path units, d_k cosθ_k = d cosθ_nom + off_k, so the angle only enters inside the wall.
+  401: χ²/n 1.47 → 1.013, geometry within 0.02 mm. 405: search failure at the reduced budget.
+  Full 20-wall rerun (full config) started.
