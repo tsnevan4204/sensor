@@ -1114,3 +1114,9 @@ On the 46 seeds common to all runs, OK counts: 0° 38, 3 angles 40, +20 dB 36.
   - 641 unchanged. Correct behaviour: its truth lies at Δχ² = 4.8 (P ≈ 3 % for 1 dof). A calibrated 95 % interval is expected to
     miss ~1 wall in 20 like this; widening the cut to catch it would be tuning.
 - Cost: ~+60–90 s per 3-layer wall.
+
+## E063 — N = 5 and N = 7 (seeds 900–919, 0°, +20 dB, final xsolve with profile scan)
+- N = 5: OK 4/20, flagged 15, weak 1, silent 0. Median 655 s. Many flagged fits are far off (χ²/n up to 4000): search failure.
+- N = 7: 0/7 OK, all flagged. Stopped early; the same budget clearly does not scale.
+- Honesty holds (0 silent), but the 3-layer search budget (4000 steps, 13^N class orderings) does not scale with N.
+- Diagnosis running on 902, 916, 904, 910: χ² of the polished truth + CRB (information), and 3× PT budget.
