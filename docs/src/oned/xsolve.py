@@ -462,6 +462,33 @@ def profile_t(pol, x, i, chi0, crb, dchi=4.0, max_nfev=40, max_expand=6):
     return (t_hat - out[0], t_hat + out[1])
 
 
+SCAN_CACHE = {}
+SCAN_R = np.linspace(-0.3, 0.3, 21)
+
+
+def profile_scan(pol, x, i, chi0, max_nfev=30):
+    """Pinned polishes of layer i over t_hat*(1+r); returns [(x, chi2)] and caches (t, chi2)."""
+    er = 1 + np.exp(x[2 + 5 * i])
+    t_hat = float(np.exp(x[1 + 5 * i]) / np.sqrt(er))
+    out, cache = [], []
+    for r in SCAN_R:
+        if abs(r) < 1e-9:
+            continue
+        t = t_hat * (1 + r)
+        y = x.copy()
+        y[1 + 5 * i] = np.log(t * np.sqrt(er))
+        y = np.clip(y, pol.lo, pol.hi)
+        pol.pin = (i, t)
+        try:
+            yp, c, _ = pol.polish(y, max_nfev=max_nfev)
+        finally:
+            pol.pin = None
+        c = pol.chi2(yp)
+        out.append((yp, c)); cache.append((t, c))
+    SCAN_CACHE[i] = cache
+    return out
+
+
 def low_contrast_variants(x, N, pol, er_max=1.3):
     out = []
     for i in range(N):
@@ -541,10 +568,33 @@ def _finish(cands, views, N, d_guess, n_polish, t0):
         sg = signature(xx, N, bk)
         if c <= chi + WS.AMBIG_DCHI2 and sg not in seen:
             seen.add(sg); alts.append(dict(chi2=c, solids=list(sg[0]), gaps=list(sg[1]), back=bk))
+    # E064b: global profile scan of every layer thickness (pinned at t_hat*(1+r), r in [-30 %, +30 %], all
+    # other parameters re-polished): a better point -> released and adopted (725: missed basin below the
+    # chi2 alarm); disconnected points within dchi2 < 4 -> the interval covers them (641: genuine ambiguity)
+    if PROFILE:
+        SCAN_CACHE.clear()
+        for _round in range(2):
+            improved = False
+            for i in range(N):
+                for xs_, cs_ in profile_scan(pol[back], x, i, chi):
+                    if cs_ < chi - 1.0:
+                        xr, cr, _ = pol[back].polish(xs_, max_nfev=200)
+                        if cr < chi:
+                            x, chi, improved = xr, cr, True
+            if not improved:
+                break
+        lay, slots = PT.x_to_lay(x, N, back)
+        sol = [L for (k, _), L in zip(slots, lay) if k == "solid"]
     crb = pol[back].crb_t(x)
     t_int = None
     if PROFILE:
-        t_int = [profile_t(pol[back], x, i, chi, crb[i]) for i in range(N)]
+        t_int = []
+        for i in range(N):
+            lo_, hi_ = profile_t(pol[back], x, i, chi, crb[i])
+            for t_, c_ in SCAN_CACHE.get(i, []):
+                if c_ - chi < 4.0:
+                    lo_, hi_ = min(lo_, t_), max(hi_, t_)
+            t_int.append((lo_, hi_))
     lay, slots = PT.x_to_lay(x, N, back)
     sol = [L for (k, _), L in zip(slots, lay) if k == "solid"]
     weak = [bool(e > 0.2 * L["t"]) for e, L in zip(crb, sol)]
