@@ -1120,3 +1120,5 @@ On the 46 seeds common to all runs, OK counts: 0° 38, 3 angles 40, +20 dB 36.
 - N = 7: 0/7 OK, all flagged. Stopped early; the same budget clearly does not scale.
 - Honesty holds (0 silent), but the 3-layer search budget (4000 steps, 13^N class orderings) does not scale with N.
 - Diagnosis running on 902, 916, 904, 910: χ² of the polished truth + CRB (information), and 3× PT budget.
+- E063 diagnosis, information part: the polished truth reaches χ²/n 0.98–1.02 on 902, 904, 910 and 916, with CRBs 0.0–1.0 mm.
+  The information is present at N = 5; failures are SEARCH. The 3× budget part was killed by a container restart and is rerunning.
