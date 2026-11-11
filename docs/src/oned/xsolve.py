@@ -169,11 +169,7 @@ class Polisher:
             d = v[:, None, :] - mus[None, :, :]
             m = np.sum(np.einsum("pci,cij->pcj", d, Ls) ** 2, axis=2)
             if i in self.force:
-                c = self.force[i]
-                pen += m[:, c]
-                mu_p, sd_p = self.pstat[c]
-                pp = 1 - np.exp(-X[:, 4 + 5 * i])
-                pen += ((pp - mu_p) / sd_p) ** 2
+                pen += m[:, self.force[i]]
             else:
                 pen += np.min(m, axis=1)
         return pen
@@ -257,7 +253,8 @@ def labels_approx(pol, x):
 
 
 VIS_DCHI2 = 25.0    # layers behind which the data change by less than this are 'not observed'
-LABEL_P = 0.10      # every class with posterior >= 10 % is reported (equal priors over classes)
+LABEL_P = 0.10
+LABEL_DSCORE = 9.0   # E060d: label set = classes within this evidence-score difference      # every class with posterior >= 10 % is reported (equal priors over classes)
 
 
 _PSTAT = None
@@ -313,8 +310,6 @@ def class_evidence(pol, x, top=3, max_nfev=120):
                     la, lb = xp[2 + 5 * i], xp[3 + 5 * i]
                     v = np.array([np.log(1 + np.exp(la)), lb / np.log(10)])
                     m = float(np.sum(((v - mus[c]) @ Ls[c]) ** 2))
-                    mu_p, sd_p = pol.pstat[c]
-                    m += ((1 - np.exp(-xp[4 + 5 * i]) - mu_p) / sd_p) ** 2 + 2 * np.log(sd_p)
                     if best is None or chi + m < best:
                         best = chi + m
                 sc[nm] = best + logdet[nm]
@@ -323,7 +318,10 @@ def class_evidence(pol, x, top=3, max_nfev=120):
         mn = min(sc.values())
         pr = {nm: np.exp(-0.5 * (v_ - mn)) for nm, v_ in sc.items()}
         Z = sum(pr.values())
-        out.append(sorted(((p_ / Z, nm) for nm, p_ in pr.items() if p_ / Z >= LABEL_P), reverse=True))
+        # E060d: report every class whose evidence score is within LABEL_DSCORE of the best: score
+        # differences of ~10 arise from noise when ~20 correlated parameters are fitted (thin-layer
+        # loss vs dispersion shape), so exp(-d/2) probabilities alone overstate the confidence
+        out.append(sorted(((p_ / Z, nm) for nm, p_ in pr.items() if sc[nm] - mn <= LABEL_DSCORE), reverse=True))
     return out
 
 
