@@ -1068,3 +1068,9 @@ On the 46 seeds common to all runs, OK counts: 0° 38, 3 angles 40, +20 dB 36.
   - OK 41, flagged 4 (601, 626, 628, 639), honest 2 (643 ambiguity with truth listed, 647 weak/unobserved), SILENT 3 (618, 624, 641).
   - Correct or honestly reported: 47/50 (94 %).
   - Rerun of the 9 non-OK walls with E060b/E060d: running.
+- **E060 rerun** of the 9 non-OK held-out walls with E060b/E060d: 618 → OK (label set contains plasterboard), 624 → OK (gap found);
+  the others unchanged (deterministic seeds).
+  - With the current code: OK 43, flagged 4, honest 2, silent 1 (641): 49/50 correct-or-honest.
+  - CAVEAT: E060b/d were designed after seeing 618/624 fail, so 47/50 is the clean held-out number;
+    a second fresh set is needed to confirm 49/50.
+  - Open: 641, an optimistic linearised CRB for a weak layer behind concrete.
