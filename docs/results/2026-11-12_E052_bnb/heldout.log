@@ -390,3 +390,8 @@
     pass chi2/n <=    0.2: nodes 4.85e+07, best inf (118.1s)
     pass chi2/n <=    0.5: nodes 1.23e+08, best inf (298.3s)
     pass chi2/n <=    1.0: nodes 1.21e+08, best 150 (329.7s)
+  bnb: m=110 h=5.0 mm, K_end=26, nodes 1.22e+08, pruned 8.83e+05, leaves 1.22e+08, best 150, kept 2, truncated True, A_max 3.5, 1113.0s (gates 2.2s)
+   polished: cost 407.2 chi2/n 1.10 ([('brick', 75.1), ('concrete', 1.9), ('air', 1.75), ('water', 6.38)], 'air')
+   polished: cost 437.7 chi2/n 1.12 ([('brick', 71.7), ('concrete', 6.94), ('water', 6.38)], 'air')
+  start 1: cost 407.2 -> 402.0 chi2/n 1.10 ([('brick', 74.14), ('air', 0.3), ('concrete', 2.23), ('air', 2.14), ('water', 6.38)], 'air') (1114.4s, 4.22e+08 evals)
+  start 2: cost 437.7 -> 403.2 chi2/n 1.11 ([('brick', 72.58), ('floorboard', 5.41), ('air', 0.75), ('water', 6.38)], 'air') (1115.8s, 4.22e+08 evals)

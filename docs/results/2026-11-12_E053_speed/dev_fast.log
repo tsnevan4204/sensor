@@ -175,3 +175,16 @@
   start 3: cost 487.2 -> 436.0 chi2/n 1.18 ([('concrete', 50.26), ('air', 12.2), ('concrete', 2.49), ('marble', 14.86)], 'air') (273.0s, 3.95e+08 evals)
   refine: search cost 436.0 -> MAP 1610.3 (+7 BIC), chi2/n 1.042 ([('concrete', 50.26), ('air', 12.2), ('concrete', 2.49), ('marble', 14.86)], 'air')
   ALARM (chi2/n 1.04): escalating
+    pass chi2/n <=    0.1: nodes 1.22e+08, best inf (94.7s)
+    pass chi2/n <=    0.2: nodes 1.20e+08, best inf (87.7s)
+    pass chi2/n <=    0.5: nodes 1.22e+08, best 62 (86.3s)
+  bnb: m=78 h=5.0 mm, K_end=18, nodes 1.21e+08, pruned 1.77e+06, leaves 1.20e+08, best 62, kept 148, truncated True, A_max 3.7, 358.9s (gates 1.4s)
+   polished: cost 461.5 chi2/n 1.23 ([('concrete', 49.51), ('plasterboard', 1.8), ('air', 11.81), ('marble', 16.54)], 'air')
+   polished: cost 466.3 chi2/n 1.23 ([('concrete', 49.58), ('plywood', 1.5), ('air', 12.26), ('marble', 16.62)], 'air')
+   polished: cost 473.1 chi2/n 1.23 ([('concrete', 49.48), ('plasterboard', 1.84), ('air', 11.81), ('glass', 16.71)], 'air')
+  start 1: cost 461.5 -> 436.0 chi2/n 1.18 ([('concrete', 50.26), ('air', 12.2), ('concrete', 2.49), ('marble', 14.86)], 'air') (361.8s, 4.85e+08 evals)
+  start 2: cost 466.3 -> 436.0 chi2/n 1.18 ([('concrete', 50.26), ('air', 12.2), ('concrete', 2.49), ('marble', 14.86)], 'air') (363.5s, 4.85e+08 evals)
+  start 3: cost 473.1 -> 436.0 chi2/n 1.18 ([('concrete', 50.26), ('air', 12.2), ('concrete', 2.49), ('marble', 14.86)], 'air') (365.3s, 4.85e+08 evals)
+  refine: search cost 436.0 -> MAP 1610.3 (+7 BIC), chi2/n 1.042 ([('concrete', 50.26), ('air', 12.2), ('concrete', 2.49), ('marble', 14.86)], 'air')
+  ALARM (chi2/n 1.04): escalating
+212 flag 686s chi2/n 1.04 [('concrete', 50.3), ('marble', 16.94), ('batt', 36.41)] [12.71, 0.0] air -> [('concrete', 50.27), ('marble', 5.79), ('marble', 11.2)] [12.71, 0.0] air
