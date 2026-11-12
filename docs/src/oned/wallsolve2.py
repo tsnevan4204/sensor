@@ -204,7 +204,9 @@ def solve_once(f, y, sigma, N, d_guess, n_refine=3, verbose=False, trace=None, e
         # two adjacent solid layers of the same class = one layer counted twice, so one of the N
         # layers was not found (wall 212: a batt layer behind marble that the data barely see)
         twice = any(a == b and ka == kb == "solid" for a, b, (ka, _), (kb, _) in zip(lab[:-1], lab[1:], sl_[:-1], sl_[1:]))
-        return thin or twice
+        # a 'solid' layer that the refit turned into air is a gap: one of the N solids is missing (212)
+        void = any(k == "solid" and a == "air" for a, (k, _) in zip(lab, sl_))
+        return thin or twice or void
     refined.sort(key=lambda t: (_sliver(t[2], t[3]), t[0]))
     cb, chi, mod, slots, back, S, c = refined[0]
     implausible = _sliver(mod, slots)
