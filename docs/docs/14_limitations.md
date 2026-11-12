@@ -1,6 +1,6 @@
 # 14 · Current limitations of the algorithm (living list)
 
-Last updated 2026-11-09, after E033 was started. Each entry says what the limitation is, why it exists, how much it matters, and what would fix it. Evidence references point to `experiments/EXPERIMENT_LOG.md`.
+Last updated 2026-11-12, after E052 (sections A–E describe the stud-wall solver; section F the general known-N solver). Each entry says what the limitation is, why it exists, how much it matters, and what would fix it. Evidence references point to `experiments/EXPERIMENT_LOG.md`.
 
 ## A. What it does not do at all (scope)
 
@@ -47,3 +47,17 @@ Last updated 2026-11-09, after E033 was started. Each entry says what the limita
 | # | Limitation | Why accepted | Evidence | Possible later fix |
 |---|---|---|---|---|
 | E1 | **The number of layers N is a user input** (2026-11-09). Thicknesses, materials (library labels) and the backing (air/metal) are outputs. | Deciding the layer count from the data alone is the unsolved part: the radar data admit many-layer explanations that fit to the noise level, and every automatic structure search tried (E034 growth, E041 peeling, E042 global inversion, E043 + material prior) reached only 1–2 of 8 held-out 3-layer walls, some silently wrong. With N given, junk explanations are impossible by construction (E044). | E041–E043 in the experiment log | model selection over N = 1…N_max with the E044 solver for each N and an information criterion, once E044 is reliable for known N |
+
+
+## F. General known-N solver (`wallsolve2.solve`, E052) — limitations (2026-11-12)
+
+| # | Limitation | Evidence | Fix / status |
+|---|---|---|---|
+| F1 | **Minutes per wall** (30 s – 10 min on 4 cores), far from the 1 s target. The tree is small for thin low-loss walls (3·10⁶ nodes) and hits the node budget (1.2·10⁸ per pass) for resonant metal-backed walls and for anything behind a thick lossy layer | E052 walls 203, 208, 211, 212 | tighter bounds (finer class variants, sub-grid position optimisation at nodes), lower-weight high frequencies dropped from the tree, GPU; the fast stud-wall path (E039) remains for the standard recipe |
+| F2 | **A weak layer at the back can be missed**: a low-index layer (batt, foam; r ≈ 0.03 against air) behind a lossy or strongly reflecting layer changes the data by about the noise. The solver then duplicates another layer; since E052 this raises the alarm ("layer counted twice") instead of passing silently | wall 212 (batt behind concrete + marble) | information limit at this SNR; report the layer as not resolved; more low-band SNR or a second look from the other side |
+| F3 | **Gap ↔ low-index layer trade-off**: an air gap next to batt/foam is determined only as a sum of optical thicknesses; errors up to 2 CRB sigma (0.8 mm) with honest error bars | wall 208 | none needed beyond reporting the CRB; fixed tolerances count it as a miss |
+| F4 | **Material labels inside an impedance cluster** (glass / tile / marble; plasterboard / chipboard / plywood) are often interchangeable at Δχ² < 1: thickness is right, the label is one of the cluster | walls 205, 206 | report the cluster; two-point bound of doc 16 §8 |
+| F5 | **Priors used:** library classes (nominal member + variability), no dry solid thinner than 2.5 mm in the search (2.0 mm in the final answer), search depth 0.40 m optical first (escalated on alarm), standoff known to ~1 mm | doc 16 | all adjustable constants in `bnb.py`, `wallsearch.py`, `wallsolve2.py` |
+| F6 | **The gate bound is exact only for non-dispersive tails** (doc 16, Lemma 2); the monotonicity used to close a node is checked numerically, not proved | brute-force gate in `tests/test_structure_search.py` | measure violations on every benchmark (`devbnb.py`) |
+| F7 | **N = 3 only so far.** The tree depth is 2N; N = 4, 5 untested | — | next experiment |
+| F8 | Same as A1, A4: 1D, plane wave, simulation only; the realistic chain of E023–E035 (beam, calibration, drift) is not yet combined with this solver | — | combine after speed work |
