@@ -982,7 +982,7 @@ Finding: with the structure discrete and enumerated the landscape is benign; the
 | 212 | concrete 50.3 / marble 16.94 / batt 36.41, gap 12.71, air | **wrong, silent at the time:** marble split in two, batt (r ≈ 0.03 against air, behind concrete) missed. Now raises the alarm (same class twice) | 575 s |
 **Development: 9 exact, 2 right structure with a thickness inside its error bar, 1 wrong** (E050 baseline: 0 exact).
 
-**Held-out walls (seeds 301–330, code frozen at `f8432a6`, never used for development).** The run takes hours on 4 cores and was still going when this entry was written; first 10 walls (`heldout.jsonl`; `summarize.py` prints this table for whatever is finished):
+**Held-out walls (seeds 301–330, code frozen at `f8432a6`, never used for development).** The run takes hours on 4 cores and was still going when this entry was written; first 13 walls (`heldout.jsonl`; `summarize.py` prints this table for whatever is finished):
 
 | seed | truth (mm) | true gaps | backing | answer (label, mm) | gaps | backing | χ²/n | s | outcome |
 |---|---|---|---|---|---|---|---|---|---|
@@ -996,8 +996,11 @@ Finding: with the structure discrete and enumerated the landscape is benign; the
 | 308 | marble 10.06 / floorboard 18.4 / marble 18.45 | [0.0, 0.0] | air | glass 10.07 / floorboard 18.43 / marble 18.46 | [0.0, 0.0] | air | 0.98 | 38 | exact |
 | 309 | marble 10.02 / wood 13.64 / concrete 45.78 | [29.2, 0.0] | air | marble 10.03 / wood 13.69 / concrete 45.88 | [29.19, 0.0] | air | 0.99 | 532 | exact |
 | 310 | brick 69.98 / plywood 6.11 / concrete 65.34 | [0.0, 6.37] | air | brick 76.41 / plasterboard 2.19 / concrete 64.55 | [0.5, 0.0] | air | 7.94 | 1834 | flag |
+| 311 | glass 3.53 / brick 63.08 / glass 6.81 | [1.87, 2.9] | air | glass 3.54 / brick 63.36 / tile 6.87 | [1.87, 2.88] | air | 1.03 | 675 | exact |
+| 312 | concrete 82.97 / marble 19.95 / tile 7.51 | [0.0, 0.0] | air | concrete 82.95 / marble 19.84 / tile 7.56 | [0.0, 0.0] | air | 1.01 | 547 | exact |
+| 313 | glass 6.27 / floorboard 10.14 / plasterboard 15.74 | [0.0, 6.87] | air | glass 6.28 / floorboard 10.13 / plasterboard 15.78 | [0.0, 6.88] | air | 0.96 | 163 | exact |
 
-**First 10 held-out walls: 8 exact, 2 flagged, 0 silent.** On the exact walls: solid-thickness error median 0.024 mm (max 0.43 mm on a 67 mm brick layer), 7 gaps of 1.6–29.2 mm recovered with median error 0.03 mm (max 0.10 mm), nearest-class label right on 22/24 layers (the two misses are glass for tile/marble, same impedance cluster). Three walls escalated on their own alarm: 301 became exact, 304 and 310 stayed flagged.
+**First 13 held-out walls: 11 exact, 2 flagged, 0 silent.** solid-thickness |error| on exact walls: median 0.028 mm, 90% 0.110 mm, max 0.422 mm; gaps on exact walls: 10 gaps of 1.6-29.2 mm, |error| median 0.015 mm, max 0.100 mm; material label exactly right (nearest class) on exact walls: 30/33 (label misses are within one impedance cluster: glass / tile / marble). Three walls escalated on their own alarm: 301 became exact, 304 and 310 stayed flagged.
 - 304 (flag, χ²/n 1.12): foam 14.06 | gap 3.18 | plywood 6.26 | gap 4.89 | tile 7.89 answered as batt 17.0 | plywood 6.21 | gap 4.82 | tile 7.67: a 3 mm air gap behind foam (ε′ 1.05) is nearly the same medium as foam.
 - 310 (flag, χ²/n 7.9, 31 min): brick 70 | plywood 6.1 | gap 6.4 | concrete 65: 290 mm of lossy optical depth; both tree searches ran out of node budget.
 
@@ -1005,7 +1008,7 @@ Finding: with the structure discrete and enumerated the landscape is benign; the
 1. The structure search is solved for N = 3 with gaps, water and metal: exhaustive class-discrete search with pruning, not continuous relaxation. Gaps down to 1.6 mm, a 1.9 mm water film, layers hidden behind water.
 2. The χ² alarm works as an escalation trigger: walls 210 and 301 were repaired by their own alarm; no wrong answer passed silently on the held-out walls.
 3. Remaining failure classes: weak low-index layers (batt, foam) next to air or behind lossy layers (information limits: 212, 304, 208); and time (thick or metal-backed walls reach the node budget).
-**Hypothesis** (dev ≥ 9/12 exact, 0 silent outside the error bars; same on held-out): dev **passed on count, failed on "0 silent"** (212, fixed by a guard afterwards and to be re-verified); held-out so far: 8/10 exact, 0 silent.
+**Hypothesis** (dev ≥ 9/12 exact, 0 silent outside the error bars; same on held-out): dev **passed on count, failed on "0 silent"** (212, fixed by a guard afterwards and to be re-verified); held-out so far: 11/13 exact, 0 silent.
 **Cost:** 30 s – 15 min per wall on 4 cores (10⁶–10⁸ tree nodes at ~3·10⁵ nodes/s, then ~30–60 s of exact refits).
 **Next:** (1) rerun 211, 212 with the frozen code; (2) speed: sub-grid position optimisation at the nodes so the grid can be coarser, tighter bounds, drop the down-weighted frequencies in the tree; (3) N = 4, 5; (4) N unknown by the Schwarz criterion over N; (5) the realistic chain (beam, calibration, drift) with this solver.
 **Artifacts:** results/2026-11-12_E052_bnb/ (`run.py`, `summarize.py`, `dev_v*.jsonl/log`, `heldout.jsonl/log`)
