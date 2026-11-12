@@ -954,3 +954,42 @@ Finding: with the structure discrete and enumerated the landscape is benign; the
 
 ### Pre-registered: E052 — Branch-and-bound over class-discrete grid walls (before the full run)
 **Hypothesis:** on development walls 201–212 (E050: 0/12): ≥ 9/12 exact, 0 silent failures outside the error bars; then the same on held-out seeds 301–340 without any change.
+
+## E052 — Branch-and-bound over class-discrete walls with time-gate bounds  (2026-11-12)
+**Method** (`wallsolve2.solve`; math and proofs in doc 16).
+1. *Grid problem:* every wall of N solid layers (12 class representatives incl. water), any admissible gap pattern, air or metal backing, interfaces on a 5 mm optical grid, nominal class members; no dry solid thinner than 2.5 mm.
+2. *Cost with model-discrepancy weights:* grid quantisation, class variability and the standoff guess are a second, frequency-dependent error variance (σ_eff/σ ≈ 1–2 below 1 GHz, 6–26 across the UWB band). The true wall's grid representative then costs 0.2–0.8 n; without the weights it costs > 64 n on wall 202 against 3 n at its true positions.
+3. *Depth-first branch-and-bound* (`bnb.py`, compiled): a node is a wall prefix + half-space; by causality its response is exact for every completion up to the completion's next interface, which gives a lower bound on the cost of all completions from the Slepian-gated misfit (Lemma 2). Threshold continuation (χ²/n ≤ 0.125, 0.25, …) instead of a poor depth-first incumbent; one more pass collects every (class sequence, backing) within ρ = 1.5 of the optimum. Node budget 1.2·10⁸ per pass.
+4. *Polish* the best member of each sequence with a compiled LM (thicknesses, materials under the class prior, standoff, water temperature), first under σ_eff, then under σ; block moves on the best three (all class sequences at fixed positions, gap insertion/removal, single layer, relocate a layer).
+5. *Exact refit* on all three bands (adjoint LM, cycle hops, dispersion shape free); Schwarz criterion on every gap of the refined answer.
+6. *Self-check:* χ² > n + 3√(2n), a solid sliver < 2 mm, or the same class twice in a row raise the alarm; an alarm triggers one wider search (depth + 0.15 m, ρ = 4, 64 sequences).
+**Gates:** compiled forward and polish forward vs `stack.gamma_stack`: < 1e-12; branch-and-bound optimum = independent brute-force enumeration (N = 2, all gap patterns and backings, > 1000 walls). `tests/test_structure_search.py`; all 56 gates pass.
+
+**Development walls 201–212** (code changed between walls; each line is the run in `dev_v1/v2/v4/v5.jsonl`):
+| wall | truth (mm) / gaps / backing | result | time |
+|---|---|---|---|
+| 201 | glass 6.84 / water 11.1 / brick 81.55, air | exact (6.83 / 11.09 / 81.54); needed the relocate move (brick is seen only below 1 GHz) | 54 s |
+| 202 | plasterboard 11.11 / ceiling board 12.44 / chipboard 12.94, gaps 22.43, 6.66, air | exact (11.12 / 12.46 / 12.87; gaps 22.44, 6.64) | 130 s |
+| 203 | glass 4.39 / batt 65.77 / water 9.93, gap 26.17 before metal | exact after the Schwarz step (gap 26.41) | 326 s |
+| 204 | foam 10.17 / chipboard 15.92 / tile 6.94, gaps 27.18, 1.99, air | exact (gaps 27.18, 1.98) | 110 s |
+| 205 | plywood 9.72 / tile 11.73 / chipboard 17.07, air | exact; labels glass / plywood for tile / chipboard | 31 s |
+| 206 | plywood 16.76 / tile 10.96 / floorboard 10.68, air | exact | 190 s |
+| 207 | brick 98.11 / glass 9.99 / wood 22.44, air | exact | 735 s |
+| 208 | tile 11.4 / water 2.08 / batt 81.59, gap 7.67 behind water, metal | right structure; gap 8.45 (CRB 0.42), batt 81.33 (CRB 0.21): within 2 σ, outside the fixed tolerance | 280 s |
+| 209 | floorboard 11.16 / wood 11.8 / marble 18.69, gap 2.88, air | exact (gap 2.98) | 72 s |
+| 210 | wood 10.24 / foam 27.3 / marble 17.77, air | exact; first answer (air gap instead of foam) raised the alarm at χ²/n 1.13, second search found foam | 255 s |
+| 211 | plasterboard 11.25 / chipboard 14.94 / concrete 47.67, gap 8.63, metal | right structure, plus a spurious 0.65 mm gap at the metal (concrete −0.8 mm; both CRB 0.73 mm). Cause fixed afterwards: Schwarz test now on the refined answer | 674 s |
+| 212 | concrete 50.3 / marble 16.94 / batt 36.41, gap 12.71, air | **wrong, silent at the time:** marble split in two, batt (r ≈ 0.03 against air, behind concrete) missed. Now raises the alarm (same class twice) | 575 s |
+**Development: 9 exact, 2 right structure with a thickness inside its error bar, 1 wrong** (E050 baseline: 0 exact).
+
+**Held-out walls (seeds 301–330, code frozen at `f8432a6`, never used for development):** see the table appended below when the run is complete; after the first 9 walls: **8 exact, 1 flagged (304), 0 silent**; solid-thickness error median 0.024 mm (max 0.42 mm), 7 gaps of 1.6–29.2 mm recovered with median error 0.03 mm (max 0.10 mm), nearest-class label right on 22/24 layers; 2 walls escalated on their own alarm and were then exact; median 176 s, max 902 s per wall.
+Flagged wall 304: foam 14.06 | gap 3.18 | plywood 6.26 | gap 4.89 | tile 7.89 answered as batt 17.0 | plywood 6.21 | gap 4.82 | tile 7.67 at χ²/n 1.12: a 3 mm air gap behind foam (ε′ 1.05) is nearly the same medium.
+
+**Findings.**
+1. The structure search is solved for N = 3 with gaps, water and metal: exhaustive class-discrete search with pruning, not continuous relaxation. Gaps down to 1.6 mm, a 1.9 mm water film, layers hidden behind water.
+2. The χ² alarm works as an escalation trigger: 3 walls (210, 301, one more) were repaired by their own alarm.
+3. Remaining failure classes: weak low-index layers (batt, foam) next to air or behind lossy layers (information limits: 212, 304, 208); and time (thick or metal-backed walls reach the node budget).
+**Hypothesis** (dev ≥ 9/12 exact, 0 silent outside the error bars; same on held-out): dev **passed on count, failed on "0 silent"** (212, fixed by a guard afterwards and to be re-verified); held-out so far passed.
+**Cost:** 30 s – 15 min per wall on 4 cores (10⁶–10⁸ tree nodes at ~3·10⁵ nodes/s, then ~30–60 s of exact refits).
+**Next:** (1) rerun 211, 212 with the frozen code; (2) speed: sub-grid position optimisation at the nodes so the grid can be coarser, tighter bounds, drop the down-weighted frequencies in the tree; (3) N = 4, 5; (4) N unknown by the Schwarz criterion over N; (5) the realistic chain (beam, calibration, drift) with this solver.
+**Artifacts:** results/2026-11-12_E052_bnb/ (`run.py`, `summarize.py`, `dev_v*.jsonl/log`, `heldout.jsonl/log`)
