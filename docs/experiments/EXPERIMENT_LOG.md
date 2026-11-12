@@ -997,7 +997,7 @@ Finding: with the structure discrete and enumerated the landscape is benign; the
 | 309 | marble 10.02 / wood 13.64 / concrete 45.78 | [29.2, 0.0] | air | marble 10.03 / wood 13.69 / concrete 45.88 | [29.19, 0.0] | air | 0.99 | 532 | exact |
 | 310 | brick 69.98 / plywood 6.11 / concrete 65.34 | [0.0, 6.37] | air | brick 76.41 / plasterboard 2.19 / concrete 64.55 | [0.5, 0.0] | air | 7.94 | 1834 | flag |
 
-**First 10 held-out walls: 8 exact, 2 flagged, 0 silent.** On the exact walls: solid-thickness error median 0.024 mm (max 0.43 mm on a 67 mm brick layer), 8 gaps of 1.6–29.2 mm recovered with median error 0.03 mm (max 0.10 mm), nearest-class label right on 22/24 layers (the two misses are glass for tile/marble, same impedance cluster). Three walls escalated on their own alarm: 301 became exact, 304 and 310 stayed flagged.
+**First 10 held-out walls: 8 exact, 2 flagged, 0 silent.** On the exact walls: solid-thickness error median 0.024 mm (max 0.43 mm on a 67 mm brick layer), 7 gaps of 1.6–29.2 mm recovered with median error 0.03 mm (max 0.10 mm), nearest-class label right on 22/24 layers (the two misses are glass for tile/marble, same impedance cluster). Three walls escalated on their own alarm: 301 became exact, 304 and 310 stayed flagged.
 - 304 (flag, χ²/n 1.12): foam 14.06 | gap 3.18 | plywood 6.26 | gap 4.89 | tile 7.89 answered as batt 17.0 | plywood 6.21 | gap 4.82 | tile 7.67: a 3 mm air gap behind foam (ε′ 1.05) is nearly the same medium as foam.
 - 310 (flag, χ²/n 7.9, 31 min): brick 70 | plywood 6.1 | gap 6.4 | concrete 65: 290 mm of lossy optical depth; both tree searches ran out of node budget.
 
