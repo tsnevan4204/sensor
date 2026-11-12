@@ -419,3 +419,4 @@
   refine: search cost 349.6 -> MAP 1788.7 (+0 BIC), chi2/n 1.163 ([('tile', 7.73), ('plasterboard', 14.24), ('batt', 37.93)], 'metal')
 319 OK 198s chi2/n 1.00 [('tile', 7.72), ('plasterboard', 14.25), ('batt', 36.91)] [0.0, 0.0, 3.72] metal -> [('tile', 7.72), ('plasterboard', 14.23), ('batt', 37.04)] [0.0, 0.0, 3.53] metal
     pass chi2/n <=    0.1: nodes 3.84e+06, best inf (10.1s)
+    pass chi2/n <=    0.2: nodes 1.00e+07, best inf (22.3s)

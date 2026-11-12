@@ -25,3 +25,4 @@
   start 1: cost 7101.7 -> 6674.3 chi2/n 18.34 ([('wood', 15.46), ('chipboard', 22.47), ('air', 6.73), ('chipboard', 96.24)], 'air') (218.5s, 2.63e+08 evals)
   start 2: cost 38497.5 -> 348.2 chi2/n 0.96 ([('wood', 37.82), ('air', 7.26), ('chipboard', 11.14), ('brick', 66.98)], 'air') (220.7s, 2.63e+08 evals)
   start 3: cost 38788.5 -> 6780.5 chi2/n 18.46 ([('plywood', 11.51), ('wood', 26.94), ('air', 6.82), ('chipboard', 98.3)], 'air') (222.3s, 2.63e+08 evals)
+  refine: search cost 348.2 -> MAP 1533.4 (+7 BIC), chi2/n 0.996 ([('wood', 37.82), ('air', 7.26), ('chipboard', 11.14), ('brick', 66.98)], 'air')
