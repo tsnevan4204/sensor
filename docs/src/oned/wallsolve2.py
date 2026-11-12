@@ -44,11 +44,13 @@ def _to_model(ctx, S):
     return mod, slots, back
 
 
-def refine(ctx, S, f, y, sigma):
-    """Exact refinement of one search state on all bands, under the library prior."""
+def refine(ctx, S, f, y, sigma, fast=False):
+    """Exact refinement of one search state on all bands, under the library prior.
+    fast (E053): one cycle-hop pass, after the dispersion shape is released, instead of two."""
     mod, slots, back = _to_model(ctx, S)
     mod, c = ST._fit(mod, f, y, sigma)                       # dispersion shape at its class value
-    mod, c = SR.cycle_hop(mod, f, y, sigma, SR.Opts(search_step=1, search_atol=0.0))
+    if not fast:
+        mod, c = SR.cycle_hop(mod, f, y, sigma, SR.Opts(search_step=1, search_atol=0.0))
     for L in mod.layers:                                     # release the dispersion shape
         if L.theta.value < 0.5 and L.eps_r.free:
             L.pinf.value, L.pinf.free = float(np.clip(L.pinf.value, 0.02, 0.998)), True
@@ -104,7 +106,8 @@ def n_gaps(slots):
     return sum(1 for k, _ in slots if k == "gap")
 
 
-def solve_once(f, y, sigma, N, d_guess, n_refine=3, verbose=False, trace=None, extra_extent=0.0, rho=1.5, n_keep=24):
+def solve_once(f, y, sigma, N, d_guess, n_refine=3, verbose=False, trace=None, extra_extent=0.0, rho=1.5, n_keep=24,
+               fast=False):
     """Structure search on the low bands, exact refinement on all bands, and model-order selection
     over the number of gaps by the Schwarz criterion (each gap is one extra parameter: a candidate
     with one more gap must lower the MAP cost by more than ln n)."""
@@ -119,17 +122,31 @@ def solve_once(f, y, sigma, N, d_guess, n_refine=3, verbose=False, trace=None, e
     n_all = 2 * f.size
     bic = np.log(n_all)
     cand = list(states[:n_refine])
-    for S in states[:2]:                                   # Occam variants: every gap closed in turn
-        for j in range(S.nl):
-            if S.cls[j] == ctx.AIR:
-                cand.append(_without_gap(ctx, S, j))
-    refined, seen = [], set()
+    if not fast:
+        for S in states[:2]:                               # Occam variants: every gap closed in turn
+            for j in range(S.nl):
+                if S.cls[j] == ctx.AIR:
+                    cand.append(_without_gap(ctx, S, j))
+
+    def _geom(S):
+        """Geometry of a state up to labels: gap pattern, backing, optical interface depths (mm)."""
+        nopt = np.where(S.cls == ctx.AIR, 1.0, np.where(S.cls == ctx.WATER, 8.6, np.sqrt(np.maximum(S.er, 1.0))))
+        return (tuple(S.cls == ctx.AIR), S.back, tuple(np.round(np.cumsum(S.t * nopt) * 1e3).astype(int)))
+    refined, seen, geoms = [], set(), set()
     try:
         for S in cand:
             if S.key() in seen:
                 continue
             seen.add(S.key())
-            mod, c, slots, back = refine(ctx, S, f, y, sigma)
+            if fast:
+                # E053: candidates that differ only in labels refit to the same wall; and once a
+                # refit passes the alarm with a plausible wall, the remaining candidates are skipped
+                if _geom(S) in geoms:
+                    continue
+                geoms.add(_geom(S))
+                if refined and min(r[1] for r in refined) <= ST.chi2_alarm(n_all):
+                    break
+            mod, c, slots, back = refine(ctx, S, f, y, sigma, fast)
             G, _ = I.forward(mod, f, jacobian=False)
             chi = float(np.sum(np.abs((G - y) / sigma) ** 2))
             refined.append((c + bic * n_gaps(slots), chi, mod, slots, back, S, c))
@@ -191,15 +208,17 @@ def solve_once(f, y, sigma, N, d_guess, n_refine=3, verbose=False, trace=None, e
                 search_chi2n=states[0].chi / (2 * fs.size), n_states=len(states), bnb=ctx.bnb)
 
 
+FAST = False     # E053 fast refit path (opt-in until held-out-validated: protocol of E029b)
 # (extra search depth m, rho, sequences kept) tried in turn while the chi2 alarm is raised
 ESCALATE = ((0.0, 1.5, 24), (0.15, 4.0, 64))
 
 
-def solve(f, y, sigma, N, d_guess, verbose=False, **kw):
+def solve(f, y, sigma, N, d_guess, verbose=False, fast=None, **kw):
     """Self-checked solve: if the answer raises the chi2 alarm, search deeper (interfaces that only
     the sub-GHz band sees, e.g. behind a water layer, lie beyond the UWB data extent). The alarm
     decides; the best attempt (lowest data chi2) is returned with the list of attempts."""
     best, attempts, t0 = None, [], time.time()
+    kw["fast"] = FAST if fast is None else fast
     for extra, rho, n_keep in ESCALATE:
         res = solve_once(f, y, sigma, N, d_guess, verbose=verbose, extra_extent=extra, rho=rho, n_keep=n_keep, **kw)
         attempts.append(dict(extra_extent=extra, rho=rho, chi2n=res["chi2n"], alarm=res["alarm"], wall_s=res["wall_s"]))
@@ -210,5 +229,28 @@ def solve(f, y, sigma, N, d_guess, verbose=False, **kw):
         if verbose:
             print(f"  ALARM (chi2/n {res['chi2n']:.2f}): escalating", flush=True)
     best["attempts"] = attempts
+    best["wall_s"] = time.time() - t0
+    return best
+
+
+def solve_unknown_n(f, y, sigma, d_guess, n_max=4, verbose=False, **kw):
+    """E055: the number of solid layers is NOT given. Occam rule: solve for N = 1, 2, ... and
+    return the first (smallest) N whose answer passes the self-check (chi2 alarm, no sliver, no
+    class twice in a row). A wall with fewer layers than the truth cannot reach the noise level;
+    a wall with more layers must split a true layer, which the plausibility checks reject and the
+    Schwarz criterion would penalise by ~4 ln n per extra layer. If no N passes, the answer with
+    the lowest chi2 is returned with its alarm set."""
+    tried, best = [], None
+    t0 = time.time()
+    for N in range(1, n_max + 1):
+        res = solve(f, y, sigma, N, d_guess, verbose=verbose, **kw)
+        tried.append(dict(N=N, chi2n=res["chi2n"], alarm=res["alarm"], wall_s=res["wall_s"]))
+        res["N"] = N
+        if not res["alarm"]:
+            best = res
+            break
+        if best is None or res["chi2"] < best["chi2"]:
+            best = res
+    best["tried"] = tried
     best["wall_s"] = time.time() - t0
     return best

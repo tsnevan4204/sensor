@@ -84,6 +84,31 @@ def _node_response(lc, qp, k, Etab, rtab, ph, G):
 
 
 @njit(cache=True, fastmath=True)
+def _leaf_cost(lc, qp, k, Etab, rtab, ph, y, w, perm, stop):
+    """E053: cost of a terminal wall, response and misfit fused, frequencies visited in the order
+    `perm` and abandoned as soon as the partial sum exceeds `stop` (partial sums of squares only
+    grow, so no wall under the threshold is lost). Most leaves are rejected after a few
+    frequencies, and nine tenths of all tree nodes are leaves."""
+    C = rtab.shape[0] - 1
+    s = 0.0
+    for u in range(perm.shape[0]):
+        f = perm[u]
+        g = rtab[lc[k - 1] if k > 0 else C, lc[k], f]
+        for i in range(k - 1, -1, -1):
+            dq = qp[i] - (qp[i - 1] if i > 0 else -1)
+            r = rtab[lc[i - 1] if i > 0 else C, lc[i], f]
+            ge = g * Etab[lc[i], dq, f]
+            g = (r + ge) / (1.0 + r * ge)
+        g = g * ph[f]
+        dr = g.real - y[f].real
+        di = g.imag - y[f].imag
+        s += (dr * dr + di * di) * w[f]
+        if s > stop:
+            break
+    return s
+
+
+@njit(cache=True, fastmath=True)
 def _full_cost(G, y, w, stop):
     s = 0.0
     for f in range(G.shape[0]):
@@ -148,7 +173,7 @@ def _valid(c, cur, ns, N, AIR, METAL, solid):
 
 @njit(cache=True, fastmath=True)
 def _dfs(c1, c2, q1, N, m, Etab, rtab, ph, y, w, Qpad, Kn, Qy, A, best, rho, thr, AIR, METAL, solid, dqmin,
-         o_cost, o_nl, o_cls, o_q, o_back, stats, max_nodes, tot, budget):
+         o_cost, o_nl, o_cls, o_q, o_back, stats, max_nodes, tot, budget, perm):
     F = ph.shape[0]
     C = rtab.shape[0] - 1
     LM = 2 * N + 1
@@ -201,9 +226,18 @@ def _dfs(c1, c2, q1, N, m, Etab, rtab, ph, y, w, Qpad, Kn, Qy, A, best, rho, thr
         oi[k] = c + 1
         qp[k] = q; lc[k + 1] = c
         ns[k + 1] = ns[k] + (1 if solid[c] else 0)
-        _node_response(lc, qp, k + 1, Etab, rtab, ph, G[k + 1])
         stats[0] += 1
-        if c == METAL or (c == AIR and ns[k + 1] == N):
+        if c == METAL:                              # terminal: fused evaluation with early abandon
+            lim = min(thr, rho * best[0])
+            cost = _leaf_cost(lc, qp, k + 1, Etab, rtab, ph, y, w, perm, lim)
+            stats[2] += 1
+            if cost <= lim and cost < best[0]:
+                best[0] = cost
+            if cost <= lim:
+                _record(cost, lc, qp, k + 1, c, o_cost, o_nl, o_cls, o_q, o_back)
+            continue
+        _node_response(lc, qp, k + 1, Etab, rtab, ph, G[k + 1])
+        if c == AIR and ns[k + 1] == N:
             lim = min(thr, rho * best[0])
             cost = _full_cost(G[k + 1], y, w, lim)
             stats[2] += 1
@@ -211,13 +245,13 @@ def _dfs(c1, c2, q1, N, m, Etab, rtab, ph, y, w, Qpad, Kn, Qy, A, best, rho, thr
                 best[0] = cost
             if cost <= lim:
                 _record(cost, lc, qp, k + 1, c, o_cost, o_nl, o_cls, o_q, o_back)
-        if c != METAL and k + 1 < LM:
+        if k + 1 < LM:
             level = k + 1
             qi[level] = q + dqmin[c]; oi[level] = 0
 
 
 @njit(parallel=True, cache=True, fastmath=True)
-def run_tasks(tasks, N, m, Etab, rtab, ph, y, w, Qpad, Kn, Qy, A, best, rho, thr, AIR, METAL, solid, dqmin, cap, max_nodes, budget):
+def run_tasks(tasks, N, m, Etab, rtab, ph, y, w, Qpad, Kn, Qy, A, best, rho, thr, AIR, METAL, solid, dqmin, cap, max_nodes, budget, perm):
     T = tasks.shape[0]
     tot = np.zeros(1, np.int64)
     LM = 2 * N + 1
@@ -229,7 +263,7 @@ def run_tasks(tasks, N, m, Etab, rtab, ph, y, w, Qpad, Kn, Qy, A, best, rho, thr
     stats = np.zeros((T, 3), np.int64)
     for t in prange(T):
         _dfs(tasks[t, 0], tasks[t, 1], tasks[t, 2], N, m, Etab, rtab, ph, y, w, Qpad, Kn, Qy, A, best, rho, thr,
-             AIR, METAL, solid, dqmin, o_cost[t], o_nl[t], o_cls[t], o_q[t], o_back[t], stats[t], max_nodes, tot, budget)
+             AIR, METAL, solid, dqmin, o_cost[t], o_nl[t], o_cls[t], o_q[t], o_back[t], stats[t], max_nodes, tot, budget, perm)
         tot[0] += stats[t, 0]                      # approximate (unsynchronised) global node count
     return o_cost, o_nl, o_cls, o_q, o_back, stats
 
@@ -271,6 +305,7 @@ def solve_grid(f, y, s, segs, lib, N, d0, extent, h=5e-3, rho=1.5, eps=1e-3, cap
     nfront = np.vstack([lib.ntab, np.ones((1, f.size), complex)])            # row C: air in front of the wall
     rtab = np.ascontiguousarray((nfront[:, None, :] - nfront[None, :, :]) / (nfront[:, None, :] + nfront[None, :, :]))
     ph = np.exp(-2j * k0 * d0)
+    perm = np.random.default_rng(1).permutation(f.size).astype(np.int64)     # abandon order: bands interleaved
     best = np.array([incumbent], float)
     n_res = 2 * f.size
     # threshold continuation: search under an absolute misfit threshold, doubled until a wall is
@@ -280,7 +315,7 @@ def solve_grid(f, y, s, segs, lib, N, d0, extent, h=5e-3, rho=1.5, eps=1e-3, cap
     nodes_total = 0
     while True:
         t_p = time.time()
-        out = run_tasks(tasks, N, m, Etab, rtab, ph, y, w, Qpad, Kn, Qy, A, best, 1.0, thr, AIR, METAL, solid, dqmin, 1, max_nodes, budget)
+        out = run_tasks(tasks, N, m, Etab, rtab, ph, y, w, Qpad, Kn, Qy, A, best, 1.0, thr, AIR, METAL, solid, dqmin, 1, max_nodes, budget, perm)
         nodes_total += int(out[5][:, 0].sum())
         passes.append((thr / n_res, float(best[0]), int(out[5][:, 0].sum()), time.time() - t_p))
         if verbose:
@@ -290,7 +325,7 @@ def solve_grid(f, y, s, segs, lib, N, d0, extent, h=5e-3, rho=1.5, eps=1e-3, cap
         if thr > 64 * n_res:                      # nothing found under a very loose threshold: give up (reported)
             break
         thr *= 2
-    out = run_tasks(tasks, N, m, Etab, rtab, ph, y, w, Qpad, Kn, Qy, A, best, rho, np.inf, AIR, METAL, solid, dqmin, cap, max_nodes, budget)
+    out = run_tasks(tasks, N, m, Etab, rtab, ph, y, w, Qpad, Kn, Qy, A, best, rho, np.inf, AIR, METAL, solid, dqmin, cap, max_nodes, budget, perm)
     o_cost, o_nl, o_cls, o_q, o_back, stats = out
     leaves = []
     lim = rho * best[0]
