@@ -518,3 +518,4 @@
   start 2: cost 466.6 -> 365.8 chi2/n 1.01 ([('batt', 34.28), ('air', 4.49), ('wood', 15.1), ('air', 1.17), ('floorboard', 10.67)], 'air') (15.8s, 8.93e+06 evals)
   start 3: cost 728.4 -> 365.8 chi2/n 1.01 ([('batt', 34.28), ('air', 4.49), ('wood', 15.1), ('air', 1.17), ('floorboard', 10.67)], 'air') (16.7s, 8.98e+06 evals)
   refine: search cost 365.8 -> MAP 1642.5 (+15 BIC), chi2/n 1.066 ([('batt', 34.28), ('air', 4.49), ('wood', 15.1), ('air', 1.17), ('floorboard', 10.67)], 'air')
+  refine: search cost 730.5 -> MAP 9513.0 (+7 BIC), chi2/n 6.151 ([('foam', 34.09), ('air', 4.33), ('wood', 17.47), ('brick', 9.55)], 'air')
