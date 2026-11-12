@@ -1,3 +1,4 @@
 910 start chi2n 403.94 err mm [-1.51  1.07 -1.2  -0.01 -0.02]
  set bad layers [0, 1, 2] to truth (rest rigid): raw chi2n 33844.74
  -> polished 138.021 err mm [-1.62 -0.05 -0.03 -0.02 -0.01]
+ cycle_scan from start -> 224.443 err mm [-1.6  -0.15  0.43 -0.02  0.27]

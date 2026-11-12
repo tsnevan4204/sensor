@@ -27,7 +27,8 @@ SUB = 96          # frequencies per band used while tempering (all are used in t
 
 
 class Problem:
-    def __init__(self, f, y, s, N, back, d_guess, d_tol=3e-3, fmax=FMAX):
+    def __init__(self, f, y, s, N, back, d_guess, d_tol=3e-3, fmax=None):
+        fmax = FMAX if fmax is None else fmax            # read at call time (E067 stages change it)
         sel = f < fmax                                   # mmWave phase is too rugged to temper over
         f, y, s = f[sel], y[sel], s[sel]
         if SUB:                                          # E054c: temper on a subset of each band

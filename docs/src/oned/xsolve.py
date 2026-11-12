@@ -96,6 +96,7 @@ def make_views(seed, N, angles_deg=(0.0,), snr_boost_db=0.0, pos_err=0.0, ang_er
 
 
 PT_SIGMA_FLOOR = True
+SIGMA_FLOOR_SCALE = 1.0   # E067: noise continuation (floor x scale; scale < 1 sharpens toward the true sigma)
 VIEW_OFFSETS = False     # E062: each view (k >= 1) gets its own standoff offset (sensor position unknown)
 OFF_TOL = 3e-3
 ANG_TOL = np.radians(3.0)
@@ -125,7 +126,7 @@ class MultiProblem(PT.Problem):
             q = PT.Problem(f, y, s, N, back, d_guess, d_tol)
             # E061d: temper never colder than the nominal design SNR (30 dB low band, 40 dB above):
             # extra SNR (chirp averaging) sharpens the landscape; the LS polish uses the true sigma
-            fl = np.where(q.f < 1e9, 10 ** (-30 / 20), 10 ** (-40 / 20)) / np.sqrt(2) if PT_SIGMA_FLOOR else 0.0
+            fl = np.where(q.f < 1e9, 10 ** (-30 / 20), 10 ** (-40 / 20)) / np.sqrt(2) * SIGMA_FLOOR_SCALE if PT_SIGMA_FLOOR else 0.0
             self.views.append((q.f, q.y, np.maximum(q.s, fl), th))
         if VIEW_OFFSETS and len(views) > 1:
             V = len(views) - 1

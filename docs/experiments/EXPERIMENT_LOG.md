@@ -1154,3 +1154,9 @@ On the 46 seeds common to all runs, OK counts: 0° 38, 3 angles 40, +20 dB 36.
 - **E066b** (single-layer cycle-slip moves + iterated scan): no change (902 χ²/n 6.44, 910 84.7, 904 4382).
   Probe started: set the slipped layers to their true thickness (rest rigid) and polish, to tell a broken move from a
   wrong slip diagnosis.
+- **Slip probe:** setting the "slipped" layers of 902/910 to the true thickness (rest rigid) gives raw χ²/n 3–5e4, and the polish
+  returns to wrong basins (902: 34.3; 910: 138). The errors are coordinated multi-layer differences (thickness AND material),
+  not single cycle slips. The diagnosis was wrong, which is why E065/E066b found nothing.
+- → **E067 noise continuation:** stage-1 (floored σ) → PT at floor × 0.316 → PT at true σ → PT at true σ including mmWave,
+  each stage seeded with the previous best 8. Testing on 902/904/910.
+  Also fixed: pt.Problem's fmax default bound at definition time.
