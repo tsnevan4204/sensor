@@ -10,9 +10,10 @@ R = [rows[k] for k in sorted(rows)]
 ok = [r for r in R if r.get("ok")]
 crash = [r for r in R if "crash" in r]
 flag = [r for r in R if not r.get("ok") and r.get("alarm")]
-ok3 = [r for r in R if not r.get("ok") and not r.get("alarm") and r.get("ok3")]
-silent = [r for r in R if not r.get("ok") and not r.get("alarm") and not r.get("ok3") and "crash" not in r]
-print(f"walls {len(R)}: exact {len(ok)}, within 3 CRB sigma (same structure) {len(ok3)}, flagged {len(flag)}, silent {len(silent)}, crash {len(crash)}")
+part = [r for r in R if not r.get("ok") and not r.get("alarm") and r.get("partial")]
+ok3 = [r for r in R if not r.get("ok") and not r.get("alarm") and not r.get("partial") and r.get("ok3")]
+silent = [r for r in R if not r.get("ok") and not r.get("alarm") and not r.get("partial") and not r.get("ok3") and "crash" not in r]
+print(f"walls {len(R)}: exact {len(ok)}, within 3 CRB sigma (same structure) {len(ok3)}, flagged {len(flag)}, reported a layer as not resolved {len(part)}, silent {len(silent)}, crash {len(crash)}")
 t = np.array([r["wall_s"] for r in R if "wall_s" in r])
 print(f"time per wall: median {np.median(t):.0f} s, mean {t.mean():.0f} s, max {t.max():.0f} s")
 errs = np.array([abs(e) for r in ok for e in r["t_err_mm"]])
@@ -26,5 +27,5 @@ print(f"material label exactly right (nearest class) on exact walls: {sum(lab)}/
 esc = sum(1 for r in R if len(r.get("attempts", [])) > 1)
 print(f"walls that escalated on their own alarm: {esc}")
 for r in R:
-    tag = "CRASH" if "crash" in r else ("exact" if r.get("ok") else ("flag" if r.get("alarm") else ("3sigma" if r.get("ok3") else "SILENT")))
+    tag = "CRASH" if "crash" in r else ("exact" if r.get("ok") else ("flag" if r.get("alarm") else ("unresolved" if r.get("partial") else "3sigma" if r.get("ok3") else "SILENT") if True else ("3sigma" if r.get("ok3") else "SILENT")))
     print(f"| {r['seed']} | {' / '.join(f'{n} {t}' for n, t in r.get('truth', []))} | {r.get('gaps_true')} | {r.get('back')} | {' / '.join(f'{n} {t}' for n, t in r.get('fit', []))} | {r.get('gaps_fit')} | {r.get('back_fit')} | {r.get('chi2n', 0):.2f} | {r.get('wall_s', 0):.0f} | {tag} |")

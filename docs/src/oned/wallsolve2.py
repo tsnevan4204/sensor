@@ -142,11 +142,13 @@ def solve_once(f, y, sigma, N, d_guess, n_refine=3, verbose=False, trace=None, e
             seen.add(S.key())
             if fast:
                 # E053: candidates that differ only in labels refit to the same wall; and once a
-                # refit passes the alarm with a plausible wall, the remaining candidates are skipped
+                # refit is at the noise level, the remaining candidates are skipped
                 if _geom(S) in geoms:
                     continue
                 geoms.add(_geom(S))
-                if refined and min(r[1] for r in refined) <= ST.chi2_alarm(n_all):
+                # stop only at a fit within one sigma of the noise level (held-out 312: stopping at
+                # the alarm level, chi2/n 1.04, skipped the true wall at 1.01)
+                if refined and min(r[1] for r in refined) <= n_all + np.sqrt(2 * n_all):
                     break
             mod, c, slots, back = refine(ctx, S, f, y, sigma, fast)
             G, _ = I.forward(mod, f, jacobian=False)
