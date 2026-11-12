@@ -67,13 +67,14 @@ def n_gaps(slots):
     return sum(1 for k, _ in slots if k == "gap")
 
 
-def solve(f, y, sigma, N, d_guess, n_refine=3, verbose=False, trace=None, extra_extent=0.0):
+def solve_once(f, y, sigma, N, d_guess, n_refine=3, verbose=False, trace=None, extra_extent=0.0, rho=1.5, n_keep=24):
     """Structure search on the low bands, exact refinement on all bands, and model-order selection
     over the number of gaps by the Schwarz criterion (each gap is one extra parameter: a candidate
     with one more gap must lower the MAP cost by more than ln n)."""
     t0 = time.time()
     fs, ys, ss, _ = TS.search_subset(f, y, sigma)
-    states, ctx = LS.search(fs, ys, ss, N, d_guess, verbose=verbose, trace=trace, extra_extent=extra_extent)
+    states, ctx = LS.search(fs, ys, ss, N, d_guess, verbose=verbose, trace=trace, extra_extent=extra_extent,
+                            rho=rho, n_keep=n_keep)
     t_search = time.time() - t0
     pri = ML.LibPrior()
     old = SR._PRIORS
@@ -119,3 +120,26 @@ def solve(f, y, sigma, N, d_guess, n_refine=3, verbose=False, trace=None, extra_
                 t_err=t_err, weak=[bool(np.isfinite(e) and e > 0.2 * L.t.value) for e, L in zip(t_err, mod.layers)],
                 ambiguous=bool(alts), alternatives=alts, n_eval=ctx.n_eval, n_polish=ctx.n_polish,
                 search_chi2n=states[0].chi / (2 * fs.size), n_states=len(states), bnb=ctx.bnb)
+
+
+# (extra search depth m, rho, sequences kept) tried in turn while the chi2 alarm is raised
+ESCALATE = ((0.0, 1.5, 24), (0.15, 4.0, 64))
+
+
+def solve(f, y, sigma, N, d_guess, verbose=False, **kw):
+    """Self-checked solve: if the answer raises the chi2 alarm, search deeper (interfaces that only
+    the sub-GHz band sees, e.g. behind a water layer, lie beyond the UWB data extent). The alarm
+    decides; the best attempt (lowest data chi2) is returned with the list of attempts."""
+    best, attempts, t0 = None, [], time.time()
+    for extra, rho, n_keep in ESCALATE:
+        res = solve_once(f, y, sigma, N, d_guess, verbose=verbose, extra_extent=extra, rho=rho, n_keep=n_keep, **kw)
+        attempts.append(dict(extra_extent=extra, rho=rho, chi2n=res["chi2n"], alarm=res["alarm"], wall_s=res["wall_s"]))
+        if best is None or res["chi2"] < best["chi2"]:
+            best = res
+        if not res["alarm"]:
+            break
+        if verbose:
+            print(f"  ALARM (chi2/n {res['chi2n']:.2f}): escalating", flush=True)
+    best["attempts"] = attempts
+    best["wall_s"] = time.time() - t0
+    return best

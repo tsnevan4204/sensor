@@ -19,6 +19,7 @@ from numba import njit, prange
 
 F_REF = 10e9
 T_MIN, T_SIG = 0.8e-3, 0.3e-3
+T_MIN_SOLID = 2.5e-3          # dry solid layers (same floor as the branch-and-bound)
 LMAX = 12
 
 
@@ -106,7 +107,8 @@ def _resid(x, kind, cls, pp, nl, back, has_w, f, k0, y, isig, mu, Li, w_prior, e
     k = 1
     for j in range(nl):
         tj = t[j]
-        r[m] = (T_MIN - tj) / T_SIG if tj < T_MIN else 0.0
+        tm = T_MIN_SOLID if kind[j] == 0 else T_MIN
+        r[m] = (tm - tj) / T_SIG if tj < tm else 0.0
         m += 1
         k += 1
         if kind[j] == 0:

@@ -33,6 +33,7 @@ C0 = W.C0
 KIND_DRY, KIND_WATER, KIND_AIR, KIND_METAL = 0, 1, 2, 3
 GAPS = np.array([1.0, 1.6, 2.5, 4.0, 6.0, 9.0, 13.0, 19.0, 27.0, 38.0]) * 1e-3
 DMIN = 1.5e-3            # smallest optical thickness enumerated for a layer
+EXTENT_CAP = 0.40        # first search depth (optical, behind the front face); the chi2 alarm escalates it
 
 
 class Ctx:
@@ -58,7 +59,7 @@ class Ctx:
         self.solids = [int(c) for c in lib.is_solid_idx]
         self.AIR, self.METAL, self.WATER = lib.AIR, lib.METAL, lib.WATER
         segs = I.band_segments(f)
-        self.extent = TS._data_extent(f, y, s, segs, d_guess)
+        self.extent = min(TS._data_extent(f, y, s, segs, d_guess), EXTENT_CAP)
         self.w_prior = w_prior
         self.n_eval = 0
         self.n_polish = 0
@@ -201,7 +202,8 @@ def _class_opts(ctx, S, j):
     solid class (nominal member) or stay what it is (fitted row)."""
     if S.cls[j] == ctx.AIR:
         return [ctx.C + j]
-    return ctx.solids + [ctx.C + j]
+    nb = {int(S.cls[i]) for i in (j - 1, j + 1) if 0 <= i < S.nl}
+    return [c for c in ctx.solids if c not in nb] + [ctx.C + j]
 
 
 # ---------------------------------------------------------------------------- moves
@@ -348,6 +350,48 @@ def mv_gaps(ctx, S, tau):
     return blocks
 
 
+def mv_relocate(ctx, S, tau):
+    """Take one solid layer out (its optical thickness goes to the layer in front, or behind, or
+    the wall closes up) and put a new solid layer of any class and thickness somewhere else:
+    behind the last layer or between two layers. N stays fixed. This repairs the typical wrong
+    optimum "a sliver beside a strong interface, and a weak deep layer missing"."""
+    nl = S.nl
+    cur = list(ctx.C + np.arange(nl))
+    solids_j = [j for j in range(nl) if S.cls[j] != ctx.AIR]
+    if len(solids_j) < 2:
+        return []
+    end = ctx.d0 + ctx.extent
+    blocks = []
+    for j in solids_j:
+        g = tau[j + 1] - tau[j]
+        variants = [np.concatenate([tau[: j + 1], tau[j + 2:] - g])]            # close up
+        if j > 0:
+            variants.append(np.concatenate([tau[:j], tau[j + 1:]]))            # front neighbour grows
+        if j + 1 < nl:
+            variants.append(np.concatenate([tau[: j + 1], tau[j + 2:]]))       # back neighbour grows
+        rows0 = cur[:j] + cur[j + 1:]
+        if any(S.cls[r - ctx.C] == ctx.AIR and S.cls[q - ctx.C] == ctx.AIR for r, q in zip(rows0[:-1], rows0[1:])):
+            continue                                                            # would leave two gaps in a row
+        if S.cls[rows0[0] - ctx.C] == ctx.AIR:
+            continue
+        for T0 in variants:
+            n0 = len(rows0)
+            for slot in range(1, n0 + 1):                                       # new layer becomes layer `slot`
+                if slot < n0 and S.cls[rows0[slot] - ctx.C] == ctx.AIR and S.cls[rows0[slot - 1] - ctx.C] == ctx.AIR:
+                    continue
+                span = max(end - T0[-1], 0.30) if slot == n0 else 0.08    # deep layers may lie beyond the UWB extent
+                th = np.arange(5e-3, span + 1e-9, 5e-3)
+                if th.size == 0:
+                    continue
+                R, TT = [], []
+                for c in ctx.solids:
+                    for x in th:
+                        R.append(rows0[:slot] + [c] + rows0[slot:])
+                        TT.append(np.concatenate([T0[: slot + 1], T0[slot:] + x]))
+                blocks.append(Block(np.array(R, np.int64), np.array(TT), np.full(len(R), S.back)))
+    return blocks
+
+
 def mv_positions(ctx, S, tau, budget=1.5e6):
     """All interface positions at once for the present classes (thin walls: few resolution cells)."""
     nl = S.nl
@@ -411,6 +455,7 @@ def descend(ctx, S, k=8, max_rounds=12, trace=None, t_budget=None, light=False):
         moves += [(f"single{i}", (lambda S, i=i: mv_single(ctx, S, S._tau, i) if i < S.nl else [])) for i in range(nl)]
         moves.append(("classes", lambda S: mv_classes(ctx, S, S._tau)))
         moves.append(("gaps", lambda S: mv_gaps(ctx, S, S._tau)))
+        moves.append(("relocate", lambda S: mv_relocate(ctx, S, S._tau)))
         for name, gen in moves:
             blocks = gen(S)
             if not blocks:
@@ -573,12 +618,13 @@ def bnb_start(ctx, n_keep=24, rho=1.5, h=5e-3, extra_extent=0.0, verbose=False):
     return out, info
 
 
-def search(f, y, s, N, d_guess, k=8, n_desc=3, trace=None, verbose=False, t_budget=None, extra_extent=0.0):
+def search(f, y, s, N, d_guess, k=8, n_desc=3, trace=None, verbose=False, t_budget=None, extra_extent=0.0,
+           rho=1.5, n_keep=24):
     """Returns the list of distinct local optima (States, best first) and the context."""
     ctx = Ctx(f, y, s, N, d_guess)
     t0 = time.time()
     n = 2 * f.size
-    starts, info = bnb_start(ctx, verbose=verbose, extra_extent=extra_extent)
+    starts, info = bnb_start(ctx, verbose=verbose, extra_extent=extra_extent, rho=rho, n_keep=n_keep)
     ctx.bnb = info
     found = {}
     n_run = 0

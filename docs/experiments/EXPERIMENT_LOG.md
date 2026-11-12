@@ -926,3 +926,31 @@ Failure pattern: water layers (2–7 mm) in 5 of 7 held-out failures, thin high-
 **Held-out 3-layer walls (seeds 101–108, N given):** **2 exact (102, 107), 5 flagged (103, 104, 105, 106, 108), 0 silent, 1 timeout (101, killed after 90 min).** 5–36 min per wall.
 **Findings:** knowing N removes silent failures (E042 had 2/5 silent), but accuracy is still poor. **Every failure has a thin, strongly reflecting layer** (glass 3–7 mm, tile 8 mm, water 2–7 mm); both exact walls have none. Speed is dominated by the agglomerative reduction (many exact fits per step).
 **Next:** diagnose the thin high-contrast case directly (is it information or search? CRB at the truth vs. what the solver reaches), then speed.
+
+## E045–E049 — note (2026-11-12)
+These experiments exist only as commits (`9791f3a` … `2f7eb05`: class search, differential evolution with an envelope misfit, prior-free refit, echo-subset solver). They were never logged here; their last state is what E050 measures.
+
+## E050 — Baseline: the E049d echo-subset solver on fresh walls  (2026-11-12)
+**World:** `wallsolve.make_problem`, N = 3 solid layers from 14 classes (13 library solids + liquid water), a gap behind each solid layer with probability 0.35 (1–30 mm), metal backing 0.3, three bands (0.4–0.96, 3.1–10.6, 60–64 GHz, 256 points each), SNR 30/40/40 dB. Seeds 201–212 (never used before).
+**Method:** `wallsolve.solve_echo` (E049d). Score = `wallsolve.score`: backing right, every solid thickness within max(0.3 mm, 2 %), every gap within max(0.3 mm, 5 %).
+**Result: 0 exact, 12 flagged, 0 silent.** 76–598 s per wall.
+**Artifacts:** results/2026-11-12_E050_baseline/
+
+## E051 — What makes the structure search hard: three measurements  (2026-11-12)
+**Tools:** `fastbatch.py`: compiled, batched exact reflection recursion for class-discrete walls (table n[class, f]); gate: max |ΔΓ| = 2.4e-15 against `stack.gamma_stack` on 50 random stacks with water and metal.
+**(a) Rank tests** (walls 201, 202, 205, 206, 208; nominal class members; sub-GHz + UWB data).
+| wall | χ²/n of the truth with nominal classes | all positions (2.5 mm grid), true classes: best | all class sequences, true positions: rank of truth |
+|---|---|---|---|
+| 201 glass/water/brick | 1.6 | truth cell (7.4) | 0 of 4732 |
+| 202 two gaps | 3.0 | neighbour cell (51.9) | 0 of 10584 |
+| 205 plywood/tile/chipboard | 3.7 | truth cell (8.5) | 0 of 4732 |
+| 206 plywood/tile/floorboard | 14.9 | **wrong** (14.3) | 10 of 4732 |
+| 208 water + gap, metal | 9.5 | truth cell (166) | 0 of 12558 |
+Finding: with the structure discrete and enumerated the landscape is benign; the exception (206) is an off-nominal material sample (plywood loss ×0.6–1.6), so candidates must be refined within their class before the final ranking.
+**(b) Front-to-back time-gated beam** (`treesolve.march`, Slepian gates, 600–1300 survivors): loses the true prefix at 35 mm depth. Cause measured: the UWB gate holds K = 1 complex number at 35 mm, 3 at 75 mm (2WT theorem, doc 16 §3). **Negative result, and the explanation of E041's brittleness.**
+**(c) Large-neighbourhood search** (`wallsearch.py`: exhaustive two-layer blocks, class sequences, gap moves, compiled LM polish `polish.py`): from naive starts 2 of 8 starts reach the truth on wall 205; a joint enumeration of all classes × all positions without gaps solves the no-gap walls 205 and 206 but not walls with gaps (202: flagged, χ²/n 52).
+**Decision:** enumerate everything, including gaps, with pruning → E052.
+**Artifacts:** results/2026-11-12_E051_search/
+
+### Pre-registered: E052 — Branch-and-bound over class-discrete grid walls (before the full run)
+**Hypothesis:** on development walls 201–212 (E050: 0/12): ≥ 9/12 exact, 0 silent failures outside the error bars; then the same on held-out seeds 301–340 without any change.

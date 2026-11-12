@@ -32,6 +32,7 @@ import wall_toy as W
 import treesolve as TS
 
 C0 = W.C0
+T_SOLID, T_THIN = 2.5e-3, 0.8e-3      # no dry solid layer thinner than 2.5 mm; water films / gaps from 0.8 mm
 
 
 def build_gates(f, s, segs, d0, h, m, eps=1e-5, lead=0.05, a_tail=1.0):
@@ -108,16 +109,32 @@ def _gate_bound(G, Q, Qy, K, A):
 
 @njit(cache=True, fastmath=True)
 def _record(cost, lc, qp, k, back, o_cost, o_nl, o_cls, o_q, o_back):
+    """Keep the best leaf of every distinct (class sequence, backing) seen by this task (up to
+    cap sequences; then the worst sequence is evicted)."""
     cap = o_cost.shape[0]
-    j = 0
-    worst = -1.0
-    for i in range(cap):
-        if o_cost[i] > worst:
-            worst = o_cost[i]; j = i
-    if cost < worst:
-        o_cost[j] = cost; o_nl[j] = k; o_back[j] = back
-        for i in range(k):
-            o_cls[j, i] = lc[i]; o_q[j, i] = qp[i]
+    j = -1
+    for i in range(cap):                           # same sequence already stored?
+        if o_cost[i] < np.inf and o_nl[i] == k and o_back[i] == back:
+            same = True
+            for u in range(k):
+                if o_cls[i, u] != lc[u]:
+                    same = False
+                    break
+            if same:
+                if cost >= o_cost[i]:
+                    return
+                j = i
+                break
+    if j < 0:
+        worst = -1.0
+        for i in range(cap):
+            if o_cost[i] > worst:
+                worst = o_cost[i]; j = i
+        if cost >= worst:
+            return
+    o_cost[j] = cost; o_nl[j] = k; o_back[j] = back
+    for i in range(k):
+        o_cls[j, i] = lc[i]; o_q[j, i] = qp[i]
 
 
 @njit(cache=True, fastmath=True)
@@ -130,8 +147,8 @@ def _valid(c, cur, ns, N, AIR, METAL, solid):
 
 
 @njit(cache=True, fastmath=True)
-def _dfs(c1, c2, q1, N, m, Etab, rtab, ph, y, w, Qpad, Kn, Qy, A, best, rho, thr, AIR, METAL, solid,
-         o_cost, o_nl, o_cls, o_q, o_back, stats, max_nodes):
+def _dfs(c1, c2, q1, N, m, Etab, rtab, ph, y, w, Qpad, Kn, Qy, A, best, rho, thr, AIR, METAL, solid, dqmin,
+         o_cost, o_nl, o_cls, o_q, o_back, stats, max_nodes, tot, budget):
     F = ph.shape[0]
     C = rtab.shape[0] - 1
     LM = 2 * N + 1
@@ -163,10 +180,10 @@ def _dfs(c1, c2, q1, N, m, Etab, rtab, ph, y, w, Qpad, Kn, Qy, A, best, rho, thr
             _record(cost, lc, qp, 1, c2, o_cost, o_nl, o_cls, o_q, o_back)
     if c2 == METAL:
         return
-    qi[1] = q1 + 1; oi[1] = 0
+    qi[1] = q1 + dqmin[c2]; oi[1] = 0
     while level >= 1:
         k = level
-        if qi[k] >= m or k >= LM or stats[0] > max_nodes:
+        if qi[k] >= m or k >= LM or stats[0] > max_nodes or tot[0] > budget:
             level -= 1
             continue
         q = qi[k]
@@ -196,12 +213,13 @@ def _dfs(c1, c2, q1, N, m, Etab, rtab, ph, y, w, Qpad, Kn, Qy, A, best, rho, thr
                 _record(cost, lc, qp, k + 1, c, o_cost, o_nl, o_cls, o_q, o_back)
         if c != METAL and k + 1 < LM:
             level = k + 1
-            qi[level] = q + 1; oi[level] = 0
+            qi[level] = q + dqmin[c]; oi[level] = 0
 
 
 @njit(parallel=True, cache=True, fastmath=True)
-def run_tasks(tasks, N, m, Etab, rtab, ph, y, w, Qpad, Kn, Qy, A, best, rho, thr, AIR, METAL, solid, cap, max_nodes):
+def run_tasks(tasks, N, m, Etab, rtab, ph, y, w, Qpad, Kn, Qy, A, best, rho, thr, AIR, METAL, solid, dqmin, cap, max_nodes, budget):
     T = tasks.shape[0]
+    tot = np.zeros(1, np.int64)
     LM = 2 * N + 1
     o_cost = np.full((T, cap), np.inf)
     o_nl = np.zeros((T, cap), np.int64)
@@ -211,12 +229,13 @@ def run_tasks(tasks, N, m, Etab, rtab, ph, y, w, Qpad, Kn, Qy, A, best, rho, thr
     stats = np.zeros((T, 3), np.int64)
     for t in prange(T):
         _dfs(tasks[t, 0], tasks[t, 1], tasks[t, 2], N, m, Etab, rtab, ph, y, w, Qpad, Kn, Qy, A, best, rho, thr,
-             AIR, METAL, solid, o_cost[t], o_nl[t], o_cls[t], o_q[t], o_back[t], stats[t], max_nodes)
+             AIR, METAL, solid, dqmin, o_cost[t], o_nl[t], o_cls[t], o_q[t], o_back[t], stats[t], max_nodes, tot, budget)
+        tot[0] += stats[t, 0]                      # approximate (unsynchronised) global node count
     return o_cost, o_nl, o_cls, o_q, o_back, stats
 
 
-def solve_grid(f, y, s, segs, lib, N, d0, extent, h=5e-3, rho=1.5, eps=1e-3, cap=16, incumbent=np.inf,
-               max_nodes=2_000_000, a_tail=1.0, thr0=0.125, reps=None, verbose=False):
+def solve_grid(f, y, s, segs, lib, N, d0, extent, h=5e-3, rho=1.5, eps=1e-3, cap=32, incumbent=np.inf,
+               max_nodes=2_000_000, a_tail=1.0, thr0=0.125, reps=None, budget=120_000_000, verbose=False):
     """Branch-and-bound over the grid problem. Returns leaves [(cost, classes, grid indices, back)]
     sorted by cost (all with cost <= rho * best found), and a statistics dict."""
     import time
@@ -232,12 +251,16 @@ def solve_grid(f, y, s, segs, lib, N, d0, extent, h=5e-3, rho=1.5, eps=1e-3, cap
         solid[:] = False
         solid[np.asarray(reps, np.int64)] = True
     AIR, METAL = lib.AIR, lib.METAL
+    # thinnest layer branched on: T_SOLID for dry solids, T_THIN for water and gaps
+    tmin = np.where(lib.solid, T_SOLID, T_THIN)
+    tmin[lib.WATER] = T_THIN
+    dqmin = np.maximum(1, np.ceil(tmin * lib.nref / h - 1e-9)).astype(np.int64)
     tasks = []
     for c1 in np.where(solid)[0]:
         for c2 in range(len(lib.names)):
             if not _valid(c2, c1, 1, N, AIR, METAL, solid):
                 continue
-            for q1 in range(m):
+            for q1 in range(int(dqmin[c1]) - 1, m):
                 tasks.append((c1, c2, q1))
     tasks = np.array(tasks, np.int64)
     tasks = tasks[np.random.default_rng(0).permutation(len(tasks))]      # balance the threads (static chunks)
@@ -257,17 +280,19 @@ def solve_grid(f, y, s, segs, lib, N, d0, extent, h=5e-3, rho=1.5, eps=1e-3, cap
     nodes_total = 0
     while True:
         t_p = time.time()
-        out = run_tasks(tasks, N, m, Etab, rtab, ph, y, w, Qpad, Kn, Qy, A, best, 1.0, thr, AIR, METAL, solid, 1, max_nodes)
+        out = run_tasks(tasks, N, m, Etab, rtab, ph, y, w, Qpad, Kn, Qy, A, best, 1.0, thr, AIR, METAL, solid, dqmin, 1, max_nodes, budget)
         nodes_total += int(out[5][:, 0].sum())
         passes.append((thr / n_res, float(best[0]), int(out[5][:, 0].sum()), time.time() - t_p))
         if verbose:
             print(f"    pass chi2/n <= {thr / n_res:6.1f}: nodes {passes[-1][2]:.2e}, best {best[0]:.0f} ({passes[-1][3]:.1f}s)", flush=True)
         if np.isfinite(best[0]) and best[0] <= thr:
             break
+        if passes[-1][2] >= budget:               # node budget spent without a leaf: give up (reported)
+            break
         if thr > 1e4 * n_res:
             break
         thr *= 2
-    out = run_tasks(tasks, N, m, Etab, rtab, ph, y, w, Qpad, Kn, Qy, A, best, rho, np.inf, AIR, METAL, solid, cap, max_nodes)
+    out = run_tasks(tasks, N, m, Etab, rtab, ph, y, w, Qpad, Kn, Qy, A, best, rho, np.inf, AIR, METAL, solid, dqmin, cap, max_nodes, budget)
     o_cost, o_nl, o_cls, o_q, o_back, stats = out
     leaves = []
     lim = rho * best[0]
@@ -278,7 +303,7 @@ def solve_grid(f, y, s, segs, lib, N, d0, extent, h=5e-3, rho=1.5, eps=1e-3, cap
     leaves.sort(key=lambda t: t[0])
     info = dict(passes=passes, nodes_search=nodes_total, nodes=int(stats[:, 0].sum()), pruned=int(stats[:, 1].sum()), leaves_eval=int(stats[:, 2].sum()),
                 best=float(best[0]), m=m, h=h, K_end=int(Kn[-1]), gate_s=t_g, wall_s=time.time() - t0,
-                truncated=bool(np.any(stats[:, 0] > max_nodes)), n_tasks=len(tasks), A_max=float(A.max()))
+                truncated=bool(np.any(stats[:, 0] > max_nodes) or stats[:, 0].sum() >= budget), n_tasks=len(tasks), A_max=float(A.max()))
     if verbose:
         print(f"  bnb: m={m} h={1e3 * h:.1f} mm, K_end={info['K_end']}, nodes {info['nodes']:.2e}, pruned {info['pruned']:.2e}, "
               f"leaves {info['leaves_eval']:.2e}, best {best[0]:.0f}, kept {len(leaves)}, truncated {info['truncated']}, "
