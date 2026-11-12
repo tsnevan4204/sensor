@@ -163,3 +163,4 @@
     pass chi2/n <=    0.1: nodes 7.01e+04, best inf (0.2s)
     pass chi2/n <=    0.2: nodes 1.21e+06, best inf (1.0s)
     pass chi2/n <=    0.5: nodes 1.46e+07, best inf (11.9s)
+    pass chi2/n <=    1.0: nodes 4.03e+07, best 139 (32.2s)
