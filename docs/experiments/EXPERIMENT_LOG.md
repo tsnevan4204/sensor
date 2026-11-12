@@ -982,7 +982,7 @@ Finding: with the structure discrete and enumerated the landscape is benign; the
 | 212 | concrete 50.3 / marble 16.94 / batt 36.41, gap 12.71, air | **wrong, silent at the time:** marble split in two, batt (r ≈ 0.03 against air, behind concrete) missed. Now raises the alarm (same class twice) | 575 s |
 **Development: 9 exact, 2 right structure with a thickness inside its error bar, 1 wrong** (E050 baseline: 0 exact).
 
-**Held-out walls (seeds 301–330, code frozen at `f8432a6`, never used for development).** The run takes hours on 4 cores and was still going when this entry was written; first 13 walls (`heldout.jsonl`; `summarize.py` prints this table for whatever is finished):
+**Held-out walls (seeds 301–330, code frozen at `f8432a6`, never used for development; complete).**
 
 | seed | truth (mm) | true gaps | backing | answer (label, mm) | gaps | backing | χ²/n | s | outcome |
 |---|---|---|---|---|---|---|---|---|---|
@@ -999,16 +999,34 @@ Finding: with the structure discrete and enumerated the landscape is benign; the
 | 311 | glass 3.53 / brick 63.08 / glass 6.81 | [1.87, 2.9] | air | glass 3.54 / brick 63.36 / tile 6.87 | [1.87, 2.88] | air | 1.03 | 675 | exact |
 | 312 | concrete 82.97 / marble 19.95 / tile 7.51 | [0.0, 0.0] | air | concrete 82.95 / marble 19.84 / tile 7.56 | [0.0, 0.0] | air | 1.01 | 547 | exact |
 | 313 | glass 6.27 / floorboard 10.14 / plasterboard 15.74 | [0.0, 6.87] | air | glass 6.28 / floorboard 10.13 / plasterboard 15.78 | [0.0, 6.88] | air | 0.96 | 163 | exact |
+| 314 | chipboard 9.92 / tile 8.65 / marble 16.71 | [0.0, 0.0] | air | chipboard 9.91 / tile 8.68 / marble 16.78 | [0.0, 0.0] | air | 0.96 | 250 | exact |
+| 315 | marble 19.84 / batt 46.16 / brick 69.53 | [0.0, 0.0] | air | marble 19.85 / batt 46.11 / brick 69.46 | [0.0, 0.0] | air | 1.00 | 240 | exact |
+| 316 | concrete 46.24 / water 11.6 / chipboard 10.77 | [14.95, 0.0] | air | concrete 46.24 / water 11.73 / ceiling_board 217.55 | [14.9, 0.0] | air | 1.01 | 154 | SILENT |
+| 317 | plasterboard 10.26 / water 7.75 / batt 32.51 | [0.0, 0.0] | air | plasterboard 10.26 / water 7.75 / batt 243.9 | [0.0, 168.8] | air | 1.00 | 180 | SILENT |
+| 318 | brick 78.99 / water 6.31 / foam 30.33 | [0.0, 0.0] | air | brick 9.54 / brick 69.59 / water 6.32 | [0.0, 0.0] | air | 0.98 | 2618 | flag |
+| 319 | tile 7.72 / plasterboard 14.25 / batt 36.91 | [0.0, 0.0, 3.72] | metal | tile 7.72 / plasterboard 14.23 / batt 37.04 | [0.0, 0.0, 3.53] | metal | 1.00 | 198 | exact |
+| 320 | glass 4.59 / batt 50.16 / wood 13.25 | [0.0, 0.0, 13.44] | metal | tile 4.59 / batt 50.18 / wood 13.27 | [0.0, 0.0, 13.45] | metal | 1.03 | 383 | exact |
+| 321 | ceiling_board 14.7 / floorboard 21.35 / brick 76.79 | [3.49, 0.0] | air | ceiling_board 14.71 / floorboard 15.18 / brick 86.02 | [3.5, 0.0] | air | 1.14 | 1156 | flag |
+| 322 | brick 85.18 / ceiling_board 17.28 / wood 27.2 | [0.0, 0.0, 0.0] | metal | brick 81.79 / plasterboard 5.43 / ceiling_board 32.02 | [0.0, 21.01, 0.71] | metal | 6.71 | 2311 | flag |
+| 323 | batt 34.29 / wood 15.05 / floorboard 10.63 | [4.53, 1.22] | air | batt 34.28 / wood 15.04 / floorboard 10.6 | [4.52, 1.23] | air | 1.07 | 196 | exact |
+| 324 | chipboard 13.77 / wood 43.77 / glass 5.91 | [0.0, 0.0] | air | plasterboard 13.78 / wood 43.74 / glass 5.89 | [0.0, 0.0] | air | 0.97 | 159 | exact |
+| 325 | concrete 51.89 / plywood 11.08 / marble 12.01 | [0.0, 8.08] | air | concrete 52.08 / plywood 10.84 / marble 12.02 | [0.0, 8.47] | air | 1.00 | 671 | exact |
+| 326 | wood 19.35 / concrete 89.43 / water 8.49 | [2.79, 3.88] | air | wood 19.37 / concrete 89.24 / water 8.55 | [2.78, 3.85] | air | 1.02 | 176 | exact |
+| 327 | ceiling_board 17.09 / floorboard 14.9 / chipboard 17.41 | [0.0, 0.0] | air | ceiling_board 17.1 / floorboard 14.92 / chipboard 17.37 | [0.0, 0.0] | air | 0.96 | 9 | exact |
+| 328 | wood 34.07 / water 3.76 / chipboard 10.77 | [0.0, 0.0] | air | wood 34.06 / water 3.76 / chipboard 10.76 | [0.0, 0.0] | air | 0.95 | 57 | exact |
+| 329 | floorboard 14.39 / wood 14.58 / batt 67.49 | [0.0, 0.0, 4.44] | metal | floorboard 14.39 / wood 14.58 / batt 67.58 | [0.0, 0.0, 4.33] | metal | 1.00 | 370 | exact |
+| 330 | plywood 16.06 / water 1.05 / brick 82.85 | [4.06, 4.21] | air | plywood 16.06 / water 1.07 / brick 81.9 | [4.05, 5.14] | air | 1.02 | 371 | 3sigma |
 
-**First 13 held-out walls: 11 exact, 2 flagged, 0 silent.** solid-thickness |error| on exact walls: median 0.028 mm, 90% 0.110 mm, max 0.422 mm; gaps on exact walls: 10 gaps of 1.6-29.2 mm, |error| median 0.015 mm, max 0.100 mm; material label exactly right (nearest class) on exact walls: 30/33 (label misses are within one impedance cluster: glass / tile / marble). Three walls escalated on their own alarm: 301 became exact, 304 and 310 stayed flagged.
-- 304 (flag, χ²/n 1.12): foam 14.06 | gap 3.18 | plywood 6.26 | gap 4.89 | tile 7.89 answered as batt 17.0 | plywood 6.21 | gap 4.82 | tile 7.67: a 3 mm air gap behind foam (ε′ 1.05) is nearly the same medium as foam.
-- 310 (flag, χ²/n 7.9, 31 min): brick 70 | plywood 6.1 | gap 6.4 | concrete 65: 290 mm of lossy optical depth; both tree searches ran out of node budget.
+**Held-out, 30 walls: 22 exact, 1 right structure within 3 CRB σ (330), 5 flagged, 2 silent.** time per wall: median 243 s, mean 528 s, max 2618 s; solid-thickness |error| on exact walls: median 0.020 mm, 90% 0.119 mm, max 0.422 mm; gaps on exact walls: 18 gaps of 1.2-29.2 mm, |error| median 0.015 mm, max 0.390 mm; material label exactly right (nearest class) on exact walls: 61/66; 8 walls escalated on their own alarm, 3 of them became exact (301, 312, 325).
+- **Silent (316, 317):** a layer behind 8–12 mm of water answered ~200 mm too thick at χ²/n 1.00. For 316 the true wall fits no better (χ² 1545.6 vs 1545.7) and the layer's CRB is 10.5 mm at the truth: an information limit, reported wrongly as resolved. For 317 the truth is better by Δχ² 12.5. E053b adds a "layer not resolved" report (CRB > 1.5 mm or > 20 %), which marks exactly these two and none of the exact walls of E052; it was derived from these walls and needs fresh seeds.
+- **Flagged (304, 310, 318, 321, 322):** 304 foam + 3 mm gap (same medium); 310, 321, 322 brick 70–85 mm with thin layers around it (node budget exhausted, 20–40 min); 318 foam behind brick + water (brick counted twice → alarm).
+- All seven non-exact walls contain a layer the data barely see (behind water, behind thick masonry, or low-index next to air).
 
 **Findings.**
 1. The structure search is solved for N = 3 with gaps, water and metal: exhaustive class-discrete search with pruning, not continuous relaxation. Gaps down to 1.6 mm, a 1.9 mm water film, layers hidden behind water.
-2. The χ² alarm works as an escalation trigger: walls 210 and 301 were repaired by their own alarm; no wrong answer passed silently on the held-out walls.
+2. The χ² alarm works as an escalation trigger: walls 210 and 301 were repaired by their own alarm; the alarm repaired 3 held-out walls.
 3. Remaining failure classes: weak low-index layers (batt, foam) next to air or behind lossy layers (information limits: 212, 304, 208); and time (thick or metal-backed walls reach the node budget).
-**Hypothesis** (dev ≥ 9/12 exact, 0 silent outside the error bars; same on held-out): dev **passed on count, failed on "0 silent"** (212, fixed by a guard afterwards and to be re-verified); held-out so far: 11/13 exact, 0 silent.
+**Hypothesis** (dev ≥ 9/12 exact, 0 silent outside the error bars; same on held-out): dev **passed on count, failed on "0 silent"** (212, fixed by a guard afterwards and to be re-verified); held-out: 22/30 exact, 2 silent (both layers behind water) → hypothesis **failed on "0 silent"**.
 **Cost:** 30 s – 15 min per wall on 4 cores (10⁶–10⁸ tree nodes at ~3·10⁵ nodes/s, then ~30–60 s of exact refits).
 **Next:** (1) rerun 211, 212 with the frozen code; (2) speed: sub-grid position optimisation at the nodes so the grid can be coarser, tighter bounds, drop the down-weighted frequencies in the tree; (3) N = 4, 5; (4) N unknown by the Schwarz criterion over N; (5) the realistic chain (beam, calibration, drift) with this solver.
 **Artifacts:** results/2026-11-12_E052_bnb/ (`run.py`, `summarize.py`, `dev_v*.jsonl/log`, `heldout.jsonl/log`)
