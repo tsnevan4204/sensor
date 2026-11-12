@@ -287,9 +287,7 @@ def solve_grid(f, y, s, segs, lib, N, d0, extent, h=5e-3, rho=1.5, eps=1e-3, cap
             print(f"    pass chi2/n <= {thr / n_res:6.1f}: nodes {passes[-1][2]:.2e}, best {best[0]:.0f} ({passes[-1][3]:.1f}s)", flush=True)
         if np.isfinite(best[0]) and best[0] <= thr:
             break
-        if passes[-1][2] >= budget:               # node budget spent without a leaf: give up (reported)
-            break
-        if thr > 1e4 * n_res:
+        if thr > 64 * n_res:                      # nothing found under a very loose threshold: give up (reported)
             break
         thr *= 2
     out = run_tasks(tasks, N, m, Etab, rtab, ph, y, w, Qpad, Kn, Qy, A, best, rho, np.inf, AIR, METAL, solid, dqmin, cap, max_nodes, budget)

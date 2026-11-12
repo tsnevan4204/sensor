@@ -19,3 +19,5 @@ Read in this order the first time:
 | 13 | `13_prototype_chip.md` | First prototype radar: TI IWR6843 (60–64 GHz FMCW) + DCA1000 raw capture + lens; requirements, alternatives, FMCW-chain modelling consequences |
 
 `physics_explainer.html` is the illustrated version of 02 (open it in a browser). Its diagrams cover the setup, the de Rham complex, cochains on a triangle, the 1D strips, and the LC-ladder equivalent.
+| 14 | `14_limitations.md` | Living list of what the algorithm does not do, conditions it needs, known weaknesses |
+| 16 | `16_structure_search_guarantees.md` | Known-N structure search (E050–E053): branch-and-bound over class-discrete walls with time-gate bounds; lemmas and what is proved vs measured; why depth-by-depth methods fail (2WT dimension count); model-discrepancy weights; two-point limits |

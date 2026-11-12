@@ -584,6 +584,10 @@ def bnb_start(ctx, n_keep=24, rho=1.5, h=5e-3, extra_extent=0.0, verbose=False):
     leaves, info = BB.solve_grid(fb, yb, s_eff, segs, libb, ctx.N, ctx.d0, ctx.extent + extra_extent, h=h, rho=rho,
                                  reps=reps, verbose=verbose)
     ctx.n_eval += info["nodes"] + info["nodes_search"]
+    info["fallback"] = False
+    if not leaves:                             # node budget spent without a single wall: exhaustive no-gap start
+        info["fallback"] = True
+        return joint_start(ctx, n_gap=0, verbose=verbose), info
     seen, picked = set(), []
     for cost, cls, q, back in leaves:
         if (cls, back) in seen:

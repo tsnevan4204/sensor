@@ -37,6 +37,14 @@ src/oned/                 1D layered-wall code (run scripts from this folder)
                           standoff profiling, cycle hopping, ambiguity scan, Fisher/CRB, regularizers
   scenarios.py            wall definitions (truths + starting models); add scenarios here
   run_validation.py       validation suite (about 26 min on 2 cores)
+  stack.py, tmm.py        general stacks: material library world, exact reflection recursion + adjoint
+  wallsolve.py            known-N problem generator (make_problem), scoring; older solvers (E046-E049)
+  wallsolve2.py           CURRENT known-N solver (E052): solve() = branch-and-bound search + exact refit
+  bnb.py                  branch-and-bound over class-discrete grid walls, time-gate bounds (doc 16)
+  fastbatch.py, polish.py compiled (numba) exact batch forward and batch LM polish
+  wallsearch.py           block moves (classes, gaps, relocate), bnb_start, search driver
+  treesolve.py            class library table, Slepian gates (and the E051 beam: negative result)
+  devbnb.py, devsearch.py, devtree.py   development harnesses with truth tracing
 tests/test_gates.py       correctness gates; MUST pass before any experiment result is trusted
 experiments/EXPERIMENT_LOG.md   every experiment, newest last (historical E000–E007 already logged)
 results/<date>_<ID>/      outputs of each experiment
@@ -72,7 +80,7 @@ When a result surprises you, find the cause before moving on. Every major fix so
 ## Quick start
 
 ```bash
-pip install -r requirements.txt
+pip install -r requirements.txt       # includes numba (compiled kernels)
 pytest -q tests/                      # gates (< 1 min)
 cd src/oned && python3 wall_toy.py    # sanity demo
 python3 run_validation.py             # full 1D validation (~26 min, 2 cores)

@@ -16,6 +16,9 @@ import wallsearch as LS
 import wallsolve as WS
 
 
+T_PLAUSIBLE = 2.0e-3      # a dry solid layer thinner than this in the final fit is not accepted
+
+
 def _to_model(ctx, S):
     lay, slots, k = [], [], 0
     for j in range(S.nl):
@@ -63,6 +66,40 @@ def _without_gap(ctx, S, j):
     return LS.State(S.cls[keep], S.t[keep], S.er[keep], S.td[keep], back, S.d, S.Tw, S.cost, S.chi)
 
 
+def _slots_of(kinds):
+    out, k = [], 0
+    for kd in kinds:
+        if kd == "gap":
+            out.append(("gap", k - 1))
+        else:
+            out.append(("solid", k)); k += 1
+    return out
+
+
+def close_gap(mod, slots, back, j, f, y, sigma):
+    """Refit the refined model with gap layer j removed (model level: materials, dispersion and
+    all other thicknesses start from the refined values)."""
+    lay = ST.describe(mod)
+    pin = [L.pinf.value for L in mod.layers]
+    keep = [i for i in range(len(lay)) if i != j]
+    lay2 = [dict(t=lay[i]["t"], er=max(lay[i]["er"], 1.0001), td=max(lay[i]["td"], 1e-5), water=lay[i]["water"],
+                 pinf=float(min(pin[i], 0.998))) for i in keep]
+    kinds = [slots[i][0] for i in keep]
+    d = mod.standoff.value
+    ST.SBOX = (d - 0.004, d + 0.004)
+    m2 = ST.build(lay2, d, back=back, water_T=mod.water_Tp.value if mod.water_Tp is not None else 20.0)
+    ST.SBOX = None
+    for kd, L in zip(kinds, m2.layers):
+        if kd == "gap":
+            L.eps_r.free = L.tan_d.free = False
+            L.eps_r.value, L.tan_d.value = 1.0, 0.0
+        elif L.theta.value < 0.5:
+            L.pinf.value, L.pinf.free = float(np.clip(L.pinf.value, 0.02, 0.998)), True
+    m2, c = ST._fit(m2, f, y, sigma)
+    m2, c = SR.cycle_hop(m2, f, y, sigma, SR.Opts(search_step=1, search_atol=0.0))
+    return m2, c, _slots_of(kinds)
+
+
 def n_gaps(slots):
     return sum(1 for k, _ in slots if k == "gap")
 
@@ -98,10 +135,41 @@ def solve_once(f, y, sigma, N, d_guess, n_refine=3, verbose=False, trace=None, e
             refined.append((c + bic * n_gaps(slots), chi, mod, slots, back, S, c))
             if verbose:
                 print(f"  refine: search cost {S.cost:.1f} -> MAP {c:.1f} (+{bic * n_gaps(slots):.0f} BIC), chi2/n {chi / n_all:.3f} {S.describe(ctx)}", flush=True)
+        # Schwarz criterion on the REFINED answer: close each gap in turn; keep the simpler wall
+        # unless the gap lowers the MAP cost by more than ln n
+        refined.sort(key=lambda t: t[0])
+        cb, chi, mod, slots, back, S, c = refined[0]
+        changed = True
+        while changed:
+            changed = False
+            for j, (kd, _) in enumerate(slots):
+                if kd != "gap":
+                    continue
+                m2, c2, sl2 = close_gap(mod, slots, back, j, f, y, sigma)
+                if c2 < c + bic:
+                    G, _ = I.forward(m2, f, jacobian=False)
+                    chi = float(np.sum(np.abs((G - y) / sigma) ** 2))
+                    if verbose:
+                        print(f"  gap {j} ({1e3 * mod.layers[j].t.value:.2f} mm) closed: MAP {c:.1f} -> {c2:.1f} (< +ln n)", flush=True)
+                    mod, c, slots = m2, c2, sl2
+                    refined[0] = (c + bic * n_gaps(slots), chi, mod, slots, back, S, c)
+                    changed = True
+                    break
     finally:
         SR._PRIORS = old
-    refined.sort(key=lambda t: t[0])
+    # plausibility: the exact refit may shrink a solid layer into a sliver that the search space
+    # excludes (dry solids >= bnb.T_SOLID); such fits can reach the noise level with a wrong
+    # structure (wall 211), so they rank behind every plausible candidate and raise the alarm
+    def _sliver(m_, sl_):
+        lab = pri.labels(m_)
+        thin = any(k == "solid" and L.theta.value < 0.5 and L.t.value < T_PLAUSIBLE for (k, _), L in zip(sl_, m_.layers))
+        # two adjacent solid layers of the same class = one layer counted twice, so one of the N
+        # layers was not found (wall 212: a batt layer behind marble that the data barely see)
+        twice = any(a == b and ka == kb == "solid" for a, b, (ka, _), (kb, _) in zip(lab[:-1], lab[1:], sl_[:-1], sl_[1:]))
+        return thin or twice
+    refined.sort(key=lambda t: (_sliver(t[2], t[3]), t[0]))
     cb, chi, mod, slots, back, S, c = refined[0]
+    implausible = _sliver(mod, slots)
     crb = {}
     try:
         F = I.fisher(mod, f, sigma)
@@ -115,7 +183,8 @@ def solve_once(f, y, sigma, N, d_guess, n_refine=3, verbose=False, trace=None, e
             alts.append(dict(dcost=cb2 - cb, chi2=chi2, wall=S2.describe(ctx), labels=pri.labels(m2),
                              t_mm=[round(1e3 * L.t.value, 2) for L in m2.layers]))
     return dict(model=mod, slots=slots, back=back, chi2=chi, chi2n=chi / n_all,
-                alarm=bool(chi > ST.chi2_alarm(n_all)), wall_s=time.time() - t0, search_s=t_search,
+                alarm=bool(chi > ST.chi2_alarm(n_all) or implausible), implausible=bool(implausible),
+                wall_s=time.time() - t0, search_s=t_search,
                 labels=pri.labels(mod), search_labels=[ctx.lib.base[c] for c in S.cls],
                 t_err=t_err, weak=[bool(np.isfinite(e) and e > 0.2 * L.t.value) for e, L in zip(t_err, mod.layers)],
                 ambiguous=bool(alts), alternatives=alts, n_eval=ctx.n_eval, n_polish=ctx.n_polish,

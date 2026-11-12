@@ -15,3 +15,11 @@ To look at a whole state without changing anything: `git switch --detach <commit
 
 ## E042 (in progress): global blocky inversion
 Replaces the per-depth search of E034/E041 with one continuous inversion of all depths (thin slices, total-variation regularisation, frequency continuation), then segmentation and the exact polish. Lives in a new file, `profile.py`; `stack.py` (world, TMM) and `peel.py` stay untouched, so reverting = not calling `profile.py`.
+
+## E050–E052 (2026-11-12, branch `claude/upbeat-clarke-uj6xdm`): known-N structure search
+| commit | state | what it is good for | known limits |
+|---|---|---|---|
+| `e70648c` | E049d echo-subset solver (`wallsolve.solve_echo`) | baseline: 0/12 on fresh 3-layer walls (E050) | superseded |
+| `cdc5290` | E052 branch-and-bound solver (`wallsolve2.solve`) | 3-layer walls with gaps, water, metal: see E052 in the log | minutes per wall; resonant metal-backed walls hit the node budget |
+
+`wallsolve2.py`, `bnb.py`, `fastbatch.py`, `polish.py`, `wallsearch.py`, `treesolve.py` are new files; nothing older was changed, so reverting = calling `wallsolve.solve_echo` again.

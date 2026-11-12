@@ -3,3 +3,4 @@ scipy>=1.11
 matplotlib>=3.8
 pytest>=8
 mpmath>=1.3   # only for 40-digit exactness checks
+numba>=0.60   # compiled exact kernels for the structure search (E051+)
