@@ -1151,3 +1151,6 @@ On the 46 seeds common to all runs, OK counts: 0° 38, 3 angles 40, +20 dB 36.
   - The 902/910 residual errors are single-layer mmWave cycle slips: optical ≈ λ/2 = 2.4 mm with everything behind rigid.
     The cycle scan had only pairwise-transfer moves.
 - → **E066b:** single-layer cycle-slip moves (layer i ± kλ/2, rest rigid), scan repeated until no improvement. Rerunning.
+- **E066b** (single-layer cycle-slip moves + iterated scan): no change (902 χ²/n 6.44, 910 84.7, 904 4382).
+  Probe started: set the slipped layers to their true thickness (rest rigid) and polish, to tell a broken move from a
+  wrong slip diagnosis.
