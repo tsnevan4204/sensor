@@ -1017,14 +1017,14 @@ Finding: with the structure discrete and enumerated the landscape is benign; the
 | 329 | floorboard 14.39 / wood 14.58 / batt 67.49 | [0.0, 0.0, 4.44] | metal | floorboard 14.39 / wood 14.58 / batt 67.58 | [0.0, 0.0, 4.33] | metal | 1.00 | 370 | exact |
 | 330 | plywood 16.06 / water 1.05 / brick 82.85 | [4.06, 4.21] | air | plywood 16.06 / water 1.07 / brick 81.9 | [4.05, 5.14] | air | 1.02 | 371 | 3sigma |
 
-**Held-out, 30 walls: 22 exact, 1 right structure within 3 CRB σ (330), 5 flagged, 2 silent.** time per wall: median 243 s, mean 528 s, max 2618 s; solid-thickness |error| on exact walls: median 0.020 mm, 90% 0.119 mm, max 0.422 mm; gaps on exact walls: 18 gaps of 1.2-29.2 mm, |error| median 0.015 mm, max 0.390 mm; material label exactly right (nearest class) on exact walls: 61/66; 8 walls escalated on their own alarm, 3 of them became exact (301, 312, 325).
+**Held-out, 30 walls: 22 exact, 1 right structure within 3 CRB σ (330), 5 flagged, 2 silent.** time per wall: median 243 s, mean 528 s, max 2618 s; solid-thickness |error| on exact walls: median 0.020 mm, 90% 0.119 mm, max 0.422 mm; gaps on exact walls: 18 gaps of 1.2-29.2 mm, |error| median 0.015 mm, max 0.390 mm; material label exactly right (nearest class) on exact walls: 61/66; 8 walls escalated on their own alarm; 2 of them became exact (301, 314), 5 stayed flagged, 1 (317) ended silent.
 - **Silent (316, 317):** a layer behind 8–12 mm of water answered ~200 mm too thick at χ²/n 1.00. For 316 the true wall fits no better (χ² 1545.6 vs 1545.7) and the layer's CRB is 10.5 mm at the truth: an information limit, reported wrongly as resolved. For 317 the truth is better by Δχ² 12.5. E053b adds a "layer not resolved" report (CRB > 1.5 mm or > 20 %), which marks exactly these two and none of the exact walls of E052; it was derived from these walls and needs fresh seeds.
 - **Flagged (304, 310, 318, 321, 322):** 304 foam + 3 mm gap (same medium); 310, 321, 322 brick 70–85 mm with thin layers around it (node budget exhausted, 20–40 min); 318 foam behind brick + water (brick counted twice → alarm).
 - All seven non-exact walls contain a layer the data barely see (behind water, behind thick masonry, or low-index next to air).
 
 **Findings.**
 1. The structure search is solved for N = 3 with gaps, water and metal: exhaustive class-discrete search with pruning, not continuous relaxation. Gaps down to 1.6 mm, a 1.9 mm water film, layers hidden behind water.
-2. The χ² alarm works as an escalation trigger: walls 210 and 301 were repaired by their own alarm; the alarm repaired 3 held-out walls.
+2. The χ² alarm works as an escalation trigger: walls 210 and 301 were repaired by their own alarm; the alarm repaired 2 held-out walls (301, 314).
 3. Remaining failure classes: weak low-index layers (batt, foam) next to air or behind lossy layers (information limits: 212, 304, 208); and time (thick or metal-backed walls reach the node budget).
 **Hypothesis** (dev ≥ 9/12 exact, 0 silent outside the error bars; same on held-out): dev **passed on count, failed on "0 silent"** (212, fixed by a guard afterwards and to be re-verified); held-out: 22/30 exact, 2 silent (both layers behind water) → hypothesis **failed on "0 silent"**.
 **Cost:** 30 s – 15 min per wall on 4 cores (10⁶–10⁸ tree nodes at ~3·10⁵ nodes/s, then ~30–60 s of exact refits).
