@@ -42,7 +42,7 @@ def one(seed):
                 search_s=res["search_s"], truth=[(L["name"], round(1e3 * L["t"], 2)) for L in tr["layers"]],
                 gaps_true=[round(g, 2) for g in sc["gaps_true_mm"]], back=tr["back"],
                 fit=[(s_["label"], round(1e3 * s_["t"], 2)) for s_ in sol], mat_ok=sc["mat_ok"],
-                gaps_fit=[round(g, 2) for g in sc["gaps_fit_mm"]], back_fit=res["back"], ambiguous=res["ambiguous"],
+                gaps_fit=[round(g, 2) for g in sc["gaps_fit_mm"]], back_fit=res["back"], ambiguous=res["ambiguous"], unresolved=res.get("unresolved"), partial=res.get("partial"),
                 weak=res["weak"], t_err_mm=[round(e, 3) for e in sc["t_err_mm"]],
                 crb_mm=[round(1e3 * e, 4) for e in res["t_err"]], n_eval=res["n_eval"],
                 search_chi2n=res["search_chi2n"], alternatives=res["alternatives"], attempts=res["attempts"],
@@ -59,6 +59,6 @@ if __name__ == "__main__":
             continue
         r = one(seed)
         open(out, "a").write(json.dumps(r, default=float) + "\n")
-        tag = "CRASH" if "crash" in r else ("OK" if r["ok"] else ("flag" if r["alarm"] else ("OK3s" if r.get("ok3") else "SILENT")))
+        tag = "CRASH" if "crash" in r else ("OK" if r["ok"] else ("flag" if r["alarm"] else ("PART" if r.get("partial") else ("OK3s" if r.get("ok3") else "SILENT"))))
         print(r["seed"], tag, f"{r['wall_s']:.0f}s", f"chi2/n {r.get('chi2n', 0):.2f}", r.get("truth"), r.get("gaps_true"), r.get("back"),
               "->", r.get("fit"), r.get("gaps_fit"), r.get("back_fit"), flush=True)

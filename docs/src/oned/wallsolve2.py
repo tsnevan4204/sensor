@@ -16,6 +16,8 @@ import wallsearch as LS
 import wallsolve as WS
 
 
+CRB_WEAK = 1.5e-3         # absolute error-bar limit (well-resolved layers have CRB < 0.8 mm)
+UNRESOLVED_DCOST = 6.0    # a thickness whose +-50 % change costs less than this is not resolved
 T_PLAUSIBLE = 2.0e-3      # a dry solid layer thinner than this in the final fit is not accepted
 
 
@@ -172,6 +174,23 @@ def solve_once(f, y, sigma, N, d_guess, n_refine=3, verbose=False, trace=None, e
                     refined[0] = (c + bic * n_gaps(slots), chi, mod, slots, back, S, c)
                     changed = True
                     break
+        # E053b: which thicknesses do the data actually determine? Local error bars (CRB) are
+        # meaningless at a spurious optimum (held-out 316, 317: a layer behind 8-12 mm of water
+        # answered 200 mm too thick with a 2-14 mm error bar). Profile test: halve / one-and-a-half
+        # each thickness, refit everything else; if the MAP cost rises by less than UNRESOLVED_DCOST
+        # the layer is reported as NOT RESOLVED.
+        cb, chi, mod, slots, back, S, c = refined[0]
+        unresolved = []
+        for j, L in enumerate(mod.layers):
+            dmin = np.inf
+            for fac in (0.5, 1.5):
+                m2 = mod.copy()
+                L2 = m2.layers[j]
+                L2.t.value = float(np.clip(L.t.value * fac, L.t.lo * 1.01, L.t.hi * 0.99))
+                L2.t.free = False
+                m2, c2 = ST._fit(m2, f, y, sigma, max_iter=60)
+                dmin = min(dmin, c2 - c)
+            unresolved.append(bool(dmin < UNRESOLVED_DCOST))
     finally:
         SR._PRIORS = old
     # plausibility: the exact refit may shrink a solid layer into a sliver that the search space
@@ -194,6 +213,9 @@ def solve_once(f, y, sigma, N, d_guess, n_refine=3, verbose=False, trace=None, e
     except Exception:
         pass
     t_err = [crb.get(f"{L.name}.t", np.nan) for L in mod.layers]
+    # a thickness with an error bar above 20 % or above CRB_WEAK is reported as not resolved
+    # (held-out 316: the chipboard behind 11.6 mm of water has CRB 10.5 mm even at the true wall)
+    weak = [bool(np.isfinite(e) and (e > 0.2 * L.t.value or e > CRB_WEAK)) for e, L in zip(t_err, mod.layers)]
     alts = []
     for cb2, chi2, m2, sl2, bk2, S2, c2 in refined[1:]:
         if cb2 <= cb + WS.AMBIG_DCHI2:
@@ -203,7 +225,8 @@ def solve_once(f, y, sigma, N, d_guess, n_refine=3, verbose=False, trace=None, e
                 alarm=bool(chi > ST.chi2_alarm(n_all) or implausible), implausible=bool(implausible),
                 wall_s=time.time() - t0, search_s=t_search,
                 labels=pri.labels(mod), search_labels=[ctx.lib.base[c] for c in S.cls],
-                t_err=t_err, weak=[bool(np.isfinite(e) and e > 0.2 * L.t.value) for e, L in zip(t_err, mod.layers)],
+                t_err=t_err, weak=weak,
+                unresolved=unresolved, partial=bool(any(unresolved) or any(weak)),
                 ambiguous=bool(alts), alternatives=alts, n_eval=ctx.n_eval, n_polish=ctx.n_polish,
                 search_chi2n=states[0].chi / (2 * fs.size), n_states=len(states), bnb=ctx.bnb)
 
