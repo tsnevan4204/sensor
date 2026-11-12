@@ -33,6 +33,7 @@ C0 = W.C0
 KIND_DRY, KIND_WATER, KIND_AIR, KIND_METAL = 0, 1, 2, 3
 GAPS = np.array([1.0, 1.6, 2.5, 4.0, 6.0, 9.0, 13.0, 19.0, 27.0, 38.0]) * 1e-3
 DMIN = 1.5e-3            # smallest optical thickness enumerated for a layer
+FRONT_SIGMA = False       # E053c: quantisation discrepancy from the energy behind the front echo only (opt-in)
 EXTENT_CAP = 0.40        # first search depth (optical, behind the front face); the chi2 alarm escalates it
 
 
@@ -580,7 +581,7 @@ def bnb_start(ctx, n_keep=24, rho=1.5, h=5e-3, extra_extent=0.0, verbose=False):
     fb, yb, sb, segs = TS.search_subset(ctx.f, ctx.y, ctx.s, per_band=(24, 64))
     libb = TS.Library(fb)
     reps, members = BB.class_clusters(ctx.lib)
-    s_eff = BB.model_sigma(fb, yb, sb, segs, h)
+    s_eff = BB.model_sigma(fb, yb, sb, segs, h, d0=(ctx.d0 if FRONT_SIGMA else None))
     leaves, info = BB.solve_grid(fb, yb, s_eff, segs, libb, ctx.N, ctx.d0, ctx.extent + extra_extent, h=h, rho=rho,
                                  reps=reps, verbose=verbose)
     ctx.n_eval += info["nodes"] + info["nodes_search"]
@@ -607,7 +608,7 @@ def bnb_start(ctx, n_keep=24, rho=1.5, h=5e-3, extra_extent=0.0, verbose=False):
             cands.append((np.array(combo, np.int64), tau, back, lib.nref))
     S0 = State([ctx.solids[0]], np.ones(1), np.ones(1), np.ones(1), ctx.AIR, ctx.d0)
     segs_full = I.band_segments(ctx.f)
-    s_eff_full = BB.model_sigma(ctx.f, ctx.y, ctx.s, segs_full, h)
+    s_eff_full = BB.model_sigma(ctx.f, ctx.y, ctx.s, segs_full, h, d0=(ctx.d0 if FRONT_SIGMA else None))
     pol = _polish(ctx, S0, cands, np.arange(ctx.C), iters=20, isig=1.0 / s_eff_full)      # smooth cost first
     out = []
     for P in pol:

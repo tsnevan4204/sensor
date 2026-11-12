@@ -9,6 +9,9 @@ import wallsolve as WS, wallsolve2 as W2
 N = int(sys.argv[1])
 VERBOSE = "-v" in sys.argv
 FAST = "-fast" in sys.argv
+if "-front" in sys.argv:
+    import wallsearch as _LS
+    _LS.FRONT_SIGMA = True
 
 
 def one(seed):

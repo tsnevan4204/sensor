@@ -15,6 +15,7 @@ def truth_rep(tr, lib, d0, h, m):
 
 
 PER_BAND = (24, 64)
+FRONT = False
 
 
 def run(seed, N=3, h=5e-3, rho=1.5, extent=None, **kw):
@@ -29,7 +30,7 @@ def run(seed, N=3, h=5e-3, rho=1.5, extent=None, **kw):
     print(f"seed {seed}: truth", [(L['name'], round(1e3 * L['t'], 1)) for L in tr["layers"]],
           "gaps", [round(1e3 * g, 1) for g in tr["gaps"]], tr["back"], f"extent {1e3 * ext:.0f} mm", flush=True)
     ss_true = ss
-    ss = BB.model_sigma(fs, ys, ss, segs, h)
+    ss = BB.model_sigma(fs, ys, ss, segs, h, d0=(d0 if FRONT else None))
     print("  sigma_eff/sigma at band edges:", [(round(fs[i0] / 1e9, 1), round(float(ss[i0] / ss_true[i0]), 1), round(fs[i1 - 1] / 1e9, 1), round(float(ss[i1 - 1] / ss_true[i1 - 1]), 1)) for i0, i1 in segs])
     leaves, info = BB.solve_grid(fs, ys, ss, segs, lib, N, d0, ext, h=h, rho=rho, verbose=True, reps=reps, **kw)
     tc, tq, tb = truth_rep(tr, lib, d0, h, info["m"])

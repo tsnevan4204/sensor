@@ -344,19 +344,31 @@ def solve_grid(f, y, s, segs, lib, N, d0, extent, h=5e-3, rho=1.5, eps=1e-3, cap
     return leaves, info
 
 
-def model_sigma(f, y, s, segs, h, eps_mat=0.07, d_err=0.5e-3):
+def model_sigma(f, y, s, segs, h, eps_mat=0.07, d_err=0.5e-3, d0=None):
     """Effective per-frequency error level for the GRID problem: measurement noise plus the model
     discrepancy of a wall restricted to the grid with nominal class members. An interface at a
     position uniformly within +-h/2 of its grid point changes its echo a exp(-2j k0 tau) by
     a (exp(-2j k0 delta) - 1): variance |a|^2 2 (1 - sinc(k0 h / pi)) ~ |a|^2 (2 k0 h)^2 / 12;
     the standoff guess adds (2 k0 d_err)^2; class variability changes the echo amplitude by a
-    relative eps_mat. |a|^2 summed over the echoes is the band's mean |y|^2. Per real component."""
+    relative eps_mat. |a|^2 summed over the echoes is the band's mean |y|^2. Per real component.
+    E053c (d0 given): the front face is not on the grid (it sits at the standoff guess), so the
+    quantisation term uses only the energy BEHIND the front echo: the band's data minus its best
+    fit a(f) exp(-2j k0 d0) with a(f) linear in f. For a wall with a strong front echo and weak
+    echoes behind lossy masonry this lowers sigma_eff several times and the tree prunes harder."""
     k0 = 2 * np.pi * f / C0
     out = np.empty_like(s)
     for i0, i1 in segs:
-        P = float(np.mean(np.abs(y[i0:i1]) ** 2))
+        yb = y[i0:i1]
+        P = float(np.mean(np.abs(yb) ** 2))
+        Pq = P
+        if d0 is not None:
+            ph = np.exp(-2j * k0[i0:i1] * d0)
+            x_ = (f[i0:i1] - f[i0:i1].mean()) / (f[i1 - 1] - f[i0])
+            B = np.stack([ph, ph * x_], axis=1)
+            coef, *_ = np.linalg.lstsq(B, yb, rcond=None)
+            Pq = float(np.mean(np.abs(yb - B @ coef) ** 2))
         x = k0[i0:i1] * h
-        var = P * (2 * (1 - np.sinc(x / np.pi)) + (2 * k0[i0:i1] * d_err) ** 2 + eps_mat ** 2)
+        var = Pq * 2 * (1 - np.sinc(x / np.pi)) + P * ((2 * k0[i0:i1] * d_err) ** 2 + eps_mat ** 2)
         out[i0:i1] = np.sqrt(s[i0:i1] ** 2 + var / 2)
     return out
 
