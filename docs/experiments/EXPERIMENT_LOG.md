@@ -1030,3 +1030,34 @@ Finding: with the structure discrete and enumerated the landscape is benign; the
 **Cost:** 30 s – 15 min per wall on 4 cores (10⁶–10⁸ tree nodes at ~3·10⁵ nodes/s, then ~30–60 s of exact refits).
 **Next:** (1) rerun 211, 212 with the frozen code; (2) speed: sub-grid position optimisation at the nodes so the grid can be coarser, tighter bounds, drop the down-weighted frequencies in the tree; (3) N = 4, 5; (4) N unknown by the Schwarz criterion over N; (5) the realistic chain (beam, calibration, drift) with this solver.
 **Artifacts:** results/2026-11-12_E052_bnb/ (`run.py`, `summarize.py`, `dev_v*.jsonl/log`, `heldout.jsonl/log`)
+
+## E052 addendum — walls 211, 212 with the final code  (2026-11-12)
+`dev_final.jsonl` (original mode): 211 **exact** (plasterboard 11.26 | gap 8.64 | chipboard 14.85 | concrete 47.51 | metal; the spurious 0.65 mm gap is gone: Schwarz test on the refined answer). 212 **silent again, in a new form**: concrete 50.28 | "air" 12.75 | marble 16.63: the refit turned a solid slot into air (the batt behind concrete + marble is still not found). Guard added afterwards: a solid layer refitted to air raises the alarm. In fast mode (E053) the same wall is flagged (marble counted twice).
+
+## E053 — Speed  (2026-11-12)
+**Changes (all exact or opt-in).**
+1. *Fused leaf evaluation with early abandon* (`bnb._leaf_cost`): nine tenths of the tree nodes are terminal walls; their response and misfit are now computed together, frequency by frequency in a shuffled order, and abandoned when the partial sum passes the threshold. Exact (partial sums only grow). A/B under the same load: wall 205 12.7 s → 3.9 s, wall 202 85.4 s → 18.8 s (3.2× and 4.5×), same optimum and same kept leaves; the brute-force gate still passes.
+2. *Fast refit* (`solve(fast=True)`, opt-in): one cycle-hop pass instead of two; candidates that differ only in labels are refitted once; stop when a refit is within 1 σ of the noise level. (Profile of wall 205 before: 28 of 34 s in the exact refit of three near-identical candidates.)
+3. *Front-excluded discrepancy model* (`wallsearch.FRONT_SIGMA`, opt-in): the front face is not on the grid, so the quantisation variance uses only the energy behind the front echo. Tree nodes: wall 205 2.5·10⁶ → 0.9·10⁶; thick brick wall 207: the true sequence appears among the candidates (rank 2 of 6) where the old model found none within the budget; wall 212 unchanged (budget).
+4. *"Layer not resolved"* report (CRB > 1.5 mm or > 20 %, plus a ±50 % profile test), derived from held-out walls 316/317.
+
+**Results** (2 threads, machine shared with other runs: times are upper bounds).
+| set | configuration | exact | within 3 σ | flagged | not resolved | silent | median s |
+|---|---|---|---|---|---|---|---|
+| dev 201–212 | fast | 10 | 1 | 1 | – | 0 | 118 |
+| held-out 301–313 | fast | 11 | 0 | 1 | 1 (312) | 0 | 157 (original mode: 246) |
+| **fresh 331–350** (never used) | fast + front | 12 | 1 | 4 | 2 (340, 341) | 1 (338) | 128 |
+- Fresh set: the "not resolved" report marks 2 wrong deep layers and none of the 12 exact walls (0 false reports on 16 fresh exact walls incl. E054; 1 on 11 in the held-out rerun, wall 305). So the rule holds on walls it was not derived from.
+- Silent 338: plywood 16.23 | foam 29.45 | gap 5.37 | plywood 8.27 answered as plywood | batt 34.61 | plywood at χ²/n 1.01: foam + air gap and a slightly thicker batt are the same medium to the data (third case of this kind after 304, 208).
+- Wall 312 (exact in E052) came out wrong in fast mode ("not resolved", not silent): the cause is not the refit but the tree search, which exhausts its node budget on the 83 mm concrete front layer and returns a different truncated candidate set from run to run.
+**Status against the 1 s target:** easy thin walls 7–30 s; median ~2 min; thick masonry (brick/concrete ≥ 70 mm with thin layers around) 20–40 min and flagged. The node count behind lossy layers is the open problem: under the discrepancy weights the weak echoes of similar masonry classes cannot be pruned.
+**Next for speed:** sub-grid position optimisation at the nodes (coarser grid, smaller discrepancy), class-merged branching behind lossy layers, a compiled refit.
+**Artifacts:** results/2026-11-12_E053_speed/
+
+## E054 — Four layers  (2026-11-12)
+N = 4, seeds 401–410, fast + front, 2 threads shared. **4 exact, 3 flagged, 3 "not resolved", 0 silent**; on the exact walls thickness error median 0.018 mm, four gaps of 1.1–20.8 mm within 0.04 mm; median 13 min per wall (max 38 min).
+- Exact: 401 (chipboard | foam | gap 20.8 | plasterboard | gap 8.0 | chipboard | metal), 403 (floorboard | plasterboard | concrete 111.7 | water 6.95 | gap 11.7 | metal), 405, 408.
+- "Not resolved" and nearly right: 404 (spurious 0.37 mm gap, ceiling board −0.41 mm), 410 (batt behind a water film −1.6 mm). 406: two thick batt layers around concrete, wrong deep structure, reported as not resolved.
+- Flagged: 402, 409 (brick 67–85 mm), 407 (thin four-layer wall, 108 mm optical, χ²/n 10: search miss, budget).
+**Finding:** the same search works for N = 4 without change; the tree is several times larger, and the failure classes are the same (thick masonry, low-index layers). N = 5 not run (time).
+**Artifacts:** results/2026-11-12_E054_more_layers/
