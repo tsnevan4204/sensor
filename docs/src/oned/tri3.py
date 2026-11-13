@@ -23,7 +23,8 @@ Thickness: 'real' = per-class realistic ranges (T_REAL), 'stress' = 5-50 mm for 
 
 Solver (reuses the verified kernels: fastbatch.chi_batch grid forward, polish.polish_batch compiled LM,
 search.lm exact adjoint LM + search.cycle_hop, wall_inverse.fisher CRB):
-  A  standoff: earliest range-profile peak (stack.front_guess), then a standoff grid around it
+  A  standoff: earliest range-profile peak (stack.front_guess), then a one-sided standoff grid
+     d_est - 36 mm ... d_est + 6 mm (merged front echoes bias the peak late)
   B  every allowed sequence: exhaustive grid over all three thicknesses (class bounds), nominal class
      members, model-discrepancy weights (bnb.model_sigma), sub-12-GHz data; K distinct minima kept
   C  compiled polish (thicknesses, standoff, eps' and loss of every layer under ITS class prior),
@@ -220,8 +221,13 @@ class Ctx:
 
 # ============================================================================ B: exhaustive grid
 H_OPT = 2.0e-3        # optical grid step (m)
-D_SPAN = 6.0e-3       # standoff grid: d_est +- D_SPAN
+# standoff grid: the earliest range-profile peak can only be LATE (a front echo merged with a stronger
+# interface behind it within one resolution cell, ~20 mm; wall 2049: +12.6 mm), by at most the front
+# layer's optical thickness (<= ~31 mm for these classes): grid d_est - D_BACK ... d_est + D_FWD
+D_BACK = 36.0e-3
+D_FWD = 6.0e-3
 D_STEP = 1.5e-3
+D_LOCAL = 8.0e-3      # polish box around each candidate's own standoff
 NMS_OPT = 6.0e-3      # two grid minima are the same basin if every optical depth is within this
 
 
@@ -236,7 +242,11 @@ def grid_sequence(ctx, seq, K):
         n = lib.nref[c]
         m = max(2, int(np.ceil((hi - lo) * n / H_OPT)) + 1)
         grids.append(np.linspace(lo, hi, m))
-    dg = ctx.d_est + np.arange(-D_SPAN, D_SPAN + 1e-9, D_STEP)
+    # solvers that admit insulation at the FRONT: a weak foam / fibrous front echo can be missed
+    # altogether, so the estimate may be late by that layer's whole optical thickness
+    front = {s[0] for s in ctx.seqs}
+    back = D_BACK if front <= set(BOARDS) else max(bounds(c, ctx.thick)[1] * 1.08 for c in front) + 6e-3
+    dg = ctx.d_est + np.arange(-back, D_FWD + 1e-9, D_STEP)
     dg = dg[(dg >= ctx.d_box[0]) & (dg <= ctx.d_box[1])]
     T = np.array(list(itertools.product(*grids)))                  # (M, 3)
     M = T.shape[0]
@@ -268,7 +278,7 @@ def _pack(ctx, cands, lib, pp_override=None):
     X = np.zeros((P, NP)); LO = np.zeros((P, NP)); HI = np.zeros((P, NP))
     kind = np.zeros((P, PL.LMAX), np.int64); cls = np.zeros((P, PL.LMAX), np.int64); pp = np.zeros((P, PL.LMAX))
     for p, (seq, t, d, er, td, ppv) in enumerate(cands):
-        X[p, 0] = d; LO[p, 0] = max(ctx.d_box[0], ctx.d_est - 2 * D_SPAN); HI[p, 0] = min(ctx.d_box[1], ctx.d_est + 2 * D_SPAN)
+        X[p, 0] = d; LO[p, 0] = max(ctx.d_box[0], d - D_LOCAL); HI[p, 0] = min(ctx.d_box[1], d + D_LOCAL)
         X[p, 0] = np.clip(X[p, 0], LO[p, 0], HI[p, 0])
         k = 1
         for j, s in enumerate(seq):
@@ -304,11 +314,16 @@ def polish(ctx, cands, f, y, isig, iters):
 
 def _pp_variants(ctx, seq):
     """Dispersion shape is fixed in the compiled polish: wood_board spans chipboard-like (p ~ 0.75)
-    to plywood-like (p ~ 0.99) shapes, so its layers are polished with both."""
+    to plywood-like (p ~ 0.99) shapes and gypsum p ~ 0.15-0.7, so those layers get two shapes each."""
     opts = []
     for s in seq:
         c = ctx.ci[s]
-        opts.append((0.75, 0.99) if s == "wood_board" else (ctx.pp0[c],))
+        if s == "wood_board":
+            opts.append((0.75, 0.99))
+        elif s == "gypsum":                     # ITU plasterboard law: p ~ 0.15-0.7 with the sample's loss
+            opts.append((0.3, 0.6))
+        else:
+            opts.append((ctx.pp0[c],))
     return list(itertools.product(*opts))
 
 
@@ -325,15 +340,28 @@ def exact_refit(ctx, cand):
     for s, L in zip(seq, mod.layers):
         lo, hi = bounds(s, ctx.thick)
         L.t.lo, L.t.hi = lo, hi
-        L.t.value = float(np.clip(L.t.value, lo * (1 + 1e-9), hi * (1 - 1e-9)))
+        # start strictly inside the box: search.lm works in logit coordinates, where a start ON a
+        # bound cannot move (wall 2052: gypsum stuck at 9.50 mm, truth 9.87 mm -> silent wrong label)
+        m_ = 1e-3 * (hi - lo)          # 3 % moved a start by a whole cycle (wall 2034: fibrous 30.31 -> 31.8 mm)
+        L.t.value = float(np.clip(L.t.value, lo + m_, hi - m_))
     pri = ClassPrior(seq)
     old = SR._PRIORS
     SR._PRIORS = (pri,)
     try:
-        mod, c = ST._fit(mod, ctx.f, ctx.y, ctx.s)
+        # dispersion shape free from the first iteration: with the shape fixed at the polish value a
+        # thickness can run into its bound and stay there (wall 2052)
         for L in mod.layers:
             L.pinf.value, L.pinf.free = float(np.clip(L.pinf.value, 0.02, 0.998)), True
         mod, c = ST._fit(mod, ctx.f, ctx.y, ctx.s)
+        # a thickness still on a bound: one restart from the middle of its box
+        for j, (s, L) in enumerate(zip(seq, mod.layers)):
+            lo, hi = bounds(s, ctx.thick)
+            if min(L.t.value - lo, hi - L.t.value) < 0.01 * (hi - lo):
+                m2 = mod.copy()
+                m2.layers[j].t.value = 0.5 * (lo + hi)
+                m2, c2 = ST._fit(m2, ctx.f, ctx.y, ctx.s)
+                if c2 < c:
+                    mod, c = m2, c2
     finally:
         SR._PRIORS = old
     ctx.n_exact += 1

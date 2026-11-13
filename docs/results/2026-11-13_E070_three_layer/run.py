@@ -29,6 +29,20 @@ def one(seed):
     try:
         r = T.solve3(f, y, s, scope=A.solver, thick=A.thick, mode=A.mode, hop_all=A.hop_all)
         sc = T.score(r, tr)
+        # ORACLE (diagnostic only, never used by the solver): exact fit of the true sequence started at
+        # the true parameters; if the solver's own fit of that sequence is clearly worse, the search
+        # missed it (vs. an identifiability limit)
+        oracle = None
+        if tuple(tr["seq"]) in {"in": T.SEQ_IN, "out": T.SEQ_OUT, "all": T.SEQ_ALL}[A.solver]:
+            ctx = T.Ctx(f, y, s, [], A.thick)
+            L = tr["layers"]
+            cand = (0, 0, tuple(tr["seq"]), np.array([x["t"] for x in L]), tr["standoff"], [x["eps10"] for x in L],
+                    [x["tan10"] for x in L], [x["p"] for x in L])
+            o = T.exact_refit(ctx, cand)
+            kt = "|".join(tr["seq"])
+            own = r["per_seq"].get(kt, {}).get("cost", np.inf)
+            oracle = dict(cost=o["cost"], chi2=o["chi2"], own_cost=own, search_miss=bool(own > o["cost"] + 2.0),
+                          dcost_vs_best=o["cost"] - r["cost"], t_mm=[round(1e3 * x, 3) for x in o["t"]])
     except Exception as e:
         import traceback; traceback.print_exc()
         return dict(seed=seed, crash=repr(e), truth=tr["seq"], wall_s=time.time() - t0)
@@ -41,7 +55,7 @@ def one(seed):
                 rivals=r["rivals"], same_seq_alt=r["same_seq_alt"], in_bounds=r["in_bounds"],
                 per_seq=r["per_seq"], hop_gains=r["hop_gains"], timing={k: round(v, 2) for k, v in r["timing"].items()},
                 wall_s=round(r["wall_s"], 1), n_grid=r["n_grid"], n_polish=r["n_polish"], n_exact=r["n_exact"], n_hop=r["n_hop"],
-                **sc)
+                oracle=oracle, **sc)
 
 
 if __name__ == "__main__":

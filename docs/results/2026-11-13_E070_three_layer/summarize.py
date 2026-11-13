@@ -24,7 +24,18 @@ print(f"  answered: {len(ans)}  of which joint-correct {sum(r['joint'] for r in 
 ab = [r for r in R if r["status"] != "answer"]
 print(f"  abstained/alarmed: {len(ab)}  (their best answer was joint-correct in {sum(r['joint'] for r in ab)})")
 for r in silent:
-    print(f"    SILENT {r['seed']}: {'|'.join(r['truth'])} {r['t_true_mm']} -> {'|'.join(r['fit'])} {r['t_fit_mm']} chi2n {r['chi2n']:.3f}")
+    o = r.get("oracle") or {}
+    print(f"    SILENT {r['seed']}: {'|'.join(r['truth'])} {r['t_true_mm']} -> {'|'.join(r['fit'])} {r['t_fit_mm']} chi2n {r['chi2n']:.3f}"
+          f"  oracle: search_miss={o.get('search_miss')} true-seq cost vs answer {o.get('dcost_vs_best', float('nan')):+.1f}")
+orc = [r["oracle"] for r in R if r.get("oracle")]
+if orc:
+    miss = [r for r in R if r.get("oracle") and r["oracle"]["search_miss"]]
+    print(f"  ORACLE (true sequence fitted from the truth): search missed the true sequence's best fit on {len(miss)}/{len(orc)} walls"
+          + (": " + ", ".join(f"{r['seed']} (own {r['oracle']['own_cost'] - r['oracle']['cost']:+.1f})" for r in miss) if miss else ""))
+    wrong = [r for r in R if r.get("oracle") and not r["seq_ok"]]
+    info = [r for r in wrong if not r["oracle"]["search_miss"]]
+    print(f"  wrong best sequence: {len(wrong)}; of these the search found the true sequence's optimum on {len(info)} "
+          f"(= data/prior preferred a wrong label: identifiability), missed it on {len(wrong) - len(info)}")
 # per-layer confusion
 M = np.zeros((5, 5), int)
 for r in R:
