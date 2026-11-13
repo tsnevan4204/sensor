@@ -34,7 +34,7 @@ search.lm exact adjoint LM + search.cycle_hop, wall_inverse.fisher CRB):
      the KE best distinct polished minima of EVERY sequence (the polish fixes the dispersion shape and
      ranks poorly: 1702 vs 1010 on one wall, so no sequence is dropped on polished cost)
   E2 cycle hops on the best fit of every sequence within HOP_WINDOW of the best E1 cost
-  F  decision: chi2 alarm; ABSTAIN on labels if another sequence is within AMBIG of the best MAP cost;
+  F  decision: chi2 alarm, material-out-of-class alarm (MAT_ALARM); ABSTAIN on labels if another sequence is within AMBIG of the best MAP cost;
      ABSTAIN on thickness if a distinct minimum of the same sequence is within AMBIG or 3 CRB > tol.
 reference mode: KE = 4, HOP_WINDOW = 500 (calibrated with hop_all, calib_hopall.jsonl); fast: KE = 2, HOP_WINDOW = 150.
 Both modes fit every allowed sequence; the confusion map is the per-sequence cost table (per_seq).
@@ -79,10 +79,15 @@ _ORIG_LAW = ST.material_law
 _MAP = {"gypsum": "plasterboard", "fibrous": "batt", "foam": "foam", "tile": "tile"}
 
 
+import os
+WOOD = os.environ.get("TRI3_WOOD", "broad")      # broad (default) | chipboard | plywood  (owner decision pending)
+
+
 def _wood_board(rng):
     a0, c0, d0 = ST.ITU["chipboard"][:3]
     a1, c1, d1 = ST.ITU["plywood"][:3]
-    m = rng.uniform(0, 1)
+    m = rng.uniform(0, 1)                         # drawn in every mode: same random stream for the rest of the wall
+    m = {"broad": m, "chipboard": 0.0, "plywood": 1.0}[WOOD]
     a = np.exp((1 - m) * np.log(a0) + m * np.log(a1))
     s10 = np.exp((1 - m) * np.log(c0 * 10 ** d0) + m * np.log(c1 * 10 ** d1))
     d = (1 - m) * d0 + m * d1
@@ -487,12 +492,30 @@ def solve3(f, y, s, scope="in", thick="real", mode="reference", d_box=D_BOX, ver
     return res
 
 
+MAT_ALARM = 16.0      # squared Mahalanobis distance of a fitted layer material to ITS class; true samples of
+                      # every class stay below 6.2 (20000 draws each); out-of-scope walls fitted with an
+                      # in-scope sequence put foam/batt into a 'wood_board' slot at 250-350 (walls 3007, 3031)
+
+
+def mat_d2(seq, er, td):
+    st = ST.library_stats()
+    out = []
+    for nm, e, t in zip(seq, er, td):
+        mu, C = st[nm]
+        x = np.array([np.log(e), np.log10(max(t, 1e-7))]) - mu
+        out.append(float(x @ np.linalg.solve(C, x)))
+    return out
+
+
 def decide(ctx, fits):
     fits = sorted(fits, key=lambda r: r["cost"])
     b = fits[0]
     crb_t, crb_d = crb(b["model"], ctx.f, ctx.s)
     n = ctx.n_all
-    alarm = bool(b["chi2"] > ST.chi2_alarm(n))
+    md2 = mat_d2(b["seq"], b["er"], b["td"])
+    chi_alarm = bool(b["chi2"] > ST.chi2_alarm(n))
+    mat_alarm = bool(max(md2) > MAT_ALARM)
+    alarm = chi_alarm or mat_alarm
     rivals = [r for r in fits[1:] if r["seq"] != b["seq"] and r["cost"] <= b["cost"] + AMBIG]
     tol = [max(TOL[0], TOL[1] * t) for t in b["t"]]
     same_alt = [r for r in fits[1:] if r["seq"] == b["seq"] and r["cost"] <= b["cost"] + AMBIG
@@ -511,7 +534,7 @@ def decide(ctx, fits):
         if k not in per_seq or r["cost"] < per_seq[k]["cost"]:
             per_seq[k] = dict(cost=r["cost"], chi2=r["chi2"], t_mm=[round(1e3 * x, 3) for x in r["t"]])
     return dict(seq=list(b["seq"]), t=[float(x) for x in b["t"]], d=b["d"], chi2=b["chi2"], chi2n=b["chi2"] / n,
-                cost=b["cost"], alarm=alarm, status=status, crb_t=crb_t, crb_d=crb_d, weak_t=weak_t,
+                cost=b["cost"], alarm=alarm, status=status, chi_alarm=chi_alarm, mat_alarm=mat_alarm, mat_d2=md2, crb_t=crb_t, crb_d=crb_d, weak_t=weak_t,
                 rivals=[dict(seq=list(r["seq"]), dcost=r["cost"] - b["cost"], t_mm=[round(1e3 * x, 3) for x in r["t"]])
                         for r in rivals],
                 same_seq_alt=[dict(dcost=r["cost"] - b["cost"], t_mm=[round(1e3 * x, 3) for x in r["t"]]) for r in same_alt],

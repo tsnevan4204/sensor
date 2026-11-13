@@ -55,7 +55,8 @@ def one(seed):
                 rivals=r["rivals"], same_seq_alt=r["same_seq_alt"], in_bounds=r["in_bounds"],
                 per_seq=r["per_seq"], hop_gains=r["hop_gains"], timing={k: round(v, 2) for k, v in r["timing"].items()},
                 wall_s=round(r["wall_s"], 1), n_grid=r["n_grid"], n_polish=r["n_polish"], n_exact=r["n_exact"], n_hop=r["n_hop"],
-                oracle=oracle, **sc)
+                er_fit=[round(x, 4) for x in r["er"]], td_fit=[round(x, 5) for x in r["td"]], mat_d2=[round(x, 2) for x in r["mat_d2"]],
+                chi_alarm=r["chi_alarm"], mat_alarm=r["mat_alarm"], oracle=oracle, **sc)
 
 
 if __name__ == "__main__":
