@@ -199,7 +199,8 @@ class Ctx:
         for a, b in I.band_segments(f):
             if f[a] > 12e9:
                 continue
-            idx += list(np.linspace(a, b - 1, min(96, b - a)).astype(int))
+            step = max(1, (b - a) // 96)          # UNIFORM thinning: band_segments detects bands by their
+            idx += list(range(a, b, step))        # spacing (linspace+int split a band into 3-point pieces)
         idx = np.array(idx)
         self.fl, self.yl, self.sl = f[idx], y[idx], s[idx]
         self.segl = I.band_segments(self.fl)

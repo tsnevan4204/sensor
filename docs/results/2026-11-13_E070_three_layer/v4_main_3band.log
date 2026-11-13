@@ -1,0 +1,1140 @@
+ ** On entry to ZLASCL parameter number  4 had an illegal value
+Traceback (most recent call last):
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/run.py", line 30, in one
+    r = T.solve3(f, y, s, scope=A.solver, thick=A.thick, mode=A.mode, hop_all=A.hop_all)
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/../../src/oned/tri3.py", line 436, in solve3
+    ctx.s_eff = BB.model_sigma(ctx.fl, ctx.yl, ctx.sl, ctx.segl, H_OPT, d0=ctx.d_est)
+                ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/../../src/oned/bnb.py", line 368, in model_sigma
+    coef, *_ = np.linalg.lstsq(B, yb, rcond=None)
+               ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/numpy/linalg/_linalg.py", line 2539, in lstsq
+    x, resids, rank, s = _umath_linalg.lstsq(a, b, rcond,
+                         ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+                                             signature=signature)
+                                             ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/numpy/linalg/_linalg.py", line 156, in _raise_linalgerror_lstsq
+    raise LinAlgError("SVD did not converge in Linear Least Squares")
+numpy.linalg.LinAlgError: SVD did not converge in Linear Least Squares
+2002 CRASH LinAlgError('SVD did not converge in Linear Least Squares')
+ ** On entry to ZLASCL parameter number  4 had an illegal value
+Traceback (most recent call last):
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/run.py", line 30, in one
+    r = T.solve3(f, y, s, scope=A.solver, thick=A.thick, mode=A.mode, hop_all=A.hop_all)
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/../../src/oned/tri3.py", line 436, in solve3
+    ctx.s_eff = BB.model_sigma(ctx.fl, ctx.yl, ctx.sl, ctx.segl, H_OPT, d0=ctx.d_est)
+                ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/../../src/oned/bnb.py", line 368, in model_sigma
+    coef, *_ = np.linalg.lstsq(B, yb, rcond=None)
+               ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/numpy/linalg/_linalg.py", line 2539, in lstsq
+    x, resids, rank, s = _umath_linalg.lstsq(a, b, rcond,
+                         ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+                                             signature=signature)
+                                             ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/numpy/linalg/_linalg.py", line 156, in _raise_linalgerror_lstsq
+    raise LinAlgError("SVD did not converge in Linear Least Squares")
+numpy.linalg.LinAlgError: SVD did not converge in Linear Least Squares
+ ** On entry to ZLASCL parameter number  4 had an illegal value
+2001 CRASH LinAlgError('SVD did not converge in Linear Least Squares')
+Traceback (most recent call last):
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/run.py", line 30, in one
+    r = T.solve3(f, y, s, scope=A.solver, thick=A.thick, mode=A.mode, hop_all=A.hop_all)
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/../../src/oned/tri3.py", line 436, in solve3
+    ctx.s_eff = BB.model_sigma(ctx.fl, ctx.yl, ctx.sl, ctx.segl, H_OPT, d0=ctx.d_est)
+                ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/../../src/oned/bnb.py", line 368, in model_sigma
+    coef, *_ = np.linalg.lstsq(B, yb, rcond=None)
+               ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/numpy/linalg/_linalg.py", line 2539, in lstsq
+    x, resids, rank, s = _umath_linalg.lstsq(a, b, rcond,
+                         ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+                                             signature=signature)
+                                             ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/numpy/linalg/_linalg.py", line 156, in _raise_linalgerror_lstsq
+    raise LinAlgError("SVD did not converge in Linear Least Squares")
+numpy.linalg.LinAlgError: SVD did not converge in Linear Least Squares
+2000 CRASH LinAlgError('SVD did not converge in Linear Least Squares')
+ ** On entry to ZLASCL parameter number  4 had an illegal value
+Traceback (most recent call last):
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/run.py", line 30, in one
+    r = T.solve3(f, y, s, scope=A.solver, thick=A.thick, mode=A.mode, hop_all=A.hop_all)
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/../../src/oned/tri3.py", line 436, in solve3
+    ctx.s_eff = BB.model_sigma(ctx.fl, ctx.yl, ctx.sl, ctx.segl, H_OPT, d0=ctx.d_est)
+                ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/../../src/oned/bnb.py", line 368, in model_sigma
+    coef, *_ = np.linalg.lstsq(B, yb, rcond=None)
+               ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/numpy/linalg/_linalg.py", line 2539, in lstsq
+    x, resids, rank, s = _umath_linalg.lstsq(a, b, rcond,
+                         ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+                                             signature=signature)
+                                             ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/numpy/linalg/_linalg.py", line 156, in _raise_linalgerror_lstsq
+    raise LinAlgError("SVD did not converge in Linear Least Squares")
+numpy.linalg.LinAlgError: SVD did not converge in Linear Least Squares
+2003 CRASH LinAlgError('SVD did not converge in Linear Least Squares')
+ ** On entry to ZLASCL parameter number  4 had an illegal value
+Traceback (most recent call last):
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/run.py", line 30, in one
+    r = T.solve3(f, y, s, scope=A.solver, thick=A.thick, mode=A.mode, hop_all=A.hop_all)
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/../../src/oned/tri3.py", line 436, in solve3
+    ctx.s_eff = BB.model_sigma(ctx.fl, ctx.yl, ctx.sl, ctx.segl, H_OPT, d0=ctx.d_est)
+                ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/../../src/oned/bnb.py", line 368, in model_sigma
+    coef, *_ = np.linalg.lstsq(B, yb, rcond=None)
+               ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/numpy/linalg/_linalg.py", line 2539, in lstsq
+    x, resids, rank, s = _umath_linalg.lstsq(a, b, rcond,
+                         ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+                                             signature=signature)
+                                             ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/numpy/linalg/_linalg.py", line 156, in _raise_linalgerror_lstsq
+    raise LinAlgError("SVD did not converge in Linear Least Squares")
+numpy.linalg.LinAlgError: SVD did not converge in Linear Least Squares
+2004 CRASH LinAlgError('SVD did not converge in Linear Least Squares')
+ ** On entry to ZLASCL parameter number  4 had an illegal value
+Traceback (most recent call last):
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/run.py", line 30, in one
+    r = T.solve3(f, y, s, scope=A.solver, thick=A.thick, mode=A.mode, hop_all=A.hop_all)
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/../../src/oned/tri3.py", line 436, in solve3
+    ctx.s_eff = BB.model_sigma(ctx.fl, ctx.yl, ctx.sl, ctx.segl, H_OPT, d0=ctx.d_est)
+                ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/../../src/oned/bnb.py", line 368, in model_sigma
+    coef, *_ = np.linalg.lstsq(B, yb, rcond=None)
+               ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/numpy/linalg/_linalg.py", line 2539, in lstsq
+    x, resids, rank, s = _umath_linalg.lstsq(a, b, rcond,
+                         ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+                                             signature=signature)
+                                             ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/numpy/linalg/_linalg.py", line 156, in _raise_linalgerror_lstsq
+    raise LinAlgError("SVD did not converge in Linear Least Squares")
+numpy.linalg.LinAlgError: SVD did not converge in Linear Least Squares
+2005 CRASH LinAlgError('SVD did not converge in Linear Least Squares')
+ ** On entry to ZLASCL parameter number  4 had an illegal value
+Traceback (most recent call last):
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/run.py", line 30, in one
+    r = T.solve3(f, y, s, scope=A.solver, thick=A.thick, mode=A.mode, hop_all=A.hop_all)
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/../../src/oned/tri3.py", line 436, in solve3
+    ctx.s_eff = BB.model_sigma(ctx.fl, ctx.yl, ctx.sl, ctx.segl, H_OPT, d0=ctx.d_est)
+                ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/../../src/oned/bnb.py", line 368, in model_sigma
+    coef, *_ = np.linalg.lstsq(B, yb, rcond=None)
+               ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/numpy/linalg/_linalg.py", line 2539, in lstsq
+    x, resids, rank, s = _umath_linalg.lstsq(a, b, rcond,
+                         ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+                                             signature=signature)
+                                             ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/numpy/linalg/_linalg.py", line 156, in _raise_linalgerror_lstsq
+    raise LinAlgError("SVD did not converge in Linear Least Squares")
+numpy.linalg.LinAlgError: SVD did not converge in Linear Least Squares
+2006 CRASH LinAlgError('SVD did not converge in Linear Least Squares')
+ ** On entry to ZLASCL parameter number  4 had an illegal value
+Traceback (most recent call last):
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/run.py", line 30, in one
+    r = T.solve3(f, y, s, scope=A.solver, thick=A.thick, mode=A.mode, hop_all=A.hop_all)
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/../../src/oned/tri3.py", line 436, in solve3
+    ctx.s_eff = BB.model_sigma(ctx.fl, ctx.yl, ctx.sl, ctx.segl, H_OPT, d0=ctx.d_est)
+                ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/../../src/oned/bnb.py", line 368, in model_sigma
+    coef, *_ = np.linalg.lstsq(B, yb, rcond=None)
+               ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/numpy/linalg/_linalg.py", line 2539, in lstsq
+    x, resids, rank, s = _umath_linalg.lstsq(a, b, rcond,
+                         ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+                                             signature=signature)
+                                             ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/numpy/linalg/_linalg.py", line 156, in _raise_linalgerror_lstsq
+    raise LinAlgError("SVD did not converge in Linear Least Squares")
+numpy.linalg.LinAlgError: SVD did not converge in Linear Least Squares
+2007 CRASH LinAlgError('SVD did not converge in Linear Least Squares')
+ ** On entry to ZLASCL parameter number  4 had an illegal value
+Traceback (most recent call last):
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/run.py", line 30, in one
+    r = T.solve3(f, y, s, scope=A.solver, thick=A.thick, mode=A.mode, hop_all=A.hop_all)
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/../../src/oned/tri3.py", line 436, in solve3
+    ctx.s_eff = BB.model_sigma(ctx.fl, ctx.yl, ctx.sl, ctx.segl, H_OPT, d0=ctx.d_est)
+                ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/../../src/oned/bnb.py", line 368, in model_sigma
+    coef, *_ = np.linalg.lstsq(B, yb, rcond=None)
+               ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/numpy/linalg/_linalg.py", line 2539, in lstsq
+    x, resids, rank, s = _umath_linalg.lstsq(a, b, rcond,
+                         ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+                                             signature=signature)
+                                             ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/numpy/linalg/_linalg.py", line 156, in _raise_linalgerror_lstsq
+    raise LinAlgError("SVD did not converge in Linear Least Squares")
+numpy.linalg.LinAlgError: SVD did not converge in Linear Least Squares
+2008 CRASH LinAlgError('SVD did not converge in Linear Least Squares')
+ ** On entry to ZLASCL parameter number  4 had an illegal value
+Traceback (most recent call last):
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/run.py", line 30, in one
+    r = T.solve3(f, y, s, scope=A.solver, thick=A.thick, mode=A.mode, hop_all=A.hop_all)
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/../../src/oned/tri3.py", line 436, in solve3
+    ctx.s_eff = BB.model_sigma(ctx.fl, ctx.yl, ctx.sl, ctx.segl, H_OPT, d0=ctx.d_est)
+                ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/../../src/oned/bnb.py", line 368, in model_sigma
+    coef, *_ = np.linalg.lstsq(B, yb, rcond=None)
+               ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/numpy/linalg/_linalg.py", line 2539, in lstsq
+    x, resids, rank, s = _umath_linalg.lstsq(a, b, rcond,
+                         ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+                                             signature=signature)
+                                             ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/numpy/linalg/_linalg.py", line 156, in _raise_linalgerror_lstsq
+    raise LinAlgError("SVD did not converge in Linear Least Squares")
+numpy.linalg.LinAlgError: SVD did not converge in Linear Least Squares
+2009 CRASH LinAlgError('SVD did not converge in Linear Least Squares')
+ ** On entry to ZLASCL parameter number  4 had an illegal value
+Traceback (most recent call last):
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/run.py", line 30, in one
+    r = T.solve3(f, y, s, scope=A.solver, thick=A.thick, mode=A.mode, hop_all=A.hop_all)
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/../../src/oned/tri3.py", line 436, in solve3
+    ctx.s_eff = BB.model_sigma(ctx.fl, ctx.yl, ctx.sl, ctx.segl, H_OPT, d0=ctx.d_est)
+                ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/../../src/oned/bnb.py", line 368, in model_sigma
+    coef, *_ = np.linalg.lstsq(B, yb, rcond=None)
+               ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/numpy/linalg/_linalg.py", line 2539, in lstsq
+    x, resids, rank, s = _umath_linalg.lstsq(a, b, rcond,
+                         ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+                                             signature=signature)
+                                             ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/numpy/linalg/_linalg.py", line 156, in _raise_linalgerror_lstsq
+    raise LinAlgError("SVD did not converge in Linear Least Squares")
+numpy.linalg.LinAlgError: SVD did not converge in Linear Least Squares
+2010 CRASH LinAlgError('SVD did not converge in Linear Least Squares')
+ ** On entry to ZLASCL parameter number  4 had an illegal value
+Traceback (most recent call last):
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/run.py", line 30, in one
+    r = T.solve3(f, y, s, scope=A.solver, thick=A.thick, mode=A.mode, hop_all=A.hop_all)
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/../../src/oned/tri3.py", line 436, in solve3
+    ctx.s_eff = BB.model_sigma(ctx.fl, ctx.yl, ctx.sl, ctx.segl, H_OPT, d0=ctx.d_est)
+                ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/../../src/oned/bnb.py", line 368, in model_sigma
+    coef, *_ = np.linalg.lstsq(B, yb, rcond=None)
+               ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/numpy/linalg/_linalg.py", line 2539, in lstsq
+    x, resids, rank, s = _umath_linalg.lstsq(a, b, rcond,
+                         ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+                                             signature=signature)
+                                             ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/numpy/linalg/_linalg.py", line 156, in _raise_linalgerror_lstsq
+    raise LinAlgError("SVD did not converge in Linear Least Squares")
+numpy.linalg.LinAlgError: SVD did not converge in Linear Least Squares
+2012 CRASH LinAlgError('SVD did not converge in Linear Least Squares')
+ ** On entry to ZLASCL parameter number  4 had an illegal value
+Traceback (most recent call last):
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/run.py", line 30, in one
+    r = T.solve3(f, y, s, scope=A.solver, thick=A.thick, mode=A.mode, hop_all=A.hop_all)
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/../../src/oned/tri3.py", line 436, in solve3
+    ctx.s_eff = BB.model_sigma(ctx.fl, ctx.yl, ctx.sl, ctx.segl, H_OPT, d0=ctx.d_est)
+                ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/../../src/oned/bnb.py", line 368, in model_sigma
+    coef, *_ = np.linalg.lstsq(B, yb, rcond=None)
+               ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/numpy/linalg/_linalg.py", line 2539, in lstsq
+    x, resids, rank, s = _umath_linalg.lstsq(a, b, rcond,
+                         ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+                                             signature=signature)
+                                             ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/numpy/linalg/_linalg.py", line 156, in _raise_linalgerror_lstsq
+    raise LinAlgError("SVD did not converge in Linear Least Squares")
+numpy.linalg.LinAlgError: SVD did not converge in Linear Least Squares
+2011 CRASH LinAlgError('SVD did not converge in Linear Least Squares')
+ ** On entry to ZLASCL parameter number  4 had an illegal value
+Traceback (most recent call last):
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/run.py", line 30, in one
+    r = T.solve3(f, y, s, scope=A.solver, thick=A.thick, mode=A.mode, hop_all=A.hop_all)
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/../../src/oned/tri3.py", line 436, in solve3
+    ctx.s_eff = BB.model_sigma(ctx.fl, ctx.yl, ctx.sl, ctx.segl, H_OPT, d0=ctx.d_est)
+                ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/../../src/oned/bnb.py", line 368, in model_sigma
+    coef, *_ = np.linalg.lstsq(B, yb, rcond=None)
+               ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/numpy/linalg/_linalg.py", line 2539, in lstsq
+    x, resids, rank, s = _umath_linalg.lstsq(a, b, rcond,
+                         ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+                                             signature=signature)
+                                             ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/numpy/linalg/_linalg.py", line 156, in _raise_linalgerror_lstsq
+    raise LinAlgError("SVD did not converge in Linear Least Squares")
+numpy.linalg.LinAlgError: SVD did not converge in Linear Least Squares
+2013 CRASH LinAlgError('SVD did not converge in Linear Least Squares')
+ ** On entry to ZLASCL parameter number  4 had an illegal value
+Traceback (most recent call last):
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/run.py", line 30, in one
+    r = T.solve3(f, y, s, scope=A.solver, thick=A.thick, mode=A.mode, hop_all=A.hop_all)
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/../../src/oned/tri3.py", line 436, in solve3
+    ctx.s_eff = BB.model_sigma(ctx.fl, ctx.yl, ctx.sl, ctx.segl, H_OPT, d0=ctx.d_est)
+                ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/../../src/oned/bnb.py", line 368, in model_sigma
+    coef, *_ = np.linalg.lstsq(B, yb, rcond=None)
+               ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/numpy/linalg/_linalg.py", line 2539, in lstsq
+    x, resids, rank, s = _umath_linalg.lstsq(a, b, rcond,
+                         ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+                                             signature=signature)
+                                             ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/numpy/linalg/_linalg.py", line 156, in _raise_linalgerror_lstsq
+    raise LinAlgError("SVD did not converge in Linear Least Squares")
+numpy.linalg.LinAlgError: SVD did not converge in Linear Least Squares
+2014 CRASH LinAlgError('SVD did not converge in Linear Least Squares')
+ ** On entry to ZLASCL parameter number  4 had an illegal value
+Traceback (most recent call last):
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/run.py", line 30, in one
+    r = T.solve3(f, y, s, scope=A.solver, thick=A.thick, mode=A.mode, hop_all=A.hop_all)
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/../../src/oned/tri3.py", line 436, in solve3
+    ctx.s_eff = BB.model_sigma(ctx.fl, ctx.yl, ctx.sl, ctx.segl, H_OPT, d0=ctx.d_est)
+                ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/../../src/oned/bnb.py", line 368, in model_sigma
+    coef, *_ = np.linalg.lstsq(B, yb, rcond=None)
+               ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/numpy/linalg/_linalg.py", line 2539, in lstsq
+    x, resids, rank, s = _umath_linalg.lstsq(a, b, rcond,
+                         ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+                                             signature=signature)
+                                             ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/numpy/linalg/_linalg.py", line 156, in _raise_linalgerror_lstsq
+    raise LinAlgError("SVD did not converge in Linear Least Squares")
+numpy.linalg.LinAlgError: SVD did not converge in Linear Least Squares
+2015 CRASH LinAlgError('SVD did not converge in Linear Least Squares')
+ ** On entry to ZLASCL parameter number  4 had an illegal value
+Traceback (most recent call last):
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/run.py", line 30, in one
+    r = T.solve3(f, y, s, scope=A.solver, thick=A.thick, mode=A.mode, hop_all=A.hop_all)
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/../../src/oned/tri3.py", line 436, in solve3
+    ctx.s_eff = BB.model_sigma(ctx.fl, ctx.yl, ctx.sl, ctx.segl, H_OPT, d0=ctx.d_est)
+                ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/../../src/oned/bnb.py", line 368, in model_sigma
+    coef, *_ = np.linalg.lstsq(B, yb, rcond=None)
+               ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/numpy/linalg/_linalg.py", line 2539, in lstsq
+    x, resids, rank, s = _umath_linalg.lstsq(a, b, rcond,
+                         ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+                                             signature=signature)
+                                             ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/numpy/linalg/_linalg.py", line 156, in _raise_linalgerror_lstsq
+    raise LinAlgError("SVD did not converge in Linear Least Squares")
+numpy.linalg.LinAlgError: SVD did not converge in Linear Least Squares
+2016 CRASH LinAlgError('SVD did not converge in Linear Least Squares')
+ ** On entry to ZLASCL parameter number  4 had an illegal value
+Traceback (most recent call last):
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/run.py", line 30, in one
+    r = T.solve3(f, y, s, scope=A.solver, thick=A.thick, mode=A.mode, hop_all=A.hop_all)
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/../../src/oned/tri3.py", line 436, in solve3
+    ctx.s_eff = BB.model_sigma(ctx.fl, ctx.yl, ctx.sl, ctx.segl, H_OPT, d0=ctx.d_est)
+                ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/../../src/oned/bnb.py", line 368, in model_sigma
+    coef, *_ = np.linalg.lstsq(B, yb, rcond=None)
+               ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/numpy/linalg/_linalg.py", line 2539, in lstsq
+    x, resids, rank, s = _umath_linalg.lstsq(a, b, rcond,
+                         ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+                                             signature=signature)
+                                             ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/numpy/linalg/_linalg.py", line 156, in _raise_linalgerror_lstsq
+    raise LinAlgError("SVD did not converge in Linear Least Squares")
+numpy.linalg.LinAlgError: SVD did not converge in Linear Least Squares
+ ** On entry to ZLASCL parameter number  4 had an illegal value
+Traceback (most recent call last):
+ ** On entry to ZLASCL parameter number  4 had an illegal value
+Traceback (most recent call last):
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/run.py", line 30, in one
+    r = T.solve3(f, y, s, scope=A.solver, thick=A.thick, mode=A.mode, hop_all=A.hop_all)
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/../../src/oned/tri3.py", line 436, in solve3
+    ctx.s_eff = BB.model_sigma(ctx.fl, ctx.yl, ctx.sl, ctx.segl, H_OPT, d0=ctx.d_est)
+                ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/../../src/oned/bnb.py", line 368, in model_sigma
+    coef, *_ = np.linalg.lstsq(B, yb, rcond=None)
+               ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/numpy/linalg/_linalg.py", line 2539, in lstsq
+    x, resids, rank, s = _umath_linalg.lstsq(a, b, rcond,
+                         ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+                                             signature=signature)
+                                             ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/numpy/linalg/_linalg.py", line 156, in _raise_linalgerror_lstsq
+    raise LinAlgError("SVD did not converge in Linear Least Squares")
+numpy.linalg.LinAlgError: SVD did not converge in Linear Least Squares
+2017 CRASH LinAlgError('SVD did not converge in Linear Least Squares')
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/run.py", line 30, in one
+    r = T.solve3(f, y, s, scope=A.solver, thick=A.thick, mode=A.mode, hop_all=A.hop_all)
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/../../src/oned/tri3.py", line 436, in solve3
+    ctx.s_eff = BB.model_sigma(ctx.fl, ctx.yl, ctx.sl, ctx.segl, H_OPT, d0=ctx.d_est)
+                ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/../../src/oned/bnb.py", line 368, in model_sigma
+    coef, *_ = np.linalg.lstsq(B, yb, rcond=None)
+               ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/numpy/linalg/_linalg.py", line 2539, in lstsq
+    x, resids, rank, s = _umath_linalg.lstsq(a, b, rcond,
+                         ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+                                             signature=signature)
+                                             ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/numpy/linalg/_linalg.py", line 156, in _raise_linalgerror_lstsq
+    raise LinAlgError("SVD did not converge in Linear Least Squares")
+numpy.linalg.LinAlgError: SVD did not converge in Linear Least Squares
+2018 CRASH LinAlgError('SVD did not converge in Linear Least Squares')
+2019 CRASH LinAlgError('SVD did not converge in Linear Least Squares')
+ ** On entry to ZLASCL parameter number  4 had an illegal value
+Traceback (most recent call last):
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/run.py", line 30, in one
+    r = T.solve3(f, y, s, scope=A.solver, thick=A.thick, mode=A.mode, hop_all=A.hop_all)
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/../../src/oned/tri3.py", line 436, in solve3
+    ctx.s_eff = BB.model_sigma(ctx.fl, ctx.yl, ctx.sl, ctx.segl, H_OPT, d0=ctx.d_est)
+                ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/../../src/oned/bnb.py", line 368, in model_sigma
+    coef, *_ = np.linalg.lstsq(B, yb, rcond=None)
+               ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/numpy/linalg/_linalg.py", line 2539, in lstsq
+    x, resids, rank, s = _umath_linalg.lstsq(a, b, rcond,
+                         ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+                                             signature=signature)
+                                             ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/numpy/linalg/_linalg.py", line 156, in _raise_linalgerror_lstsq
+    raise LinAlgError("SVD did not converge in Linear Least Squares")
+numpy.linalg.LinAlgError: SVD did not converge in Linear Least Squares
+2020 CRASH LinAlgError('SVD did not converge in Linear Least Squares')
+ ** On entry to ZLASCL parameter number  4 had an illegal value
+Traceback (most recent call last):
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/run.py", line 30, in one
+    r = T.solve3(f, y, s, scope=A.solver, thick=A.thick, mode=A.mode, hop_all=A.hop_all)
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/../../src/oned/tri3.py", line 436, in solve3
+    ctx.s_eff = BB.model_sigma(ctx.fl, ctx.yl, ctx.sl, ctx.segl, H_OPT, d0=ctx.d_est)
+                ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/../../src/oned/bnb.py", line 368, in model_sigma
+    coef, *_ = np.linalg.lstsq(B, yb, rcond=None)
+               ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/numpy/linalg/_linalg.py", line 2539, in lstsq
+    x, resids, rank, s = _umath_linalg.lstsq(a, b, rcond,
+                         ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+                                             signature=signature)
+                                             ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/numpy/linalg/_linalg.py", line 156, in _raise_linalgerror_lstsq
+    raise LinAlgError("SVD did not converge in Linear Least Squares")
+numpy.linalg.LinAlgError: SVD did not converge in Linear Least Squares
+2022 CRASH LinAlgError('SVD did not converge in Linear Least Squares')
+ ** On entry to ZLASCL parameter number  4 had an illegal value
+Traceback (most recent call last):
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/run.py", line 30, in one
+    r = T.solve3(f, y, s, scope=A.solver, thick=A.thick, mode=A.mode, hop_all=A.hop_all)
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/../../src/oned/tri3.py", line 436, in solve3
+    ctx.s_eff = BB.model_sigma(ctx.fl, ctx.yl, ctx.sl, ctx.segl, H_OPT, d0=ctx.d_est)
+                ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/../../src/oned/bnb.py", line 368, in model_sigma
+    coef, *_ = np.linalg.lstsq(B, yb, rcond=None)
+               ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/numpy/linalg/_linalg.py", line 2539, in lstsq
+    x, resids, rank, s = _umath_linalg.lstsq(a, b, rcond,
+                         ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+                                             signature=signature)
+                                             ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/numpy/linalg/_linalg.py", line 156, in _raise_linalgerror_lstsq
+    raise LinAlgError("SVD did not converge in Linear Least Squares")
+numpy.linalg.LinAlgError: SVD did not converge in Linear Least Squares
+2023 CRASH LinAlgError('SVD did not converge in Linear Least Squares')
+ ** On entry to ZLASCL parameter number  4 had an illegal value
+Traceback (most recent call last):
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/run.py", line 30, in one
+    r = T.solve3(f, y, s, scope=A.solver, thick=A.thick, mode=A.mode, hop_all=A.hop_all)
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/../../src/oned/tri3.py", line 436, in solve3
+    ctx.s_eff = BB.model_sigma(ctx.fl, ctx.yl, ctx.sl, ctx.segl, H_OPT, d0=ctx.d_est)
+                ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/../../src/oned/bnb.py", line 368, in model_sigma
+    coef, *_ = np.linalg.lstsq(B, yb, rcond=None)
+               ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/numpy/linalg/_linalg.py", line 2539, in lstsq
+    x, resids, rank, s = _umath_linalg.lstsq(a, b, rcond,
+                         ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+                                             signature=signature)
+                                             ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/numpy/linalg/_linalg.py", line 156, in _raise_linalgerror_lstsq
+    raise LinAlgError("SVD did not converge in Linear Least Squares")
+numpy.linalg.LinAlgError: SVD did not converge in Linear Least Squares
+2021 CRASH LinAlgError('SVD did not converge in Linear Least Squares')
+ ** On entry to ZLASCL parameter number  4 had an illegal value
+Traceback (most recent call last):
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/run.py", line 30, in one
+    r = T.solve3(f, y, s, scope=A.solver, thick=A.thick, mode=A.mode, hop_all=A.hop_all)
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/../../src/oned/tri3.py", line 436, in solve3
+    ctx.s_eff = BB.model_sigma(ctx.fl, ctx.yl, ctx.sl, ctx.segl, H_OPT, d0=ctx.d_est)
+                ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/../../src/oned/bnb.py", line 368, in model_sigma
+    coef, *_ = np.linalg.lstsq(B, yb, rcond=None)
+               ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/numpy/linalg/_linalg.py", line 2539, in lstsq
+    x, resids, rank, s = _umath_linalg.lstsq(a, b, rcond,
+                         ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+                                             signature=signature)
+                                             ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/numpy/linalg/_linalg.py", line 156, in _raise_linalgerror_lstsq
+    raise LinAlgError("SVD did not converge in Linear Least Squares")
+numpy.linalg.LinAlgError: SVD did not converge in Linear Least Squares
+2024 CRASH LinAlgError('SVD did not converge in Linear Least Squares')
+ ** On entry to ZLASCL parameter number  4 had an illegal value
+Traceback (most recent call last):
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/run.py", line 30, in one
+    r = T.solve3(f, y, s, scope=A.solver, thick=A.thick, mode=A.mode, hop_all=A.hop_all)
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/../../src/oned/tri3.py", line 436, in solve3
+    ctx.s_eff = BB.model_sigma(ctx.fl, ctx.yl, ctx.sl, ctx.segl, H_OPT, d0=ctx.d_est)
+                ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/../../src/oned/bnb.py", line 368, in model_sigma
+    coef, *_ = np.linalg.lstsq(B, yb, rcond=None)
+               ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/numpy/linalg/_linalg.py", line 2539, in lstsq
+    x, resids, rank, s = _umath_linalg.lstsq(a, b, rcond,
+                         ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+                                             signature=signature)
+                                             ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/numpy/linalg/_linalg.py", line 156, in _raise_linalgerror_lstsq
+    raise LinAlgError("SVD did not converge in Linear Least Squares")
+numpy.linalg.LinAlgError: SVD did not converge in Linear Least Squares
+2026 CRASH LinAlgError('SVD did not converge in Linear Least Squares')
+ ** On entry to ZLASCL parameter number  4 had an illegal value
+Traceback (most recent call last):
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/run.py", line 30, in one
+    r = T.solve3(f, y, s, scope=A.solver, thick=A.thick, mode=A.mode, hop_all=A.hop_all)
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/../../src/oned/tri3.py", line 436, in solve3
+    ctx.s_eff = BB.model_sigma(ctx.fl, ctx.yl, ctx.sl, ctx.segl, H_OPT, d0=ctx.d_est)
+                ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/../../src/oned/bnb.py", line 368, in model_sigma
+    coef, *_ = np.linalg.lstsq(B, yb, rcond=None)
+               ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/numpy/linalg/_linalg.py", line 2539, in lstsq
+    x, resids, rank, s = _umath_linalg.lstsq(a, b, rcond,
+                         ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+                                             signature=signature)
+                                             ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/numpy/linalg/_linalg.py", line 156, in _raise_linalgerror_lstsq
+    raise LinAlgError("SVD did not converge in Linear Least Squares")
+numpy.linalg.LinAlgError: SVD did not converge in Linear Least Squares
+2025 CRASH LinAlgError('SVD did not converge in Linear Least Squares')
+ ** On entry to ZLASCL parameter number  4 had an illegal value
+Traceback (most recent call last):
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/run.py", line 30, in one
+    r = T.solve3(f, y, s, scope=A.solver, thick=A.thick, mode=A.mode, hop_all=A.hop_all)
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/../../src/oned/tri3.py", line 436, in solve3
+    ctx.s_eff = BB.model_sigma(ctx.fl, ctx.yl, ctx.sl, ctx.segl, H_OPT, d0=ctx.d_est)
+                ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/../../src/oned/bnb.py", line 368, in model_sigma
+    coef, *_ = np.linalg.lstsq(B, yb, rcond=None)
+               ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/numpy/linalg/_linalg.py", line 2539, in lstsq
+    x, resids, rank, s = _umath_linalg.lstsq(a, b, rcond,
+                         ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+                                             signature=signature)
+                                             ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/numpy/linalg/_linalg.py", line 156, in _raise_linalgerror_lstsq
+    raise LinAlgError("SVD did not converge in Linear Least Squares")
+numpy.linalg.LinAlgError: SVD did not converge in Linear Least Squares
+2027 CRASH LinAlgError('SVD did not converge in Linear Least Squares')
+ ** On entry to ZLASCL parameter number  4 had an illegal value
+Traceback (most recent call last):
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/run.py", line 30, in one
+    r = T.solve3(f, y, s, scope=A.solver, thick=A.thick, mode=A.mode, hop_all=A.hop_all)
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/../../src/oned/tri3.py", line 436, in solve3
+    ctx.s_eff = BB.model_sigma(ctx.fl, ctx.yl, ctx.sl, ctx.segl, H_OPT, d0=ctx.d_est)
+                ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/../../src/oned/bnb.py", line 368, in model_sigma
+    coef, *_ = np.linalg.lstsq(B, yb, rcond=None)
+               ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/numpy/linalg/_linalg.py", line 2539, in lstsq
+    x, resids, rank, s = _umath_linalg.lstsq(a, b, rcond,
+                         ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+                                             signature=signature)
+                                             ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/numpy/linalg/_linalg.py", line 156, in _raise_linalgerror_lstsq
+    raise LinAlgError("SVD did not converge in Linear Least Squares")
+numpy.linalg.LinAlgError: SVD did not converge in Linear Least Squares
+2028 CRASH LinAlgError('SVD did not converge in Linear Least Squares')
+ ** On entry to ZLASCL parameter number  4 had an illegal value
+Traceback (most recent call last):
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/run.py", line 30, in one
+    r = T.solve3(f, y, s, scope=A.solver, thick=A.thick, mode=A.mode, hop_all=A.hop_all)
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/../../src/oned/tri3.py", line 436, in solve3
+    ctx.s_eff = BB.model_sigma(ctx.fl, ctx.yl, ctx.sl, ctx.segl, H_OPT, d0=ctx.d_est)
+                ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/../../src/oned/bnb.py", line 368, in model_sigma
+    coef, *_ = np.linalg.lstsq(B, yb, rcond=None)
+               ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/numpy/linalg/_linalg.py", line 2539, in lstsq
+    x, resids, rank, s = _umath_linalg.lstsq(a, b, rcond,
+                         ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+                                             signature=signature)
+                                             ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/numpy/linalg/_linalg.py", line 156, in _raise_linalgerror_lstsq
+    raise LinAlgError("SVD did not converge in Linear Least Squares")
+numpy.linalg.LinAlgError: SVD did not converge in Linear Least Squares
+2029 CRASH LinAlgError('SVD did not converge in Linear Least Squares')
+ ** On entry to ZLASCL parameter number  4 had an illegal value
+Traceback (most recent call last):
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/run.py", line 30, in one
+    r = T.solve3(f, y, s, scope=A.solver, thick=A.thick, mode=A.mode, hop_all=A.hop_all)
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/../../src/oned/tri3.py", line 436, in solve3
+    ctx.s_eff = BB.model_sigma(ctx.fl, ctx.yl, ctx.sl, ctx.segl, H_OPT, d0=ctx.d_est)
+                ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/../../src/oned/bnb.py", line 368, in model_sigma
+    coef, *_ = np.linalg.lstsq(B, yb, rcond=None)
+               ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/numpy/linalg/_linalg.py", line 2539, in lstsq
+    x, resids, rank, s = _umath_linalg.lstsq(a, b, rcond,
+                         ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+                                             signature=signature)
+                                             ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/numpy/linalg/_linalg.py", line 156, in _raise_linalgerror_lstsq
+    raise LinAlgError("SVD did not converge in Linear Least Squares")
+numpy.linalg.LinAlgError: SVD did not converge in Linear Least Squares
+2031 CRASH LinAlgError('SVD did not converge in Linear Least Squares')
+ ** On entry to ZLASCL parameter number  4 had an illegal value
+Traceback (most recent call last):
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/run.py", line 30, in one
+    r = T.solve3(f, y, s, scope=A.solver, thick=A.thick, mode=A.mode, hop_all=A.hop_all)
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/../../src/oned/tri3.py", line 436, in solve3
+    ctx.s_eff = BB.model_sigma(ctx.fl, ctx.yl, ctx.sl, ctx.segl, H_OPT, d0=ctx.d_est)
+                ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/../../src/oned/bnb.py", line 368, in model_sigma
+    coef, *_ = np.linalg.lstsq(B, yb, rcond=None)
+               ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/numpy/linalg/_linalg.py", line 2539, in lstsq
+    x, resids, rank, s = _umath_linalg.lstsq(a, b, rcond,
+                         ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+                                             signature=signature)
+                                             ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/numpy/linalg/_linalg.py", line 156, in _raise_linalgerror_lstsq
+    raise LinAlgError("SVD did not converge in Linear Least Squares")
+numpy.linalg.LinAlgError: SVD did not converge in Linear Least Squares
+2030 CRASH LinAlgError('SVD did not converge in Linear Least Squares')
+ ** On entry to ZLASCL parameter number  4 had an illegal value
+Traceback (most recent call last):
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/run.py", line 30, in one
+    r = T.solve3(f, y, s, scope=A.solver, thick=A.thick, mode=A.mode, hop_all=A.hop_all)
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/../../src/oned/tri3.py", line 436, in solve3
+    ctx.s_eff = BB.model_sigma(ctx.fl, ctx.yl, ctx.sl, ctx.segl, H_OPT, d0=ctx.d_est)
+                ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/../../src/oned/bnb.py", line 368, in model_sigma
+    coef, *_ = np.linalg.lstsq(B, yb, rcond=None)
+               ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/numpy/linalg/_linalg.py", line 2539, in lstsq
+    x, resids, rank, s = _umath_linalg.lstsq(a, b, rcond,
+                         ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+                                             signature=signature)
+                                             ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/numpy/linalg/_linalg.py", line 156, in _raise_linalgerror_lstsq
+    raise LinAlgError("SVD did not converge in Linear Least Squares")
+numpy.linalg.LinAlgError: SVD did not converge in Linear Least Squares
+2033 CRASH LinAlgError('SVD did not converge in Linear Least Squares')
+ ** On entry to ZLASCL parameter number  4 had an illegal value
+Traceback (most recent call last):
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/run.py", line 30, in one
+    r = T.solve3(f, y, s, scope=A.solver, thick=A.thick, mode=A.mode, hop_all=A.hop_all)
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/../../src/oned/tri3.py", line 436, in solve3
+    ctx.s_eff = BB.model_sigma(ctx.fl, ctx.yl, ctx.sl, ctx.segl, H_OPT, d0=ctx.d_est)
+                ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/../../src/oned/bnb.py", line 368, in model_sigma
+    coef, *_ = np.linalg.lstsq(B, yb, rcond=None)
+               ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/numpy/linalg/_linalg.py", line 2539, in lstsq
+    x, resids, rank, s = _umath_linalg.lstsq(a, b, rcond,
+                         ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+                                             signature=signature)
+                                             ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/numpy/linalg/_linalg.py", line 156, in _raise_linalgerror_lstsq
+    raise LinAlgError("SVD did not converge in Linear Least Squares")
+numpy.linalg.LinAlgError: SVD did not converge in Linear Least Squares
+2032 CRASH LinAlgError('SVD did not converge in Linear Least Squares')
+ ** On entry to ZLASCL parameter number  4 had an illegal value
+Traceback (most recent call last):
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/run.py", line 30, in one
+    r = T.solve3(f, y, s, scope=A.solver, thick=A.thick, mode=A.mode, hop_all=A.hop_all)
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/../../src/oned/tri3.py", line 436, in solve3
+    ctx.s_eff = BB.model_sigma(ctx.fl, ctx.yl, ctx.sl, ctx.segl, H_OPT, d0=ctx.d_est)
+                ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/../../src/oned/bnb.py", line 368, in model_sigma
+    coef, *_ = np.linalg.lstsq(B, yb, rcond=None)
+               ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/numpy/linalg/_linalg.py", line 2539, in lstsq
+    x, resids, rank, s = _umath_linalg.lstsq(a, b, rcond,
+                         ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+                                             signature=signature)
+                                             ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/numpy/linalg/_linalg.py", line 156, in _raise_linalgerror_lstsq
+    raise LinAlgError("SVD did not converge in Linear Least Squares")
+numpy.linalg.LinAlgError: SVD did not converge in Linear Least Squares
+2034 CRASH LinAlgError('SVD did not converge in Linear Least Squares')
+ ** On entry to ZLASCL parameter number  4 had an illegal value
+Traceback (most recent call last):
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/run.py", line 30, in one
+    r = T.solve3(f, y, s, scope=A.solver, thick=A.thick, mode=A.mode, hop_all=A.hop_all)
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/../../src/oned/tri3.py", line 436, in solve3
+    ctx.s_eff = BB.model_sigma(ctx.fl, ctx.yl, ctx.sl, ctx.segl, H_OPT, d0=ctx.d_est)
+                ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/../../src/oned/bnb.py", line 368, in model_sigma
+    coef, *_ = np.linalg.lstsq(B, yb, rcond=None)
+               ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/numpy/linalg/_linalg.py", line 2539, in lstsq
+    x, resids, rank, s = _umath_linalg.lstsq(a, b, rcond,
+                         ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+                                             signature=signature)
+                                             ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/numpy/linalg/_linalg.py", line 156, in _raise_linalgerror_lstsq
+    raise LinAlgError("SVD did not converge in Linear Least Squares")
+numpy.linalg.LinAlgError: SVD did not converge in Linear Least Squares
+2035 CRASH LinAlgError('SVD did not converge in Linear Least Squares')
+ ** On entry to ZLASCL parameter number  4 had an illegal value
+Traceback (most recent call last):
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/run.py", line 30, in one
+    r = T.solve3(f, y, s, scope=A.solver, thick=A.thick, mode=A.mode, hop_all=A.hop_all)
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/../../src/oned/tri3.py", line 436, in solve3
+    ctx.s_eff = BB.model_sigma(ctx.fl, ctx.yl, ctx.sl, ctx.segl, H_OPT, d0=ctx.d_est)
+                ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/../../src/oned/bnb.py", line 368, in model_sigma
+    coef, *_ = np.linalg.lstsq(B, yb, rcond=None)
+               ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/numpy/linalg/_linalg.py", line 2539, in lstsq
+    x, resids, rank, s = _umath_linalg.lstsq(a, b, rcond,
+                         ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+                                             signature=signature)
+                                             ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/numpy/linalg/_linalg.py", line 156, in _raise_linalgerror_lstsq
+    raise LinAlgError("SVD did not converge in Linear Least Squares")
+numpy.linalg.LinAlgError: SVD did not converge in Linear Least Squares
+2036 CRASH LinAlgError('SVD did not converge in Linear Least Squares')
+ ** On entry to ZLASCL parameter number  4 had an illegal value
+Traceback (most recent call last):
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/run.py", line 30, in one
+    r = T.solve3(f, y, s, scope=A.solver, thick=A.thick, mode=A.mode, hop_all=A.hop_all)
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/../../src/oned/tri3.py", line 436, in solve3
+    ctx.s_eff = BB.model_sigma(ctx.fl, ctx.yl, ctx.sl, ctx.segl, H_OPT, d0=ctx.d_est)
+                ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/../../src/oned/bnb.py", line 368, in model_sigma
+    coef, *_ = np.linalg.lstsq(B, yb, rcond=None)
+               ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/numpy/linalg/_linalg.py", line 2539, in lstsq
+    x, resids, rank, s = _umath_linalg.lstsq(a, b, rcond,
+                         ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+                                             signature=signature)
+                                             ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/numpy/linalg/_linalg.py", line 156, in _raise_linalgerror_lstsq
+    raise LinAlgError("SVD did not converge in Linear Least Squares")
+numpy.linalg.LinAlgError: SVD did not converge in Linear Least Squares
+ ** On entry to ZLASCL parameter number  4 had an illegal value
+Traceback (most recent call last):
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/run.py", line 30, in one
+    r = T.solve3(f, y, s, scope=A.solver, thick=A.thick, mode=A.mode, hop_all=A.hop_all)
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/../../src/oned/tri3.py", line 436, in solve3
+    ctx.s_eff = BB.model_sigma(ctx.fl, ctx.yl, ctx.sl, ctx.segl, H_OPT, d0=ctx.d_est)
+                ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/../../src/oned/bnb.py", line 368, in model_sigma
+    coef, *_ = np.linalg.lstsq(B, yb, rcond=None)
+               ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/numpy/linalg/_linalg.py", line 2539, in lstsq
+    x, resids, rank, s = _umath_linalg.lstsq(a, b, rcond,
+                         ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+                                             signature=signature)
+                                             ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/numpy/linalg/_linalg.py", line 156, in _raise_linalgerror_lstsq
+    raise LinAlgError("SVD did not converge in Linear Least Squares")
+numpy.linalg.LinAlgError: SVD did not converge in Linear Least Squares
+2038 CRASH LinAlgError('SVD did not converge in Linear Least Squares')
+2037 CRASH LinAlgError('SVD did not converge in Linear Least Squares')
+ ** On entry to ZLASCL parameter number  4 had an illegal value
+Traceback (most recent call last):
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/run.py", line 30, in one
+    r = T.solve3(f, y, s, scope=A.solver, thick=A.thick, mode=A.mode, hop_all=A.hop_all)
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/../../src/oned/tri3.py", line 436, in solve3
+    ctx.s_eff = BB.model_sigma(ctx.fl, ctx.yl, ctx.sl, ctx.segl, H_OPT, d0=ctx.d_est)
+                ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/../../src/oned/bnb.py", line 368, in model_sigma
+    coef, *_ = np.linalg.lstsq(B, yb, rcond=None)
+               ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/numpy/linalg/_linalg.py", line 2539, in lstsq
+    x, resids, rank, s = _umath_linalg.lstsq(a, b, rcond,
+                         ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+                                             signature=signature)
+                                             ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/numpy/linalg/_linalg.py", line 156, in _raise_linalgerror_lstsq
+    raise LinAlgError("SVD did not converge in Linear Least Squares")
+numpy.linalg.LinAlgError: SVD did not converge in Linear Least Squares
+2039 CRASH LinAlgError('SVD did not converge in Linear Least Squares')
+ ** On entry to ZLASCL parameter number  4 had an illegal value
+Traceback (most recent call last):
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/run.py", line 30, in one
+    r = T.solve3(f, y, s, scope=A.solver, thick=A.thick, mode=A.mode, hop_all=A.hop_all)
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/../../src/oned/tri3.py", line 436, in solve3
+    ctx.s_eff = BB.model_sigma(ctx.fl, ctx.yl, ctx.sl, ctx.segl, H_OPT, d0=ctx.d_est)
+                ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/../../src/oned/bnb.py", line 368, in model_sigma
+    coef, *_ = np.linalg.lstsq(B, yb, rcond=None)
+               ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/numpy/linalg/_linalg.py", line 2539, in lstsq
+    x, resids, rank, s = _umath_linalg.lstsq(a, b, rcond,
+                         ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+                                             signature=signature)
+                                             ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/numpy/linalg/_linalg.py", line 156, in _raise_linalgerror_lstsq
+    raise LinAlgError("SVD did not converge in Linear Least Squares")
+numpy.linalg.LinAlgError: SVD did not converge in Linear Least Squares
+2040 CRASH LinAlgError('SVD did not converge in Linear Least Squares')
+ ** On entry to ZLASCL parameter number  4 had an illegal value
+Traceback (most recent call last):
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/run.py", line 30, in one
+    r = T.solve3(f, y, s, scope=A.solver, thick=A.thick, mode=A.mode, hop_all=A.hop_all)
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/../../src/oned/tri3.py", line 436, in solve3
+    ctx.s_eff = BB.model_sigma(ctx.fl, ctx.yl, ctx.sl, ctx.segl, H_OPT, d0=ctx.d_est)
+                ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/../../src/oned/bnb.py", line 368, in model_sigma
+    coef, *_ = np.linalg.lstsq(B, yb, rcond=None)
+               ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/numpy/linalg/_linalg.py", line 2539, in lstsq
+    x, resids, rank, s = _umath_linalg.lstsq(a, b, rcond,
+                         ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+                                             signature=signature)
+                                             ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/numpy/linalg/_linalg.py", line 156, in _raise_linalgerror_lstsq
+    raise LinAlgError("SVD did not converge in Linear Least Squares")
+numpy.linalg.LinAlgError: SVD did not converge in Linear Least Squares
+2041 CRASH LinAlgError('SVD did not converge in Linear Least Squares')
+ ** On entry to ZLASCL parameter number  4 had an illegal value
+Traceback (most recent call last):
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/run.py", line 30, in one
+    r = T.solve3(f, y, s, scope=A.solver, thick=A.thick, mode=A.mode, hop_all=A.hop_all)
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/../../src/oned/tri3.py", line 436, in solve3
+    ctx.s_eff = BB.model_sigma(ctx.fl, ctx.yl, ctx.sl, ctx.segl, H_OPT, d0=ctx.d_est)
+                ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/../../src/oned/bnb.py", line 368, in model_sigma
+    coef, *_ = np.linalg.lstsq(B, yb, rcond=None)
+               ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/numpy/linalg/_linalg.py", line 2539, in lstsq
+    x, resids, rank, s = _umath_linalg.lstsq(a, b, rcond,
+                         ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+                                             signature=signature)
+                                             ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/numpy/linalg/_linalg.py", line 156, in _raise_linalgerror_lstsq
+    raise LinAlgError("SVD did not converge in Linear Least Squares")
+numpy.linalg.LinAlgError: SVD did not converge in Linear Least Squares
+2042 CRASH LinAlgError('SVD did not converge in Linear Least Squares')
+ ** On entry to ZLASCL parameter number  4 had an illegal value
+Traceback (most recent call last):
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/run.py", line 30, in one
+    r = T.solve3(f, y, s, scope=A.solver, thick=A.thick, mode=A.mode, hop_all=A.hop_all)
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/../../src/oned/tri3.py", line 436, in solve3
+    ctx.s_eff = BB.model_sigma(ctx.fl, ctx.yl, ctx.sl, ctx.segl, H_OPT, d0=ctx.d_est)
+                ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/../../src/oned/bnb.py", line 368, in model_sigma
+    coef, *_ = np.linalg.lstsq(B, yb, rcond=None)
+               ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/numpy/linalg/_linalg.py", line 2539, in lstsq
+    x, resids, rank, s = _umath_linalg.lstsq(a, b, rcond,
+                         ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+                                             signature=signature)
+                                             ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/numpy/linalg/_linalg.py", line 156, in _raise_linalgerror_lstsq
+    raise LinAlgError("SVD did not converge in Linear Least Squares")
+numpy.linalg.LinAlgError: SVD did not converge in Linear Least Squares
+2043 CRASH LinAlgError('SVD did not converge in Linear Least Squares')
+ ** On entry to ZLASCL parameter number  4 had an illegal value
+Traceback (most recent call last):
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/run.py", line 30, in one
+    r = T.solve3(f, y, s, scope=A.solver, thick=A.thick, mode=A.mode, hop_all=A.hop_all)
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/../../src/oned/tri3.py", line 436, in solve3
+    ctx.s_eff = BB.model_sigma(ctx.fl, ctx.yl, ctx.sl, ctx.segl, H_OPT, d0=ctx.d_est)
+                ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/../../src/oned/bnb.py", line 368, in model_sigma
+    coef, *_ = np.linalg.lstsq(B, yb, rcond=None)
+               ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/numpy/linalg/_linalg.py", line 2539, in lstsq
+    x, resids, rank, s = _umath_linalg.lstsq(a, b, rcond,
+                         ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+                                             signature=signature)
+                                             ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/numpy/linalg/_linalg.py", line 156, in _raise_linalgerror_lstsq
+    raise LinAlgError("SVD did not converge in Linear Least Squares")
+numpy.linalg.LinAlgError: SVD did not converge in Linear Least Squares
+2044 CRASH LinAlgError('SVD did not converge in Linear Least Squares')
+ ** On entry to ZLASCL parameter number  4 had an illegal value
+Traceback (most recent call last):
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/run.py", line 30, in one
+    r = T.solve3(f, y, s, scope=A.solver, thick=A.thick, mode=A.mode, hop_all=A.hop_all)
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/../../src/oned/tri3.py", line 436, in solve3
+    ctx.s_eff = BB.model_sigma(ctx.fl, ctx.yl, ctx.sl, ctx.segl, H_OPT, d0=ctx.d_est)
+                ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/../../src/oned/bnb.py", line 368, in model_sigma
+    coef, *_ = np.linalg.lstsq(B, yb, rcond=None)
+               ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/numpy/linalg/_linalg.py", line 2539, in lstsq
+    x, resids, rank, s = _umath_linalg.lstsq(a, b, rcond,
+                         ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+                                             signature=signature)
+                                             ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/numpy/linalg/_linalg.py", line 156, in _raise_linalgerror_lstsq
+    raise LinAlgError("SVD did not converge in Linear Least Squares")
+numpy.linalg.LinAlgError: SVD did not converge in Linear Least Squares
+2045 CRASH LinAlgError('SVD did not converge in Linear Least Squares')
+ ** On entry to ZLASCL parameter number  4 had an illegal value
+Traceback (most recent call last):
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/run.py", line 30, in one
+    r = T.solve3(f, y, s, scope=A.solver, thick=A.thick, mode=A.mode, hop_all=A.hop_all)
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/../../src/oned/tri3.py", line 436, in solve3
+    ctx.s_eff = BB.model_sigma(ctx.fl, ctx.yl, ctx.sl, ctx.segl, H_OPT, d0=ctx.d_est)
+                ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/../../src/oned/bnb.py", line 368, in model_sigma
+    coef, *_ = np.linalg.lstsq(B, yb, rcond=None)
+               ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/numpy/linalg/_linalg.py", line 2539, in lstsq
+    x, resids, rank, s = _umath_linalg.lstsq(a, b, rcond,
+                         ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+                                             signature=signature)
+                                             ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/numpy/linalg/_linalg.py", line 156, in _raise_linalgerror_lstsq
+    raise LinAlgError("SVD did not converge in Linear Least Squares")
+numpy.linalg.LinAlgError: SVD did not converge in Linear Least Squares
+2046 CRASH LinAlgError('SVD did not converge in Linear Least Squares')
+ ** On entry to ZLASCL parameter number  4 had an illegal value
+Traceback (most recent call last):
+ ** On entry to ZLASCL parameter number  4 had an illegal value
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/run.py", line 30, in one
+    r = T.solve3(f, y, s, scope=A.solver, thick=A.thick, mode=A.mode, hop_all=A.hop_all)
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/../../src/oned/tri3.py", line 436, in solve3
+    ctx.s_eff = BB.model_sigma(ctx.fl, ctx.yl, ctx.sl, ctx.segl, H_OPT, d0=ctx.d_est)
+                ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/../../src/oned/bnb.py", line 368, in model_sigma
+    coef, *_ = np.linalg.lstsq(B, yb, rcond=None)
+               ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/numpy/linalg/_linalg.py", line 2539, in lstsq
+    x, resids, rank, s = _umath_linalg.lstsq(a, b, rcond,
+                         ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+                                             signature=signature)
+                                             ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/numpy/linalg/_linalg.py", line 156, in _raise_linalgerror_lstsq
+    raise LinAlgError("SVD did not converge in Linear Least Squares")
+numpy.linalg.LinAlgError: SVD did not converge in Linear Least Squares
+Traceback (most recent call last):
+2048 CRASH LinAlgError('SVD did not converge in Linear Least Squares')
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/run.py", line 30, in one
+    r = T.solve3(f, y, s, scope=A.solver, thick=A.thick, mode=A.mode, hop_all=A.hop_all)
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/../../src/oned/tri3.py", line 436, in solve3
+    ctx.s_eff = BB.model_sigma(ctx.fl, ctx.yl, ctx.sl, ctx.segl, H_OPT, d0=ctx.d_est)
+                ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/../../src/oned/bnb.py", line 368, in model_sigma
+    coef, *_ = np.linalg.lstsq(B, yb, rcond=None)
+               ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/numpy/linalg/_linalg.py", line 2539, in lstsq
+    x, resids, rank, s = _umath_linalg.lstsq(a, b, rcond,
+                         ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+                                             signature=signature)
+                                             ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/numpy/linalg/_linalg.py", line 156, in _raise_linalgerror_lstsq
+    raise LinAlgError("SVD did not converge in Linear Least Squares")
+numpy.linalg.LinAlgError: SVD did not converge in Linear Least Squares
+2047 CRASH LinAlgError('SVD did not converge in Linear Least Squares')
+ ** On entry to ZLASCL parameter number  4 had an illegal value
+Traceback (most recent call last):
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/run.py", line 30, in one
+    r = T.solve3(f, y, s, scope=A.solver, thick=A.thick, mode=A.mode, hop_all=A.hop_all)
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/../../src/oned/tri3.py", line 436, in solve3
+    ctx.s_eff = BB.model_sigma(ctx.fl, ctx.yl, ctx.sl, ctx.segl, H_OPT, d0=ctx.d_est)
+                ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/../../src/oned/bnb.py", line 368, in model_sigma
+    coef, *_ = np.linalg.lstsq(B, yb, rcond=None)
+               ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/numpy/linalg/_linalg.py", line 2539, in lstsq
+    x, resids, rank, s = _umath_linalg.lstsq(a, b, rcond,
+                         ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+                                             signature=signature)
+                                             ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/numpy/linalg/_linalg.py", line 156, in _raise_linalgerror_lstsq
+    raise LinAlgError("SVD did not converge in Linear Least Squares")
+numpy.linalg.LinAlgError: SVD did not converge in Linear Least Squares
+2049 CRASH LinAlgError('SVD did not converge in Linear Least Squares')
+ ** On entry to ZLASCL parameter number  4 had an illegal value
+Traceback (most recent call last):
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/run.py", line 30, in one
+    r = T.solve3(f, y, s, scope=A.solver, thick=A.thick, mode=A.mode, hop_all=A.hop_all)
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/../../src/oned/tri3.py", line 436, in solve3
+    ctx.s_eff = BB.model_sigma(ctx.fl, ctx.yl, ctx.sl, ctx.segl, H_OPT, d0=ctx.d_est)
+                ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/../../src/oned/bnb.py", line 368, in model_sigma
+    coef, *_ = np.linalg.lstsq(B, yb, rcond=None)
+               ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/numpy/linalg/_linalg.py", line 2539, in lstsq
+    x, resids, rank, s = _umath_linalg.lstsq(a, b, rcond,
+                         ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+                                             signature=signature)
+                                             ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/numpy/linalg/_linalg.py", line 156, in _raise_linalgerror_lstsq
+    raise LinAlgError("SVD did not converge in Linear Least Squares")
+numpy.linalg.LinAlgError: SVD did not converge in Linear Least Squares
+2051 CRASH LinAlgError('SVD did not converge in Linear Least Squares')
+ ** On entry to ZLASCL parameter number  4 had an illegal value
+Traceback (most recent call last):
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/run.py", line 30, in one
+    r = T.solve3(f, y, s, scope=A.solver, thick=A.thick, mode=A.mode, hop_all=A.hop_all)
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/../../src/oned/tri3.py", line 436, in solve3
+    ctx.s_eff = BB.model_sigma(ctx.fl, ctx.yl, ctx.sl, ctx.segl, H_OPT, d0=ctx.d_est)
+                ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/../../src/oned/bnb.py", line 368, in model_sigma
+    coef, *_ = np.linalg.lstsq(B, yb, rcond=None)
+               ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/numpy/linalg/_linalg.py", line 2539, in lstsq
+    x, resids, rank, s = _umath_linalg.lstsq(a, b, rcond,
+                         ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+                                             signature=signature)
+                                             ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/numpy/linalg/_linalg.py", line 156, in _raise_linalgerror_lstsq
+    raise LinAlgError("SVD did not converge in Linear Least Squares")
+numpy.linalg.LinAlgError: SVD did not converge in Linear Least Squares
+2050 CRASH LinAlgError('SVD did not converge in Linear Least Squares')
+ ** On entry to ZLASCL parameter number  4 had an illegal value
+Traceback (most recent call last):
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/run.py", line 30, in one
+    r = T.solve3(f, y, s, scope=A.solver, thick=A.thick, mode=A.mode, hop_all=A.hop_all)
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/../../src/oned/tri3.py", line 436, in solve3
+    ctx.s_eff = BB.model_sigma(ctx.fl, ctx.yl, ctx.sl, ctx.segl, H_OPT, d0=ctx.d_est)
+                ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/../../src/oned/bnb.py", line 368, in model_sigma
+    coef, *_ = np.linalg.lstsq(B, yb, rcond=None)
+               ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/numpy/linalg/_linalg.py", line 2539, in lstsq
+    x, resids, rank, s = _umath_linalg.lstsq(a, b, rcond,
+                         ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+                                             signature=signature)
+                                             ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/numpy/linalg/_linalg.py", line 156, in _raise_linalgerror_lstsq
+    raise LinAlgError("SVD did not converge in Linear Least Squares")
+numpy.linalg.LinAlgError: SVD did not converge in Linear Least Squares
+2052 CRASH LinAlgError('SVD did not converge in Linear Least Squares')
+ ** On entry to ZLASCL parameter number  4 had an illegal value
+Traceback (most recent call last):
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/run.py", line 30, in one
+    r = T.solve3(f, y, s, scope=A.solver, thick=A.thick, mode=A.mode, hop_all=A.hop_all)
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/../../src/oned/tri3.py", line 436, in solve3
+    ctx.s_eff = BB.model_sigma(ctx.fl, ctx.yl, ctx.sl, ctx.segl, H_OPT, d0=ctx.d_est)
+                ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/../../src/oned/bnb.py", line 368, in model_sigma
+    coef, *_ = np.linalg.lstsq(B, yb, rcond=None)
+               ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/numpy/linalg/_linalg.py", line 2539, in lstsq
+    x, resids, rank, s = _umath_linalg.lstsq(a, b, rcond,
+                         ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+                                             signature=signature)
+                                             ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/numpy/linalg/_linalg.py", line 156, in _raise_linalgerror_lstsq
+    raise LinAlgError("SVD did not converge in Linear Least Squares")
+numpy.linalg.LinAlgError: SVD did not converge in Linear Least Squares
+2053 CRASH LinAlgError('SVD did not converge in Linear Least Squares')
+ ** On entry to ZLASCL parameter number  4 had an illegal value
+Traceback (most recent call last):
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/run.py", line 30, in one
+    r = T.solve3(f, y, s, scope=A.solver, thick=A.thick, mode=A.mode, hop_all=A.hop_all)
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/../../src/oned/tri3.py", line 436, in solve3
+    ctx.s_eff = BB.model_sigma(ctx.fl, ctx.yl, ctx.sl, ctx.segl, H_OPT, d0=ctx.d_est)
+                ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/../../src/oned/bnb.py", line 368, in model_sigma
+    coef, *_ = np.linalg.lstsq(B, yb, rcond=None)
+               ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/numpy/linalg/_linalg.py", line 2539, in lstsq
+    x, resids, rank, s = _umath_linalg.lstsq(a, b, rcond,
+                         ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+                                             signature=signature)
+                                             ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/numpy/linalg/_linalg.py", line 156, in _raise_linalgerror_lstsq
+    raise LinAlgError("SVD did not converge in Linear Least Squares")
+numpy.linalg.LinAlgError: SVD did not converge in Linear Least Squares
+2054 CRASH LinAlgError('SVD did not converge in Linear Least Squares')
+ ** On entry to ZLASCL parameter number  4 had an illegal value
+Traceback (most recent call last):
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/run.py", line 30, in one
+    r = T.solve3(f, y, s, scope=A.solver, thick=A.thick, mode=A.mode, hop_all=A.hop_all)
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/../../src/oned/tri3.py", line 436, in solve3
+    ctx.s_eff = BB.model_sigma(ctx.fl, ctx.yl, ctx.sl, ctx.segl, H_OPT, d0=ctx.d_est)
+                ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/../../src/oned/bnb.py", line 368, in model_sigma
+    coef, *_ = np.linalg.lstsq(B, yb, rcond=None)
+               ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/numpy/linalg/_linalg.py", line 2539, in lstsq
+    x, resids, rank, s = _umath_linalg.lstsq(a, b, rcond,
+                         ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+                                             signature=signature)
+                                             ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/numpy/linalg/_linalg.py", line 156, in _raise_linalgerror_lstsq
+    raise LinAlgError("SVD did not converge in Linear Least Squares")
+numpy.linalg.LinAlgError: SVD did not converge in Linear Least Squares
+2055 CRASH LinAlgError('SVD did not converge in Linear Least Squares')
+ ** On entry to ZLASCL parameter number  4 had an illegal value
+Traceback (most recent call last):
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/run.py", line 30, in one
+    r = T.solve3(f, y, s, scope=A.solver, thick=A.thick, mode=A.mode, hop_all=A.hop_all)
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/../../src/oned/tri3.py", line 436, in solve3
+    ctx.s_eff = BB.model_sigma(ctx.fl, ctx.yl, ctx.sl, ctx.segl, H_OPT, d0=ctx.d_est)
+                ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/../../src/oned/bnb.py", line 368, in model_sigma
+    coef, *_ = np.linalg.lstsq(B, yb, rcond=None)
+               ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/numpy/linalg/_linalg.py", line 2539, in lstsq
+    x, resids, rank, s = _umath_linalg.lstsq(a, b, rcond,
+                         ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+                                             signature=signature)
+                                             ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/numpy/linalg/_linalg.py", line 156, in _raise_linalgerror_lstsq
+    raise LinAlgError("SVD did not converge in Linear Least Squares")
+numpy.linalg.LinAlgError: SVD did not converge in Linear Least Squares
+ ** On entry to ZLASCL parameter number  4 had an illegal value
+2057 CRASH LinAlgError('SVD did not converge in Linear Least Squares')
+Traceback (most recent call last):
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/run.py", line 30, in one
+    r = T.solve3(f, y, s, scope=A.solver, thick=A.thick, mode=A.mode, hop_all=A.hop_all)
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/../../src/oned/tri3.py", line 436, in solve3
+    ctx.s_eff = BB.model_sigma(ctx.fl, ctx.yl, ctx.sl, ctx.segl, H_OPT, d0=ctx.d_est)
+                ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/../../src/oned/bnb.py", line 368, in model_sigma
+    coef, *_ = np.linalg.lstsq(B, yb, rcond=None)
+               ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/numpy/linalg/_linalg.py", line 2539, in lstsq
+    x, resids, rank, s = _umath_linalg.lstsq(a, b, rcond,
+                         ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+                                             signature=signature)
+                                             ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/numpy/linalg/_linalg.py", line 156, in _raise_linalgerror_lstsq
+    raise LinAlgError("SVD did not converge in Linear Least Squares")
+numpy.linalg.LinAlgError: SVD did not converge in Linear Least Squares
+2056 CRASH LinAlgError('SVD did not converge in Linear Least Squares')
+ ** On entry to ZLASCL parameter number  4 had an illegal value
+Traceback (most recent call last):
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/run.py", line 30, in one
+    r = T.solve3(f, y, s, scope=A.solver, thick=A.thick, mode=A.mode, hop_all=A.hop_all)
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/../../src/oned/tri3.py", line 436, in solve3
+    ctx.s_eff = BB.model_sigma(ctx.fl, ctx.yl, ctx.sl, ctx.segl, H_OPT, d0=ctx.d_est)
+                ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/../../src/oned/bnb.py", line 368, in model_sigma
+    coef, *_ = np.linalg.lstsq(B, yb, rcond=None)
+               ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/numpy/linalg/_linalg.py", line 2539, in lstsq
+    x, resids, rank, s = _umath_linalg.lstsq(a, b, rcond,
+                         ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+                                             signature=signature)
+                                             ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/numpy/linalg/_linalg.py", line 156, in _raise_linalgerror_lstsq
+    raise LinAlgError("SVD did not converge in Linear Least Squares")
+numpy.linalg.LinAlgError: SVD did not converge in Linear Least Squares
+2058 CRASH LinAlgError('SVD did not converge in Linear Least Squares')
+ ** On entry to ZLASCL parameter number  4 had an illegal value
+Traceback (most recent call last):
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/run.py", line 30, in one
+    r = T.solve3(f, y, s, scope=A.solver, thick=A.thick, mode=A.mode, hop_all=A.hop_all)
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/../../src/oned/tri3.py", line 436, in solve3
+    ctx.s_eff = BB.model_sigma(ctx.fl, ctx.yl, ctx.sl, ctx.segl, H_OPT, d0=ctx.d_est)
+                ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/sensor/docs/results/2026-11-13_E070_three_layer/../../src/oned/bnb.py", line 368, in model_sigma
+    coef, *_ = np.linalg.lstsq(B, yb, rcond=None)
+               ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/numpy/linalg/_linalg.py", line 2539, in lstsq
+    x, resids, rank, s = _umath_linalg.lstsq(a, b, rcond,
+                         ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+                                             signature=signature)
+                                             ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/numpy/linalg/_linalg.py", line 156, in _raise_linalgerror_lstsq
+    raise LinAlgError("SVD did not converge in Linear Least Squares")
+numpy.linalg.LinAlgError: SVD did not converge in Linear Least Squares
+2059 CRASH LinAlgError('SVD did not converge in Linear Least Squares')
