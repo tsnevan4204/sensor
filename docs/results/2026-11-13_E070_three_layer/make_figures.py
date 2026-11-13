@@ -216,8 +216,58 @@ def example(seed=2024):
     fig.savefig(os.path.join(OUT, "4_example_wall.png"), dpi=200); plt.close(fig)
 
 
+# ---------------------------------------------------------------- 5. confusion map (noise-free, all 80 sequences)
+def confmap():
+    R, fn = load("map_noisefree")
+    cls = ["gypsum", "wood_board", "tile", "fibrous", "foam"]
+    M = np.zeros((5, 5)); N = np.zeros(5)
+    for r in R:
+        ps = r["per_seq"]; kt = "|".join(r["truth"])
+        if kt not in ps:
+            continue
+        c0 = ps[kt]["cost"]
+        o = r.get("oracle")
+        if o and o["cost"] < c0:
+            c0 = o["cost"]
+        for c in r["truth"]:
+            N[cls.index(c)] += 1
+        hit = set()
+        for k, v in ps.items():
+            if k == kt or v["cost"] - c0 >= 10:
+                continue
+            for i, (a, b) in enumerate(zip(r["truth"], k.split("|"))):
+                if a != b:
+                    hit.add((i, a, b))
+        for i, a, b in hit:
+            M[cls.index(a), cls.index(b)] += 1
+    F = M / np.maximum(N[:, None], 1)
+    fig, ax = plt.subplots(figsize=(7.4, 5.6))
+    from matplotlib.colors import LinearSegmentedColormap
+    cmap = LinearSegmentedColormap.from_list("seq", ["#fcfcfb", "#cfe0f6", "#7fb0ea", "#2a78d6", "#123d73"])
+    im = ax.imshow(F, cmap=cmap, vmin=0, vmax=max(0.5, F.max()))
+    for i in range(5):
+        for j in range(5):
+            if i == j:
+                ax.text(j, i, "—", ha="center", va="center", color=MUTED)
+            else:
+                ax.text(j, i, f"{100 * F[i, j]:.0f}%", ha="center", va="center", fontsize=10.5,
+                        color="white" if F[i, j] > 0.3 else INK)
+    ax.set_xticks(range(5)); ax.set_xticklabels([NICE[c] for c in cls], rotation=20, ha="right", color=INK2)
+    ax.set_yticks(range(5)); ax.set_yticklabels([NICE[c] for c in cls], color=INK2)
+    ax.set_xlabel("impostor label that fits as well"); ax.set_ylabel("true layer class")
+    ax.grid(False)
+    for sp in ax.spines.values():
+        sp.set_visible(False)
+    cb = fig.colorbar(im, ax=ax, fraction=0.04, pad=0.02); cb.outline.set_visible(False)
+    cb.set_label("share of layers with a tie", color=INK2)
+    ax.set_title("Which labels can radar NOT tell apart?\n(noise-free data, all 80 sequences)", fontsize=12.5)
+    foot(fig, f"Share of true layers with a wrong-label fit within Δ<10.\n{len(R)} simulated walls (1 per sequence). Data: {fn}")
+    fig.tight_layout(rect=(0, 0.04, 1, 1))
+    fig.savefig(os.path.join(OUT, "5_confusion_map.png"), dpi=200); plt.close(fig)
+
+
 if __name__ == "__main__":
-    which = sys.argv[1:] or ["outcomes", "thickness", "ambiguity", "example"]
+    which = sys.argv[1:] or ["outcomes", "thickness", "ambiguity", "example", "confmap"]
     for w in which:
         globals()[w]() if w != "example" else example()
         print("done", w, flush=True)
