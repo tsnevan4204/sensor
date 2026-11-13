@@ -261,23 +261,32 @@ def solve(f, y, sigma, N, d_guess, verbose=False, fast=None, **kw):
 
 
 def solve_unknown_n(f, y, sigma, d_guess, n_max=4, verbose=False, **kw):
-    """E055: the number of solid layers is NOT given. Occam rule: solve for N = 1, 2, ... and
-    return the first (smallest) N whose answer passes the self-check (chi2 alarm, no sliver, no
-    class twice in a row). A wall with fewer layers than the truth cannot reach the noise level;
-    a wall with more layers must split a true layer, which the plausibility checks reject and the
-    Schwarz criterion would penalise by ~4 ln n per extra layer. If no N passes, the answer with
-    the lowest chi2 is returned with its alarm set."""
-    tried, best = [], None
+    """E055: the number of solid layers is NOT given. Solve for N = 1, 2, ...; the first N whose
+    answer passes the self-check (chi2 alarm, plausibility) is a candidate. Then N + 1 is solved
+    as well and replaces it if it also passes and lowers chi2 by more than the Schwarz penalty of
+    one layer, 4 ln n (thickness, eps', loss, dispersion): the chi2 alarm alone (3 sigma of chi2)
+    lets a weak last layer go unnoticed (wall 503: foam behind a gap, chi2/n 1.09 without it).
+    A wall with fewer layers than the truth cannot reach the noise level; one with more must split
+    a true layer, which the plausibility checks reject. If no N passes, the answer with the lowest
+    chi2 is returned with its alarm set."""
+    tried, best, accepted = [], None, None
     t0 = time.time()
+    bic_layer = 4 * np.log(2 * f.size)
     for N in range(1, n_max + 1):
         res = solve(f, y, sigma, N, d_guess, verbose=verbose, **kw)
         tried.append(dict(N=N, chi2n=res["chi2n"], alarm=res["alarm"], wall_s=res["wall_s"]))
         res["N"] = N
-        if not res["alarm"]:
-            best = res
+        if accepted is not None:                       # this is the N + 1 check
+            if not res["alarm"] and res["chi2"] < accepted["chi2"] - bic_layer:
+                accepted = res                         # the extra layer is real: check one more
+                continue
             break
+        if not res["alarm"]:
+            accepted = res
+            continue
         if best is None or res["chi2"] < best["chi2"]:
             best = res
-    best["tried"] = tried
-    best["wall_s"] = time.time() - t0
-    return best
+    out = accepted if accepted is not None else best
+    out["tried"] = tried
+    out["wall_s"] = time.time() - t0
+    return out

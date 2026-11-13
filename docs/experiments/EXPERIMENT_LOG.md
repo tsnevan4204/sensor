@@ -1061,3 +1061,13 @@ N = 4, seeds 401–410, fast + front, 2 threads shared. **4 exact, 3 flagged, 3 
 - Flagged: 402, 409 (brick 67–85 mm), 407 (thin four-layer wall, 108 mm optical, χ²/n 10: search miss, budget).
 **Finding:** the same search works for N = 4 without change; the tree is several times larger, and the failure classes are the same (thick masonry, low-index layers). N = 5 not run (time).
 **Artifacts:** results/2026-11-12_E054_more_layers/
+
+## E055 — Unknown number of layers (Occam over N)  (2026-11-13)
+**Method:** `wallsolve2.solve_unknown_n`: solve N = 1, 2, …; the first N that passes the self-check is accepted; N + 1 is then tried and replaces it only if it passes and lowers χ² by more than 4 ln(2n) (one layer's Schwarz penalty). Fast refit and front-excluded discrepancy model (E053 options).
+**Test:** seeds 501–518, true N = 1 + seed mod 3 (6 walls each with 1, 2, 3 layers; never used before).
+**Result:** layer count right on **16/18**; exact on **15/18**; 1 reported as "not resolved" (511); **2 silent** (503, 509). Median ~4 min per wall.
+- 503 (wood | chipboard | foam | gap 2.95, air): answered as wood | chipboard | batt 29.4 with no gap; foam, batt and air are nearly one medium.
+- 509 (water | glass 3.9 | plywood, gap 1.5 before the glass): answered as water | chipboard 16.3; the glass and plywood fit as one chipboard layer at χ²/n 0.96.
+- Before the N + 1 check was added (first pass rule, `unknown_n_v1_first_pass_rule.jsonl`), 2 walls had an over-layered answer that passed the noise test (e.g. 512 found 3 layers where the truth had 3 with a tile for glass; 511 over-split a 1 mm gap). The N + 1 check fixed these at a cost of ~2× time on the 3-layer walls.
+**Status:** step 5 works on this set; the two silent failures are the same weak-layer class as before (E052/E053), not new.
+**Artifacts:** results/2026-11-12_E055_unknown_n/

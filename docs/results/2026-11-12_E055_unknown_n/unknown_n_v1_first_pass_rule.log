@@ -1,0 +1,5 @@
+501 OK N 1->1 1s chi2/n 1.00 [('tile', 8.84)] [] air -> [('tile', 8.85)] [] air [(1, 1.0, False)]
+502 OK N 2->2 5s chi2/n 0.98 [('plasterboard', 12.11), ('brick', 86.76)] [0.0] air -> [('plasterboard', 12.11), ('brick', 86.96)] [0.0] air [(1, 23.5, True), (2, 0.98, False)]
+503 SILENT N 3->2 4s chi2/n 1.09 [('wood', 38.79), ('chipboard', 14.31), ('foam', 27.02)] [0.0, 2.95] air -> [('wood', 38.77), ('chipboard', 14.3)] [0.0] air [(1, 10.33, True), (2, 1.09, False)]
+504 OK N 1->1 1s chi2/n 1.03 [('tile', 9.86)] [0.0] metal -> [('tile', 9.86)] [0.0] metal [(1, 1.03, False)]
+505 OK N 2->2 27s chi2/n 0.97 [('batt', 89.92), ('tile', 9.59)] [15.5] air -> [('batt', 89.89), ('tile', 9.58)] [15.52] air [(1, 325.08, True), (2, 0.97, False)]
