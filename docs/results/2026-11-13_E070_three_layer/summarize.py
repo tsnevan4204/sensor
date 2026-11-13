@@ -94,6 +94,9 @@ if "--map" in sys.argv:
         if kt not in ps:
             print(f"    {r['seed']}: true sequence not refitted"); continue
         c0 = ps[kt]["cost"]
+        o = r.get("oracle")
+        if o and o["cost"] < c0:          # identifiability map: use the best fit of the true sequence found
+            c0 = o["cost"]                # by anyone (the solver's search miss is reported separately)
         wrong = sorted((v["cost"] - c0, k) for k, v in ps.items() if k != kt)
         dmins.append((wrong[0][0], r["seed"], kt, wrong[0][1]))
         for dlt, k in wrong:

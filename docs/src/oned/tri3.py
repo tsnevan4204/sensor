@@ -265,7 +265,10 @@ def grid_sequence(ctx, seq, K):
     # altogether, so the estimate may be late by that layer's whole optical thickness
     front = {s[0] for s in ctx.seqs}
     back = D_BACK if front <= set(BOARDS) else max(bounds(c, ctx.thick)[1] * 1.08 for c in front) + 6e-3
-    dg = ctx.d_est + np.arange(-back, D_FWD + 1e-9, D_STEP)
+    # ... and with a weak insulation front the 'earliest peak' can be a range SIDELOBE of the strong
+    # second echo, i.e. EARLY (map wall 1004: -14 mm): one main-lobe width forward as well
+    fwd = D_FWD if front <= set(BOARDS) else 40e-3
+    dg = ctx.d_est + np.arange(-back, fwd + 1e-9, D_STEP)
     dg = dg[(dg >= ctx.d_box[0]) & (dg <= ctx.d_box[1])]
     T = np.array(list(itertools.product(*grids)))                  # (M, 3)
     M = T.shape[0]
