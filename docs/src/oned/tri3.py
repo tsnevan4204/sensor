@@ -553,6 +553,7 @@ def decide(ctx, fits):
                         for r in rivals],
                 same_seq_alt=[dict(dcost=r["cost"] - b["cost"], t_mm=[round(1e3 * x, 3) for x in r["t"]]) for r in same_alt],
                 in_bounds=b["in_bounds"], er=[float(x) for x in b["er"]], td=[float(x) for x in b["td"]],
+                pinf=[float(x) for x in b["pinf"]],
                 per_seq=per_seq)
 
 
