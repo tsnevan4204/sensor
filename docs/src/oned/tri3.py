@@ -122,6 +122,19 @@ def install():
     ST._TRI3 = True
 
 
+_SAVED = None
+
+
+def uninstall():
+    """Restore the repo's full material world (tests run other modules in the same process)."""
+    if not getattr(ST, "_TRI3", False):
+        return
+    ST.material_law = _ORIG_LAW
+    ST.ALL_MATERIALS = list(ST.ITU) + list(ST.OTHER) + list(ST.SPECIAL)
+    ST._LIB = None
+    ST._TRI3 = False
+
+
 def bounds(name, thick="real"):
     return T_REAL[name] if thick == "real" else T_STRESS
 

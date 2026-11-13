@@ -8,8 +8,14 @@ import stack as ST
 import polish as PL
 import wall_inverse as I
 import treesolve as TS
+import pytest
 
-T.install()
+
+@pytest.fixture(autouse=True, scope="module")
+def _five_class_world():
+    T.install()
+    yield
+    T.uninstall()
 
 
 def test_sequence_counts():
