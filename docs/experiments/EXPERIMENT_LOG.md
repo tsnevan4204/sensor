@@ -1100,5 +1100,19 @@ N = 4, seeds 401–410, fast + front, 2 threads shared. **4 exact, 3 flagged, 3 
 
 **Runtime:** median 128 s per wall on one core (grid 30 s, polish 32 s, exact fits 47 s, hops 22 s; 1.5·10⁶ grid walls, ~107 exact fits), in-scope reference. All-80 solver ~640 s per wall.
 
-**Still running when this entry was written:** fast mode, stress (5–50 mm), noisy all-80 run (outer-insulation sequences as candidates), 3-band ablation with the fixed standoff estimate; results appended below.
+**More runs (final code):**
+| set | walls | best sequence right | joint | answered | answered & correct | abstain labels | abstain thickness | alarm | **confidently wrong** | median s/wall |
+|---|---|---|---|---|---|---|---|---|---|---|
+| in scope, **fast mode** (`main_fast`) | 60 | 60 | 59 | 21 | 21 | 36 | 3 | 0 | **0** | 75 |
+| in scope, reference (`main_ref`, repeated) | 60 | 60 | 59 | 21 | 21 | 36 | 3 | 0 | **0** | 128 |
+| in scope, **3 bands** (+0.4–0.96 GHz, `main_3band`) | 60 | 59 | 58 | 22 | 21 | 37 | 1 | 0 | **1** | 163 |
+| **stress** 5–50 mm all classes (`stress_ref`) | 30 | 24 | 24 | 2 | 2 | 19 | 9 | 0 | **0** | 1205 |
+- **Fast mode = reference on every wall** (identical status and answer on 60/60) at 0.6× the time; the grid (24 s) and polish (25 s) now dominate, not the exact fits (17 s).
+- **Two vs three bands (step 5):** the sub-GHz band does not resolve the label ambiguity (22 vs 21 answered, 37 vs 36 label abstentions); thickness accuracy unchanged (median 0.018 mm), median CRB 0.037 vs 0.046 mm. It brought one confidently-wrong answer, a SEARCH miss: 2053 (wood | fibrous | wood, plywood-like samples, dispersion shape p 0.91/0.97) – every exact fit of the true sequence ended at cost 5374 (third layer on its 19 mm bound), 3822 above the winner, outside the hop window, so the true basin was never reached; with 2 bands the same wall is found. Likely cause (not verified): the compiled polish tries p = 0.75 / 0.99 for wood_board only, and the sub-GHz band is very sensitive to the dispersion shape. Open item if 3 bands are pursued.
+- A first 3-band run (`v5_main_3band_frontbug`) was confounded by the standoff estimate (bug 7): 11 walls missed – all 11 raised the alarm, none was answered wrongly.
+- **Stress (5–50 mm for every class):** 0 confidently wrong, but almost everything abstains (thick lossy fronts, e.g. 38 mm tile + 45 mm gypsum, hide the deeper layers; 3 search misses on such walls, all abstained). Thickness |error| median 0.034 mm, max 0.64 mm on right-label walls. The grid takes 19 min per wall here (5.7·10⁷ walls): the realistic class ranges are what make the reference solver affordable.
+- **Wood board = chipboard only** is harder than the broad class (see table above): the choice of wood model matters more than any solver setting.
+
+**Status against the owner's goal ("perfect"):** zero confidently-wrong answers on every in-scope set with the final 2-band code (60 + 60 + 60 walls) and on the out-of-scope set; every committed answer was correct. But only ~35 % of in-scope walls get a committed label answer: gypsum vs wood board is not separable with these class definitions (an information limit shown by the noise-free confusion map, not a solver limit). Paths to more committed answers: (a) merge gypsum + wood board into one 'board' class for labelling (thickness is unaffected), (b) define wood board by measured coupons and re-run the confusion map, (c) a measurement that separates them (e.g. moisture/conductivity at lower frequency – the 0.4–0.96 GHz band did NOT).
+**Noisy all-80 run** (outer-insulation sequences as candidates): still running; appended when done.
 **Artifacts:** results/2026-11-13_E070_three_layer/ (`run.py`, `summarize.py`, `make_figures.py`, `figures/`, `*.jsonl`, archived `v1_/v3_/v4_/v5_` runs)
