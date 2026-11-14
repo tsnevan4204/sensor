@@ -75,3 +75,6 @@
 1074 JOINT abstain_labels 860s fibrous|gypsum|foam [89.993, 14.927, 21.587] -> fibrous|gypsum|foam [90.0, 14.936, 21.708] chi2n 1.001 rivals [('fibrous|wood_board|foam', 5.6), ('fibrous|wood_board|foam', 5.6)]
 1075 JOINT abstain_labels 866s fibrous|gypsum|tile [77.241, 11.184, 10.317] -> fibrous|gypsum|tile [77.246, 11.162, 10.289] chi2n 0.987 rivals [('fibrous|wood_board|tile', 4.3)]
 1076 JOINT answer 703s fibrous|wood_board|gypsum [52.184, 12.644, 12.827] -> fibrous|wood_board|gypsum [52.179, 12.682, 12.777] chi2n 0.994 rivals []
+1077 JOINT answer 911s fibrous|wood_board|fibrous [85.395, 15.213, 58.682] -> fibrous|wood_board|fibrous [85.325, 15.285, 59.247] chi2n 0.987 rivals []
+1078 JOINT abstain_labels 895s fibrous|wood_board|foam [83.678, 10.978, 11.322] -> fibrous|wood_board|foam [83.618, 10.937, 11.097] chi2n 0.995 rivals [('fibrous|gypsum|foam', 6.1)]
+1079 JOINT answer 816s fibrous|wood_board|tile [86.503, 10.107, 9.318] -> fibrous|wood_board|tile [86.488, 10.029, 9.338] chi2n 0.968 rivals []
