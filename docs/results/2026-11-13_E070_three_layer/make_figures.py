@@ -70,6 +70,9 @@ def outcomes():
         rows.append((f"Insulation on an outer face\n(solver doesn't know), n={len(outv4)}\nfit check only", cats_out(outv4)))
     if outf:
         rows.append((f"Same, + material-out-of-class\nalarm, n={len(outf)}", cats_out(outf)))
+    a80, fa = load("all80_ref")
+    if fa == "all80_ref.jsonl":
+        rows.append((f"All 80 sequences allowed\n(incl. outer insulation), n={len(a80)}", cats_in(a80)))
     fig, ax = plt.subplots(figsize=(10, 1.25 + 1.15 * len(rows)))
     keys = [("ok", "correct answer", GOOD, "white"), ("abst", "abstained (\"can't tell\")", NEUTRAL, INK),
             ("alarm", "alarm (\"doesn't fit\")", WARN, INK), ("wrong", "confidently wrong", CRIT, "white")]
@@ -88,7 +91,7 @@ def outcomes():
     ax.legend(handles=handles, ncol=4, loc="lower left", bbox_to_anchor=(0, 1.0), frameon=False, fontsize=9.5)
     ax.set_title("Three-layer wall inversion: what the solver says on each wall", pad=30)
     foot(fig, f"Simulation, 3.1-10.6 + 60-64 GHz, 40 dB SNR. Reference solver over all allowed sequences. Data: {fm}"
-              + (", v4_outscope_ref.jsonl" if outv4 else "") + (", outscope_ref.jsonl" if outf else ""))
+              + (", v4_outscope_ref.jsonl" if outv4 else "") + (", outscope_ref.jsonl" if outf else "") + ", all80_ref.jsonl")
     fig.tight_layout(rect=(0, 0.04, 1, 1))
     fig.savefig(os.path.join(OUT, "1_outcomes.png"), dpi=200); plt.close(fig)
 
