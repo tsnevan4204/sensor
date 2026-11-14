@@ -45,6 +45,11 @@ src/oned/                 1D layered-wall code (run scripts from this folder)
   wallsearch.py           block moves (classes, gaps, relocate), bnb_start, search driver
   treesolve.py            class library table, Slepian gates (and the E051 beam: negative result)
   devbnb.py, devsearch.py, devtree.py   development harnesses with truth tracing
+  tri3.py                 CURRENT three-layer five-class solver (E070, owner scope 2026-11-13): explicit class
+                          models (wood_board = broad chipboard..plywood class, switch TRI3_WOOD), make3() world,
+                          solve3() = exhaustive per-sequence grid + compiled polish + exact refit under class-fixed
+                          priors, chi2 + material-out-of-class alarms, label/thickness abstention; mode fast == reference
+                          on 60/60 walls. Results, figures, confusion map: results/2026-11-13_E070_three_layer/
 tests/test_gates.py       correctness gates; MUST pass before any experiment result is trusted
 experiments/EXPERIMENT_LOG.md   every experiment, newest last (historical E000–E007 already logged)
 results/<date>_<ID>/      outputs of each experiment
