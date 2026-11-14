@@ -90,7 +90,7 @@ def outcomes():
     handles = [matplotlib.patches.Patch(color=col, label=nm) for _, nm, col, _ in keys]
     ax.legend(handles=handles, ncol=4, loc="lower left", bbox_to_anchor=(0, 1.0), frameon=False, fontsize=9.5)
     ax.set_title("Three-layer wall inversion: what the solver says on each wall", pad=30)
-    foot(fig, f"Simulation, 3.1-10.6 + 60-64 GHz, 40 dB SNR. Reference solver over all allowed sequences. Data: {fm}"
+    foot(fig, f"Simulation, 3.1-10.6 + 60-64 GHz, 40 dB SNR. Reference solver over all allowed sequences.\nData: {fm}"
               + (", v4_outscope_ref.jsonl" if outv4 else "") + (", outscope_ref.jsonl" if outf else "") + ", all80_ref.jsonl")
     fig.tight_layout(rect=(0, 0.04, 1, 1))
     fig.savefig(os.path.join(OUT, "1_outcomes.png"), dpi=200); plt.close(fig)
