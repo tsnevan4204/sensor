@@ -230,7 +230,10 @@ class Ctx:
             self.mu[c] = mu
             self.Li[c] = np.linalg.cholesky(np.linalg.inv(Cv))
             self.er0[c], self.td0[c], self.pp0[c] = lib.laws[c].er, lib.laws[c].td, lib.laws[c].pp
-        d = ST.front_guess(f, y, lo=d_box[0], hi=d_box[1])
+        # standoff from the WIDEST band only: front_guess builds a range profile assuming a uniform
+        # frequency grid, which sub-GHz + UWB concatenated is not (3-band ablation: errors up to 116 mm)
+        a, b = max(I.band_segments(f), key=lambda ab: f[ab[1] - 1] - f[ab[0]] if f[ab[0]] < 20e9 else -1)
+        d = ST.front_guess(f[a:b], y[a:b], lo=d_box[0], hi=d_box[1])
         self.d_est = float(np.clip(d, d_box[0], d_box[1]))
         self.d_box = d_box
         self.n_grid = 0

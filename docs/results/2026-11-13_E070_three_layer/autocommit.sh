@@ -12,6 +12,6 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
 Claude-Session: https://claude.ai/code/session_017DGgcmTZEMRvB5FFcE2UF8" && for i in 1 2 3 4; do git push -q origin claude/cool-bohr-v3xzec && break || sleep $((2**i)); done
     cd - >/dev/null
   fi
-  grep -q "ALL DONE" chain3.log && break
+  grep -q "ALL DONE 2" chain3.log && break
   sleep 30
 done

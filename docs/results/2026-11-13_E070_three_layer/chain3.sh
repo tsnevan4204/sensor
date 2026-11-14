@@ -12,3 +12,5 @@ run main_fast     --seeds 2000 2059 --truth in  --solver in  --balanced --mode f
 run stress_ref    --seeds 4000 4029 --truth in  --solver in  --balanced --mode reference --thick stress
 run all80_ref     --seeds 1000 1079 --truth all --solver all --balanced --mode reference
 echo "=== ALL DONE $(date -u +%H:%M)"
+run main_3band    --seeds 2000 2059 --truth in  --solver in  --balanced --mode reference --bands 3
+echo "=== ALL DONE 2 $(date -u +%H:%M)"
